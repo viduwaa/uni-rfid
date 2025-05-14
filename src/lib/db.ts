@@ -9,21 +9,21 @@ dotenv.config();
 
 // Create a connection pool
 const config = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : undefined,
-    database: process.env.DB_NAME,
-    ssl: process.env.DB_SSL_CERT_PATH ? {
-        ca: fs.readFileSync(process.env.DB_SSL_CERT_PATH).toString(),
-    } : undefined
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    host: process.env.PGHOST,
+    port: process.env.PGPORT ? parseInt(process.env.PGPORT, 10) : undefined,
+    database: process.env.PGNAME,
+    ssl: {
+    rejectUnauthorized: false
+  }
 };
 
 const pool = new pg.Pool(config);
 
 // Test the connection
 pool.on("connect", () => {
-    console.log("Connected to Aiven PostgreSQL database");
+    console.log("Connected to Azure PostgreSQL database");
 });
 
 pool.on("error", (err) => {

@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS students (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   register_number VARCHAR(50) UNIQUE NOT NULL,
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
+  full_name VARCHAR(100) NOT NULL,
+  initial_name VARCHAR(100) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   faculty VARCHAR(100) NOT NULL,
   year_of_study INTEGER NOT NULL,
