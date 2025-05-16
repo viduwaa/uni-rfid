@@ -1,18 +1,7 @@
-export interface ValidationErrors {
-    fullName?: string;
-    initName?: string;
-    registerNumber?: string;
-    email?: string;
-    faculty?: string;
-    yearOfStudy?: string;
-    address?: string;
-    phoneNumber?: string;
-    dateOfBirth?: string;
-    photo? : any;
-}
+import { StudentForm } from "@/types/student";
 
-export const validateForm = (formData: FormData): ValidationErrors => {
-    const validationErrors: ValidationErrors = {};
+export const validateForm = (formData: FormData): StudentForm => {
+    const validationErrors: StudentForm = {};
 
     const data = {
         fullName: formData.get("fullName") as string,

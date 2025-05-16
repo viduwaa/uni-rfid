@@ -25,13 +25,11 @@ async function initDb() {
     // Test connection
     const result = await pool.query('SELECT version()')
     console.log(result.rows[0].version)
-    
+    console.log('Database schema initialized successfully')
     //initialize tables
     await initTables()
   } catch (error) {
     console.error('Error initializing database:', error)
-  } finally {
-    console.log('Database schema initialized successfully')
   }
 }
 

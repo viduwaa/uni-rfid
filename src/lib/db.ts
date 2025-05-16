@@ -1,7 +1,5 @@
 // lib/db.ts
-import fs from 'fs';
 import pg from 'pg';
-import url from 'url';
 import dotenv from "dotenv";
 
 // Load environment variables

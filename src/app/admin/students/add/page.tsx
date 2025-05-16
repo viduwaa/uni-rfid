@@ -24,13 +24,13 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Upload, ArrowLeft } from "lucide-react";
-import { validateForm, ValidationErrors } from "./validateForm";
-import axios from "axios";
+import { validateForm } from "./validateForm";
+import { StudentForm } from "@/types/student";
 
 export default function AddStudent() {
     const [isUploading, setIsUploading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-    const [validationError, setValidationError] = useState<ValidationErrors>();
+    const [validationError, setValidationError] = useState<StudentForm>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,8 +73,15 @@ export default function AddStudent() {
         setIsSubmitting(true);
 
         try {
-            /* const response = await axios.post("api/students/", formData);
-            console.log("success", response.data); */
+            const response = await fetch("/api/students/", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
             toast.success("Student Registration success", {
                 description: "Reidrecting to card registration",
             });
@@ -91,7 +98,7 @@ export default function AddStudent() {
     return (
         <div className="min-h-screen bg-slate-50 py-10">
             <div className="container mx-auto">
-                <div className="mb-6 flex items-center">
+                <div className="mb-6 flex items-center ">
                     <Link href="/admin/dashboard" className="mr-4">
                         <Button variant="outline" size="icon">
                             <ArrowLeft className="h-4 w-4" />
