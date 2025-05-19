@@ -44,12 +44,25 @@ export async function POST(request: NextRequest) {
         console.log(studentData.phoneNumber);
         await insertStudent(studentData, photoURL);
 
+
         return NextResponse.json({
             success: true,
             status: 201,
         });
     } catch (error) {
         console.error("API Error:", error);
+
+        //inform user reg no or email exists
+        if((error as Error).name == "Duplicate Error" ){
+            return NextResponse.json({
+                success: false,
+                message: (error as Error).message
+            },{
+                status : 400
+            })
+        }
+
+        //inform user about server error
         return NextResponse.json(
             {
                 success: false,

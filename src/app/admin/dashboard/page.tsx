@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { UserPlus, Users, BookOpen, BarChart3, Settings } from "lucide-react"
+import { UserPlus,IdCard , Users, BookOpen, BarChart3, Settings } from "lucide-react"
 
 export default function AdminDashboard() {
   return (
@@ -38,6 +38,21 @@ export default function AdminDashboard() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Add lecturer details including photo, name, department, and contact information.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/students/add" className="block">
+            <Card className="h-full transition-all hover:shadow-md">
+              <CardHeader>
+                <IdCard  className="h-8 w-8 text-primary" />
+                <CardTitle className="mt-2">Manage RFID Cards</CardTitle>
+                <CardDescription>Register new cards or manage the cards</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Access card details, edit currency and payments
                 </p>
               </CardContent>
             </Card>

@@ -78,17 +78,21 @@ export default function AddStudent() {
                 body: formData,
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(data.message || "Submission failed");
             }
 
             toast.success("Student Registration success", {
                 description: "Reidrecting to card registration",
             });
+
+            form.reset();
         } catch (error) {
             console.error("Error submitting form", error);
             toast.error("Error submitting form", {
-                description: "Please try again later",
+                description: (error as Error).message + "\nPlease try again",
             });
         } finally {
             setIsSubmitting(false);
