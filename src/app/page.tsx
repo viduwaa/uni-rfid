@@ -28,7 +28,7 @@ export default function Home() {
             </CardContent>
             <CardFooter>
               <Link href="/admin/login" className="w-full">
-                <Button className="w-full cursor-pointer">Admin Login</Button>
+                <Button className="w-full cursor-pointer" variant="outline">Admin Login</Button>
               </Link>
             </CardFooter>
           </Card>
