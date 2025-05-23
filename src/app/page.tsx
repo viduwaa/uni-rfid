@@ -28,7 +28,7 @@ export default function Home() {
             </CardContent>
             <CardFooter>
               <Link href="/admin/login" className="w-full">
-                <Button className="w-full cursor-pointer">Admin Login</Button>
+                <Button className="w-full cursor-pointer" variant="outline">Admin Login</Button>
               </Link>
             </CardFooter>
           </Card>
@@ -72,6 +72,47 @@ export default function Home() {
               </Link>
             </CardFooter>
           </Card>
+
+          <Card className="transition-all hover:shadow-md">
+            <CardHeader>
+              <Coffee className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Library Portal</CardTitle>
+              <CardDescription>Manage book inventories, borrowing records, and fines</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+              Track issued books, handle returns, manage library users, and update book availability and categories.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/canteen/login" className="w-full">
+                <Button className="w-full cursor-pointer" variant="outline">
+                  Library Login
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          <Card className="transition-all hover:shadow-md">
+            <CardHeader>
+              <Coffee className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Student Portal</CardTitle>
+              <CardDescription>View academic performance and personal records</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+              Check grades, GPA, attendance, and access course-related information. Stay updated with academic progress and notifications.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/canteen/login" className="w-full">
+                <Button className="w-full cursor-pointer" variant="outline">
+                  Student Login
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
         </div>
       </div>
     </div>
