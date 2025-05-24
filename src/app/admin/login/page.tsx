@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 
 export default function AdminLogin() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
