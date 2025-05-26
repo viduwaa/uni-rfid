@@ -5,14 +5,14 @@ import { UserPlus,IdCard , Users, BookOpen, BarChart3, Settings } from "lucide-r
 
 export default function AdminDashboard() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <div className="container mx-auto py-10">
         <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">Manage all aspects of the university NFC card system</p>
+          <h1 className="text-3xl font-bold tracking-tight text-center">Admin Dashboard</h1>
+          <p className="mt-2 text-muted-foreground text-center">Manage all aspects of the university NFC card system</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
           <Link href="/admin/students/add" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/students/add" className="block">
+          <Link href="/admin/rfid" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <IdCard  className="h-8 w-8 text-primary" />
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
           </Link>
         </div>
 
-        <div className="mt-8 flex justify-end">
+        <div className="mt-8 flex justify-end px-5">
           <Link href="/">
             <Button variant="outline">Logout</Button>
           </Link>
