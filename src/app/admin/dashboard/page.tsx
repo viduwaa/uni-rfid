@@ -43,7 +43,7 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/students/add" className="block">
+          <Link href="/admin/rfid" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <IdCard  className="h-8 w-8 text-primary" />

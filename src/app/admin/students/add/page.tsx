@@ -108,7 +108,7 @@ export default function AddStudent() {
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                     </Link>
-                    <h1 className="text-3xl font-bold tracking-tight">
+                    <h1 className="text-3xl font-bold tracking-tight text-center w-full mt-4">
                         Add New Student
                     </h1>
                 </div>
