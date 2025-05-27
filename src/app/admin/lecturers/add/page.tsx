@@ -47,7 +47,7 @@ export default function AddLecturer() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-aut">
+      <div className="container mx-auto p-6 space-y-6">
         <div className="mb-6 flex items-center text-center">
           <Link href="/admin/dashboard" className="mr-4">
             <Button variant="outline" size="icon">

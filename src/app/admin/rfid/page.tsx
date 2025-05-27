@@ -28,7 +28,8 @@ import {
   PlusCircle, 
   Search, 
   Edit, 
-  Trash2 
+  Trash2, 
+  ArrowLeft
 } from "lucide-react";
 
 import { Metadata, ResolvingMetadata } from 'next'
@@ -64,6 +65,11 @@ export default async function RfidCardManagement({ searchParams }: Props) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Link href="/admin/dashboard" className="mr-4">
+              <Button variant="outline" size="icon">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
             <IdCard className="h-6 w-6" />
             RFID Card Management
           </h1>
