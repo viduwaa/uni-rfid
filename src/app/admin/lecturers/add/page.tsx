@@ -54,7 +54,7 @@ export default function AddLecturer() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight text-center ">Add New Lecturer</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-center w-full mt-4">Add New Lecturer</h1>
         </div>
 
         <Card className="mx-auto max-w-3xl">

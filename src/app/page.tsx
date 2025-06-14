@@ -46,7 +46,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/admin/login" className="w-full">
+              <Link href="/admin/adminlogin" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Admin Login
                 </Button>
@@ -69,7 +69,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/lecture/login" className="w-full">
+              <Link href="/admin/lecturerlogin" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Lecture Login
                 </Button>
