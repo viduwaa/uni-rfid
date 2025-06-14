@@ -19,7 +19,7 @@ import {
 export default function AdminDashboard() {
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-10 p-6 space-y-6">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight text-center">
             Admin Dashboard
