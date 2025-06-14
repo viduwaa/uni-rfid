@@ -23,7 +23,7 @@ export default function Home() {
       <div className="container mx-auto py-10">
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold tracking-tight">
-            University NFC Card System
+            University RFID Card System
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
             Manage attendance, canteen services, and student information
@@ -46,7 +46,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/admin/adminlogin" className="w-full">
+              <Link href="/admin" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Admin Login
                 </Button>
@@ -69,7 +69,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/admin/lecturerlogin" className="w-full">
+              <Link href="/lecturer/" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Lecture Login
                 </Button>
