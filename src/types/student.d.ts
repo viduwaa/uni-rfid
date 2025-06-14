@@ -9,4 +9,5 @@ export interface StudentForm {
     phoneNumber?: string;
     dateOfBirth?: string;
     photo? : any;
+    nicNumber? : string;
 }

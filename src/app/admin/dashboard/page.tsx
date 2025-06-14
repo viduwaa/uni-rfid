@@ -87,13 +87,12 @@ export default function AdminDashboard() {
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <Users className="h-8 w-8 text-primary" />
-                <CardTitle className="mt-2">Manage Students</CardTitle>
+                <CardTitle className="mt-2">Manage Students & Lecturers</CardTitle>
                 <CardDescription>View and edit student records</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Search, view, edit, or delete student information in the
-                  system.
+                  Search, view, edit, or delete student information in the system.
                 </p>
               </CardContent>
             </Card>
@@ -110,21 +109,6 @@ export default function AdminDashboard() {
                 <p className="text-sm text-muted-foreground">
                   Access attendance reports, canteen usage, and other system
                   analytics.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/settings" className="block">
-            <Card className="h-full transition-all hover:shadow-md">
-              <CardHeader>
-                <Settings className="h-8 w-8 text-primary" />
-                <CardTitle className="mt-2">Settings</CardTitle>
-                <CardDescription>Configure system parameters</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Adjust system settings, permissions, and integration options.
                 </p>
               </CardContent>
             </Card>

@@ -89,6 +89,7 @@ export default function AddStudent() {
             });
 
             form.reset();
+            setPhotoPreview(null);
         } catch (error) {
             console.error("Error submitting form", error);
             toast.error("Error submitting form", {
@@ -154,7 +155,7 @@ export default function AddStudent() {
                                             </div>
                                         )}
                                     </div>
-                                    <div>
+                                    <div className="mb-0">
                                         <Label
                                             htmlFor="photo"
                                             className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
@@ -170,12 +171,13 @@ export default function AddStudent() {
                                             name="photo"
                                             onChange={handlePhotoChange}
                                         />
-                                        {validationError?.photo && (
-                                            <span className="text-red-500 text-sm">
-                                                {validationError.photo}
-                                            </span>
-                                        )}
+                                        
                                     </div>
+                                {validationError?.photo && (
+                                    <span className="text-red-500 text-sm">
+                                        {validationError.photo}
+                                    </span>
+                                )}
                                 </div>
 
                                 {/* Full name */}
@@ -199,7 +201,7 @@ export default function AddStudent() {
                                 </div>
 
                                 {/* Name with initials */}
-                                <div className="grid grid-cols-1">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label htmlFor="initName">
                                             Name with initials
@@ -208,6 +210,22 @@ export default function AddStudent() {
                                             id="initName"
                                             placeholder="J.Doe"
                                             name="initName"
+                                            required
+                                        />
+                                        {validationError?.initName && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.initName}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="initName">
+                                            NIC Number
+                                        </Label>
+                                        <Input
+                                            id="initName"
+                                            placeholder="2XXXXXXXXXV"
+                                            name="nic_no"
                                             required
                                         />
                                         {validationError?.initName && (
