@@ -1,189 +1,406 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "sonner"
-import { Upload, ArrowLeft } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { Upload, ArrowLeft } from "lucide-react";
+import { LecturerForm } from "@/types/lecturers";
+import { validateForm } from "./validateForm";
 
 export default function AddLecturer() {
-  const [isUploading, setIsUploading] = useState(false)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+    const [isUploading, setIsUploading] = useState(false);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [validationError, setValidationError] = useState<LecturerForm>();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setIsUploading(true)
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setIsUploading(true);
 
-      // Simulate upload delay
-      setTimeout(() => {
-        const file = e.target.files![0]
-        const reader = new FileReader()
+            // Simulate upload delay
+            setTimeout(() => {
+                const file = e.target.files![0];
+                const reader = new FileReader();
 
-        reader.onload = (event) => {
-          setPhotoPreview(event.target?.result as string)
-          setIsUploading(false)
+                reader.onload = (event) => {
+                    setPhotoPreview(event.target?.result as string);
+                    setIsUploading(false);
+                };
+
+                reader.readAsDataURL(file);
+            }, 1000);
         }
+    };
 
-        reader.readAsDataURL(file)
-      }, 1000)
-    }
-  }
+    const handleSubmit = async (event: React.FormEvent) => {
+            event.preventDefault();
+    
+            // get form data
+            const form = event.currentTarget as HTMLFormElement;
+            const formData = new FormData(form);
+    
+            //validate form data
+            const validationErrors = validateForm(formData);
+            if (Object.keys(validationErrors).length > 0) {
+                setValidationError(validationErrors);
+                return;
+            }
+    
+            //clear valdation errors
+            setValidationError({});
+    
+            //start submitting
+            setIsSubmitting(true);
+    
+            try {
+                const response = await fetch("/api/lecturers/", {
+                    method: "POST",
+                    body: formData,
+                });
+    
+                const data = await response.json();
+    
+                if (!response.ok) {
+                    throw new Error(data.message || "Submission failed");
+                }
+    
+                toast.success("Lecturer Registration success");
+    
+                form.reset();
+                setPhotoPreview(null);
+            } catch (error) {
+                console.error("Error submitting form", error);
+                toast.error("Error submitting form", {
+                    description: (error as Error).message + "\nPlease try again",
+                });
+            } finally {
+                setIsSubmitting(false);
+            }
+        };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    return (
+        <div className="min-h-screen">
+            <div className="container mx-auto p-6 space-y-6">
+                {/* back button */}
+                <div className="mb-6 flex items-center text-center">
+                    <Link href="/admin/dashboard" className="mr-4">
+                        <Button variant="outline" size="icon">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <h1 className="text-3xl font-bold tracking-tight text-center w-full mt-4">
+                        Add New Lecturer
+                    </h1>
+                </div>
 
-    // Simulate form submission
-    toast.success("Lecturer Added", {
-      description: "The lecturer has been successfully added to the system.",
-    })
-  }
+                <Card className="mx-auto max-w-3xl">
+                    <CardHeader>
+                        <CardTitle>Lecturer Information</CardTitle>
+                        <CardDescription>
+                            Enter the details of the new lecturer to register
+                            them in the system
+                        </CardDescription>
+                    </CardHeader>
 
-  return (
-    <div className="min-h-screen">
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="mb-6 flex items-center text-center">
-          <Link href="/admin/dashboard" className="mr-4">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight text-center w-full mt-4">Add New Lecturer</h1>
+                    {/* lecturerr add form */}
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-4">
+                                <div className="flex flex-col items-center space-y-4">
+                                    <div className="relative h-32 w-32 overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50">
+                                        {photoPreview ? (
+                                            <img
+                                                src={
+                                                    photoPreview ||
+                                                    "/placeholder.svg"
+                                                }
+                                                alt="Lecturer preview"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center">
+                                                <Upload className="h-8 w-8 text-gray-400" />
+                                            </div>
+                                        )}
+                                        {isUploading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label
+                                            htmlFor="photo"
+                                            className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                                        >
+                                            Upload Photo
+                                        </Label>
+                                        <Input
+                                            id="photo"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            name="photo"
+                                            onChange={handlePhotoChange}
+                                        />
+                                    </div>
+                                    {validationError?.photo && (
+                                        <span className="text-red-500 text-sm">
+                                            {validationError.photo}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Full name */}
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fullName">
+                                            Full Name
+                                        </Label>
+                                        <Input
+                                            id="fullName"
+                                            name="fullName"
+                                            placeholder="Jane"
+                                            required
+                                        />
+                                    </div>
+                                    {validationError?.fullName && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.fullName}
+                                            </span>
+                                    )}
+                                </div>
+
+                                {/* Initials name */}
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="initName">
+                                            Name with initials
+                                        </Label>
+                                        <Input
+                                            id="initName"
+                                            name="initName"
+                                            placeholder="STAFF2023001"
+                                            required
+                                        />
+                                    </div>
+                                    {validationError?.initName && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.initName}
+                                            </span>
+                                    )}
+                                </div>
+
+                                {/* reg no and nic */}
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="regNo">
+                                            Registration Number / Staff ID
+                                        </Label>
+                                        <Input
+                                            id="regNo"
+                                            name="regNo"
+                                            placeholder="STAFF2023001"
+                                            required
+                                        />
+                                        {validationError?.registerNumber && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.registerNumber}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="nic">NIC Number</Label>
+                                        <Input
+                                            id="nic"
+                                            name="nic"
+                                            placeholder="6099XXXXXV"
+                                            required
+                                        />
+                                        {validationError?.nicNo && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.nicNo}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Faculty and Position */}
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="grid grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="faculty">Faculty</Label>
+                                            <Select name="faculty">
+                                                <SelectTrigger className="w-[160px]" id="faculty">
+                                                    <SelectValue  placeholder="Select Faculty" />
+                                                </SelectTrigger>
+                                                <SelectContent> 
+                                                    <SelectItem value="tec">
+                                                        Technology
+                                                    </SelectItem>
+                                                    <SelectItem value="app">
+                                                        Applied Sciences
+                                                    </SelectItem>
+                                                    <SelectItem value="ssh">
+                                                        Social Sciences & Humanities
+                                                    </SelectItem>
+                                                    <SelectItem value="mgt">
+                                                        Management Studies
+                                                    </SelectItem>
+                                                    <SelectItem value="agr">
+                                                        Agriculture
+                                                    </SelectItem>
+                                                    <SelectItem value="med">
+                                                        Medicine and Allied Sciences
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {validationError?.faculty && (
+                                                <span className="text-red-500 text-sm">
+                                                    {validationError.faculty}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="position">
+                                                Position
+                                            </Label>
+                                            <Select name="position">
+                                                <SelectTrigger id="position" className="w-full">
+                                                    <SelectValue placeholder="Select position" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="senior">
+                                                        Senior Lecturer
+                                                    </SelectItem>
+                                                    <SelectItem value="junior">
+                                                        Junior Lecturer
+                                                    </SelectItem>
+                                                    <SelectItem value="demo">
+                                                        Demonstrator
+                                                    </SelectItem>
+                                                    <SelectItem value="lecturer">
+                                                        Lecturer
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {validationError?.position && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.position}
+                                            </span>
+                                        )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="dob">
+                                            Date of Birth
+                                        </Label>
+                                        <Input
+                                            id="dob"
+                                            type="date"
+                                            name="dob"
+                                        />
+                                        {validationError?.dateOfBirth && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.dateOfBirth}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* email & phone number*/}
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            placeholder="STAFF2023001@rjt.ac.lk"
+                                            name="email"
+                                        />
+                                        {validationError?.email && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.email}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">
+                                            Phone Number
+                                        </Label>
+                                        <Input
+                                            id="phone"
+                                            placeholder="+1 (555) 123-4567"
+                                            name="phone"
+                                        />
+                                        {validationError?.phoneNumber && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.phoneNumber}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="Address">Address</Label>
+                                    <Textarea
+                                        id="Address"
+                                        placeholder="Lecturer's address"
+                                        name="address"
+                                    />
+                                    {validationError?.address && (
+                                        <span className="text-red-500 text-sm">
+                                            {validationError.address}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="Address">Brief Bio / Specialization</Label>
+                                    <Textarea
+                                        id="bio"
+                                        placeholder="Lecturer's Specialization"
+                                        name="bio"
+                                    />
+                                    {validationError?.bio && (
+                                        <span className="text-red-500 text-sm">
+                                            {validationError.bio}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-4">
+                                <Link href="/admin/dashboard">
+                                    <Button variant="outline" type="button">
+                                        Cancel
+                                    </Button>
+                                </Link>
+                                <Button type="submit">Add Lecturer</Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-
-        <Card className="mx-auto max-w-3xl">
-          <CardHeader>
-            <CardTitle>Lecturer Information</CardTitle>
-            <CardDescription>Enter the details of the new lecturer to register them in the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative h-32 w-32 overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50">
-                    {photoPreview ? (
-                      <img
-                        src={photoPreview || "/placeholder.svg"}
-                        alt="Lecturer preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <Upload className="h-8 w-8 text-gray-400" />
-                      </div>
-                    )}
-                    {isUploading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor="photo"
-                      className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                    >
-                      Upload Photo
-                    </Label>
-                    <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="Jane" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Smith" required />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="staffId">Staff ID</Label>
-                    <Input id="staffId" placeholder="STAFF2023001" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="jane.smith@university.edu" required />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Select>
-                      <SelectTrigger id="department">
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cs">Computer Science</SelectItem>
-                        <SelectItem value="eng">Engineering</SelectItem>
-                        <SelectItem value="bus">Business</SelectItem>
-                        <SelectItem value="arts">Arts & Humanities</SelectItem>
-                        <SelectItem value="sci">Science</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Select>
-                      <SelectTrigger id="position">
-                        <SelectValue placeholder="Select position" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="professor">Professor</SelectItem>
-                        <SelectItem value="associate">Associate Professor</SelectItem>
-                        <SelectItem value="assistant">Assistant Professor</SelectItem>
-                        <SelectItem value="lecturer">Lecturer</SelectItem>
-                        <SelectItem value="adjunct">Adjunct Faculty</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Input id="specialization" placeholder="e.g., Machine Learning, Organic Chemistry" />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" placeholder="+1 (555) 123-4567" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="office">Office Location</Label>
-                    <Input id="office" placeholder="Building A, Room 101" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Brief Bio</Label>
-                  <Textarea id="bio" placeholder="Short biography or professional summary" />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-4">
-                <Link href="/admin/dashboard">
-                  <Button variant="outline" type="button">
-                    Cancel
-                  </Button>
-                </Link>
-                <Button type="submit">Add Lecturer</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
+    );
 }

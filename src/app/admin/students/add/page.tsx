@@ -171,13 +171,12 @@ export default function AddStudent() {
                                             name="photo"
                                             onChange={handlePhotoChange}
                                         />
-                                        
                                     </div>
-                                {validationError?.photo && (
-                                    <span className="text-red-500 text-sm">
-                                        {validationError.photo}
-                                    </span>
-                                )}
+                                    {validationError?.photo && (
+                                        <span className="text-red-500 text-sm">
+                                            {validationError.photo}
+                                        </span>
+                                    )}
                                 </div>
 
                                 {/* Full name */}
@@ -219,18 +218,18 @@ export default function AddStudent() {
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="initName">
+                                        <Label htmlFor="nicno">
                                             NIC Number
                                         </Label>
                                         <Input
-                                            id="initName"
+                                            id="nicno"
                                             placeholder="2XXXXXXXXXV"
-                                            name="nic_no"
+                                            name="nicno"
                                             required
                                         />
-                                        {validationError?.initName && (
+                                        {validationError?.nicNumber && (
                                             <span className="text-red-500 text-sm">
-                                                {validationError.initName}
+                                                {validationError.nicNumber}
                                             </span>
                                         )}
                                     </div>

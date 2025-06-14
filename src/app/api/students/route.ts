@@ -39,8 +39,10 @@ export async function POST(request: NextRequest) {
             address: formData.get("address") as string,
             phoneNumber: formData.get("phone") as string,
             dateOfBirth: formData.get("dob") as string,
-            nicNumber : formData.get("nic_no") as string
+            nicNumber : formData.get("nicno") as string
         };
+
+        console.log(studentData.nicNumber)
 
         console.log(studentData.phoneNumber);
         await insertStudent(studentData, photoURL);

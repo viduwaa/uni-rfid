@@ -1,4 +1,5 @@
 import { StudentForm } from "@/types/student";
+import { strict } from "assert";
 
 export const validateForm = (formData: FormData): StudentForm => {
     const validationErrors: StudentForm = {};
@@ -8,6 +9,7 @@ export const validateForm = (formData: FormData): StudentForm => {
         initName: formData.get("initName") as string,
         registerNumber: formData.get("registerNumber") as string,
         email: formData.get("email") as string,
+        nicno:formData.get("nicno") as string,
         faculty: formData.get("faculty") as string,
         yearOfStudy: formData.get("yearOfStudy") as string,
         address: formData.get("address") as string,
@@ -42,6 +44,13 @@ export const validateForm = (formData: FormData): StudentForm => {
         validationErrors.email = "Email is required";
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(data.email)) {
         validationErrors.email = "Invalid email address";
+    }
+
+    //nic validation
+    if (!data.nicno) {
+        validationErrors.nicNumber = "NIC is required";
+    } else if (data.nicno.length < 5) {
+        validationErrors.nicNumber = "Enter proper NIC number";
     }
 
     //faculty validation

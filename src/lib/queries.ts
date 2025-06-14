@@ -1,14 +1,15 @@
 import { StudentForm } from "@/types/student";
 import { pool } from "./db";
-const bcrypt = require('bcrypt');
+import { LecturerForm } from "@/types/lecturers";
+const bcrypt = require("bcrypt");
 
 export const insertStudent = async (
     studentForm: StudentForm,
-    photoURL: string | null,
+    photoURL: string | null
 ) => {
     const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        await client.query("BEGIN");
 
         //hash password
         const saltRounds = 10;
@@ -19,14 +20,14 @@ export const insertStudent = async (
             FROM students 
             WHERE register_number = $1 OR email = $2`,
             [studentForm.registerNumber, studentForm.email]
-        )
+        );
 
         if (checkDuplicates.rows.length > 0) {
-            let reason = "Register number or Email address already exists"
+            let reason = "Register number or Email address already exists";
 
-            const error = new Error(reason)
-            error.name = "Duplicate Error"
-            throw error;   
+            const error = new Error(reason);
+            error.name = "Duplicate Error";
+            throw error;
         }
 
         //insert into user table
@@ -70,17 +71,102 @@ export const insertStudent = async (
             ]
         );
 
-        await client.query('COMMIT');
-        
+        await client.query("COMMIT");
+
         return {
             userId: userId,
-            studentId: studentResponse.rows[0].id
-        }
+            studentId: studentResponse.rows[0].id,
+        };
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error("Insert to DB error",error)
+        await client.query("ROLLBACK");
+        console.error("Insert to DB error", error);
         throw error;
-    }finally{
+    } finally {
+        client.release();
+    }
+};
+
+export const insertLecturer = async (
+    lecturerForm: LecturerForm,
+    photoURL: string | null
+) => {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+        //hash password
+        const saltRounds = 10;
+        const lec_pw = await bcrypt.hash(lecturerForm.nicNo, saltRounds);
+
+        const checkDuplicates = await client.query(
+            `SELECT staff_id,email 
+            FROM lecturers 
+            WHERE staff_id = $1 OR email = $2`,
+            [lecturerForm.registerNumber, lecturerForm.email]
+        );
+
+        if (checkDuplicates.rows.length > 0) {
+            let reason = "Register number or Email address already exists";
+
+            const error = new Error(reason);
+            error.name = "Duplicate Error";
+            throw error;
+        }
+
+        //insert into user table
+        const userResponse = await client.query(
+            `INSERT INTO users (email, name, password, role) 
+             VALUES ($1, $2, $3, 'LECTURER') 
+             RETURNING id`,
+            [lecturerForm.email, lecturerForm.fullName, lec_pw]
+        );
+
+        const userId = userResponse.rows[0].id;
+
+        const lecturerResponse = await client.query(
+            `INSERT INTO lecturers (
+            user_id,
+            staff_id, 
+            nic_no,
+            full_name,
+            initial_name, 
+            email, 
+            faculty, 
+            position, 
+            specialization,
+            address, 
+            phone, 
+            photo, 
+            date_of_birth
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+            [
+                userId,
+                lecturerForm.registerNumber,
+                lecturerForm.nicNo,
+                lecturerForm.fullName,
+                lecturerForm.initName,
+                lecturerForm.email,
+                lecturerForm.faculty,
+                lecturerForm.position,
+                lecturerForm.bio,
+                lecturerForm.address,
+                lecturerForm.phoneNumber,
+                photoURL,
+                lecturerForm.dateOfBirth,
+            ]
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            userId: userId,
+            lecturerID: lecturerResponse.rows[0].id,
+        };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        console.error("Insert to DB error", error);
+        throw error;
+    } finally {
         client.release();
     }
 };

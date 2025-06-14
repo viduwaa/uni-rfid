@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
-import { insertStudent } from "@/lib/queries";
-import { StudentForm } from "@/types/student";
+import { insertLecturer, insertStudent } from "@/lib/queries";
+import { LecturerForm } from "@/types/lecturers";
 
 export const config = {
     api: {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
         let photoURL = null;
         const photo = formData.get("photo") as File | null;
-        const regNo = formData.get("registerNumber") as string;
+        const regNo = formData.get("regNo") as string;
 
         if (photo && photo.size > 0) {
             const fileExtension = photo.name.split(".").pop();
@@ -29,21 +29,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const studentData: StudentForm = {
+        const lecturersData: LecturerForm = {
             fullName: formData.get("fullName") as string,
             initName: formData.get("initName") as string,
-            registerNumber: formData.get("registerNumber") as string,
+            registerNumber: formData.get("regNo") as string,
             email: formData.get("email") as string,
+            nicNo:formData.get("nic") as string,
             faculty: formData.get("faculty") as string,
-            yearOfStudy: formData.get("yearOfStudy") as string,
+            position: formData.get("position") as string,
             address: formData.get("address") as string,
             phoneNumber: formData.get("phone") as string,
             dateOfBirth: formData.get("dob") as string,
-            nicNumber : formData.get("nic_no") as string
+            bio: formData.get("bio") as string
         };
 
-        console.log(studentData.phoneNumber);
-        await insertStudent(studentData, photoURL);
+        console.log(lecturersData.phoneNumber);
+        await insertLecturer(lecturersData, photoURL);
 
 
         return NextResponse.json({
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
             {
                 success: false,
-                message: "Failed to insert student",
+                message: "Failed to insert lecturer",
                 error: (error as Error).message,
             },
             { status: 500 }
