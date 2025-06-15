@@ -85,7 +85,14 @@ export default function AddStudent() {
             }
 
             toast.success("Student Registration success", {
-                description: "Reidrecting to card registration",
+                description: (
+                    <Link
+                        href="/admin/rfid/issue-new"
+                        className="text-blue-500 hover:underline"
+                    >
+                        Click here to card registration
+                    </Link>
+                ),
             });
 
             form.reset();
