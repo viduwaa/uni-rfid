@@ -1,4 +1,4 @@
-import { StudentForm } from "@/types/student";
+import { BaseStudent, StudentForm } from "@/types/student";
 import { pool } from "./db";
 import { LecturerForm } from "@/types/lecturers";
 const bcrypt = require("bcrypt");
@@ -170,3 +170,54 @@ export const insertLecturer = async (
         client.release();
     }
 };
+
+export const notIssued = async () => {
+    const client = await pool.connect();
+
+    try {
+        const notIssuedStudents = await client.query(
+            `SELECT * FROM students WHERE card_id IS null ORDER BY created_at DESC`
+        );
+
+        return notIssuedStudents.rows
+    } catch (error) {
+        console.error('Database query error:', error);
+    }finally{
+        client.release()
+    }
+};
+
+export const insertCardDetails = async(cardData : BaseStudent)=>{
+    const client = await pool.connect()
+
+    try{
+        const cardInsertResponse = await client.query(
+            `INSERT INTO rfid_cards (
+                card_uid,
+                assigned_student,
+                assigned_date,
+                status,
+                balance
+            )VALUES(
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+            )RETURNING id`,[
+                cardData.card_id,
+                cardData.user_id,
+                new Date().toISOString(),
+                'ACTIVE',
+                cardData.credits
+            ]
+        );
+
+        return cardInsertResponse.rows[0];
+    }catch (error){
+        console.error("Insert to DB error", error);
+        throw error;
+    }finally{
+        client.release()
+    }
+}
