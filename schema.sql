@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Students table
 CREATE TABLE IF NOT EXISTS students (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID UNIQUE NOT NULL,
+  user_id UUID PRIMARY KEY DEFAULT,
   register_number VARCHAR(50) UNIQUE NOT NULL,
   full_name VARCHAR(100) NOT NULL,
   initial_name VARCHAR(100) NOT NULL,
@@ -27,7 +26,6 @@ CREATE TABLE IF NOT EXISTS students (
   email VARCHAR(255) UNIQUE NOT NULL,
   faculty VARCHAR(100) NOT NULL,
   year_of_study INTEGER NOT NULL,
-  card_id VARCHAR(100) UNIQUE,
   address TEXT,
   phone VARCHAR(50),
   photo TEXT,
@@ -36,6 +34,7 @@ CREATE TABLE IF NOT EXISTS students (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_students_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 
 -- Lecturers table
 CREATE TABLE IF NOT EXISTS lecturers (
@@ -68,8 +67,9 @@ CREATE TABLE IF NOT EXISTS rfid_cards (
   balance DECIMAL(10,2) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_rfid_cards_student FOREIGN KEY (assigned_student) REFERENCES students(id) ON DELETE CASCADE
+  CONSTRAINT fk_rfid_cards_student FOREIGN KEY (assigned_student) REFERENCES students(user_id) ON DELETE CASCADE
 );
+
 
 -- Courses table
 CREATE TABLE IF NOT EXISTS courses (
