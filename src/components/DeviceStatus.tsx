@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const SOCKET_SERVER_URL =
-    process.env.SOCKET_SERVER_URI || "http://localhost:4000";
+    process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "http://localhost:4000";
 
 export default function DeviceStatus() {
     const [isConnected, setIsConnected] = useState(false);
@@ -99,9 +99,9 @@ export default function DeviceStatus() {
     const colorClass = getStatusColor();
 
     return (
-        <div className="max-w-sm mx-auto p-4">
+        <div className="max-w-sm mx-auto p-2">
             <div
-                className={`rounded-lg border-2 p-4 transition-all duration-300 ${
+                className={`rounded-lg border-2 p-2 transition-all duration-300 ${
                     colorClass === "green"
                         ? "border-green-200 bg-green-50 shadow-lg"
                         : "border-gray-200 bg-gray-50 shadow-sm"
@@ -123,7 +123,7 @@ export default function DeviceStatus() {
                     <div className="flex-1">
                         <div className="flex items-center space-x-2">
                             <Smartphone className="w-4 h-4 text-gray-600" />
-                            <h3 className="font-semibold text-gray-800">
+                            <h3 className="font-semibold text-gray-800 text-md">
                                 {deviceName || "NFC Reader"}
                             </h3>
                         </div>
