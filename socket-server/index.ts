@@ -19,6 +19,8 @@ let currentNFCStatus = {
     error: null,
 };
 
+const clientsWithReaders = new Map(); // store PC clients with NFC
+
 io.on("connection", (socket) => {
     console.log("📡 New device connected");
 
@@ -54,6 +56,20 @@ io.on("connection", (socket) => {
         console.log("👋 Card removed:", data);
         io.emit("nfc-swipe-end", data);
         // Optional handling
+    });
+
+    // Receive write request from frontend
+    socket.on("write-to-card", (cardData) => {
+        console.log("📝 Write request received from frontend:", cardData);
+        io.emit("write-card-data", cardData);
+    });
+
+    // Get response back from PC when write is done
+    socket.on("write-complete", (result) => {
+        console.log("✅ Card write complete:", result);
+
+        // Optionally broadcast to frontend or other systems
+        io.emit("card-write-success", result);
     });
 
     socket.on("disconnect", () => {
