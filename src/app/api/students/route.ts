@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
-import { insertStudent } from "@/lib/queries";
+import { insertStudent, notIssued } from "@/lib/queries";
 import { StudentForm } from "@/types/student";
 
 export const config = {
@@ -39,14 +39,13 @@ export async function POST(request: NextRequest) {
             address: formData.get("address") as string,
             phoneNumber: formData.get("phone") as string,
             dateOfBirth: formData.get("dob") as string,
-            nicNumber : formData.get("nicno") as string
+            nicNumber: formData.get("nicno") as string,
         };
 
-        console.log(studentData.nicNumber)
+        console.log(studentData.nicNumber);
 
         console.log(studentData.phoneNumber);
         await insertStudent(studentData, photoURL);
-
 
         return NextResponse.json({
             success: true,
@@ -56,13 +55,16 @@ export async function POST(request: NextRequest) {
         console.error("API Error:", error);
 
         //inform user reg no or email exists
-        if((error as Error).name == "Duplicate Error" ){
-            return NextResponse.json({
-                success: false,
-                message: (error as Error).message
-            },{
-                status : 400
-            })
+        if ((error as Error).name == "Duplicate Error") {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: (error as Error).message,
+                },
+                {
+                    status: 400,
+                }
+            );
         }
 
         //inform user about server error
@@ -74,5 +76,32 @@ export async function POST(request: NextRequest) {
             },
             { status: 500 }
         );
+    }
+}
+
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const cardNotIssued = searchParams.get("notissued");
+
+        if (cardNotIssued == "true") {
+            const students = await notIssued();
+            
+            return NextResponse.json({
+                success: true,
+                data: students,
+                count: students?.length ?? 0,
+            });
+        }
+
+        return NextResponse.json({
+            success: false,
+            message: "Invalid query parameter",
+        });
+    } catch (error) {
+        return NextResponse.json({
+            success: false,
+            message: "Failed to fetch students",
+        }, { status: 500 });
     }
 }
