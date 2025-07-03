@@ -26,13 +26,14 @@ import IssueNewCard from "./IssueNewCard";
 import ManageExistingCard from "./ManageExistingCard";
 import { UserCog } from "lucide-react";
 import DeviceStatus from "@/components/DeviceStatus";
+import AddMenu from "./AddMenu";
 
 export default function RFIDManagement() {
     const [showIssueNew, setShowIssueNew] = useState(true);
     return (
         <>
             <div className="container mx-auto">
-                <DeviceStatus/>
+                
                 <div className="p-6 space-y-6">
                     <div className="w-full grid items-center grid-cols-2 justify-around">
                         <div className="flex">
@@ -52,14 +53,8 @@ export default function RFIDManagement() {
                             </div>
                         </div>
                         <div className="ml-auto">
-                            <Link
-                                href="/admin/students/add"
-                                className="mr-4 bg-green-600"
-                            >
-                                <Button className="bg-green-600">
-                                    Add new student
-                                </Button>
-                            </Link>
+                            <DeviceStatus/>
+                            
                         </div>
                     </div>
                    
