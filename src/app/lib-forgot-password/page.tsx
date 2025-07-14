@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export default function AdminForgotPassword() {
+export default function ForgotPassword() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md shadow-lg">
@@ -16,11 +16,11 @@ export default function AdminForgotPassword() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Admin Email</Label>
+            <Label htmlFor="email">User Email</Label>
             <Input 
               id="email" 
               type="email" 
-              placeholder="admin@university.edu" 
+              placeholder="user@university.edu" 
               className="focus-visible:ring-primary"
             />
             <p className="text-sm text-muted-foreground">
@@ -35,13 +35,13 @@ export default function AdminForgotPassword() {
           <div className="flex items-center justify-center space-x-2 text-sm">
             <span>Remember your password?</span>
             <Link 
-              href="/admin/adminlogin" 
+              href="/library/" 
               className="font-medium text-primary hover:underline"
             >
               Login
             </Link>
           </div>
-          <Link href="/library" className="w-full">
+          <Link href="/" className="w-full">
             <Button variant="outline" className="w-full">
               Back to Home
             </Button>
