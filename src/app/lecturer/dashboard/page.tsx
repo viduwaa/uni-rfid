@@ -29,7 +29,7 @@ export default function LectureDashboard() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
-          <Link href="#" className="block">
+          <Link href="/lecturer/getAttendance/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <UserCheck className="h-8 w-8 text-primary" />
@@ -46,7 +46,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/genarateReports/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <ChartColumn className="h-8 w-8 text-primary" />
@@ -63,7 +63,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/myStudents/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <Users className="h-8 w-8 text-primary" />
@@ -80,7 +80,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/classSchedule/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <CalendarCheck2 className="h-8 w-8 text-primary" />
