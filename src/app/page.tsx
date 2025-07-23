@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coffee, BookOpen, ShieldCheck } from "lucide-react";
+import { Coffee, BookOpen, ShieldCheck, GraduationCap,LibraryBig } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,7 +92,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/canteen/login" className="w-full">
+              <Link href="/canteen/" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Canteen Login
                 </Button>
@@ -102,7 +102,7 @@ export default function Home() {
 
           <Card className="transition-all hover:shadow-md">
             <CardHeader>
-              <Coffee className="h-8 w-8 text-primary" />
+              <LibraryBig className="h-8 w-8 text-primary" />
               <CardTitle className="mt-2">Library Portal</CardTitle>
               <CardDescription>
                 Manage book inventories, borrowing records, and fines
@@ -125,7 +125,7 @@ export default function Home() {
 
           <Card className="transition-all hover:shadow-md">
             <CardHeader>
-              <Coffee className="h-8 w-8 text-primary" />
+              <GraduationCap className="h-8 w-8 text-primary" />
               <CardTitle className="mt-2">Student Portal</CardTitle>
               <CardDescription>
                 View academic performance and personal records
