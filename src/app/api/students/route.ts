@@ -42,10 +42,36 @@ export async function POST(request: NextRequest) {
             nicNumber: formData.get("nicno") as string,
         };
 
-        console.log(studentData.nicNumber);
+        // Validate required fields before database insertion
+        if (
+            !studentData.email ||
+            !studentData.fullName ||
+            !studentData.registerNumber
+        ) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message:
+                        "Missing required fields: email, fullName, or registerNumber",
+                },
+                { status: 400 }
+            );
+        }
 
-        console.log(studentData.phoneNumber);
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(studentData.email)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Invalid email format",
+                },
+                { status: 400 }
+            );
+        }
+
         await insertStudent(studentData, photoURL);
+        
 
         return NextResponse.json({
             success: true,
@@ -54,20 +80,18 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("API Error:", error);
 
-        //inform user reg no or email exists
-        if ((error as Error).name == "Duplicate Error") {
+        // Handle duplicate error from your database
+        if ((error as Error).name === "Duplicate Error") {
             return NextResponse.json(
                 {
                     success: false,
                     message: (error as Error).message,
                 },
-                {
-                    status: 400,
-                }
+                { status: 400 }
             );
         }
 
-        //inform user about server error
+        // Generic server error
         return NextResponse.json(
             {
                 success: false,
@@ -86,7 +110,7 @@ export async function GET(request: NextRequest) {
 
         if (cardNotIssued == "true") {
             const students = await notIssued();
-            
+
             return NextResponse.json({
                 success: true,
                 data: students,
@@ -99,9 +123,12 @@ export async function GET(request: NextRequest) {
             message: "Invalid query parameter",
         });
     } catch (error) {
-        return NextResponse.json({
-            success: false,
-            message: "Failed to fetch students",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to fetch students",
+            },
+            { status: 500 }
+        );
     }
 }
