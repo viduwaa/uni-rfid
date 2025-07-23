@@ -1,8 +1,8 @@
 "use client"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, MapPin, Clock } from "lucide-react"
-import Link from "next/link"
 
 interface ClassEvent {
     id: string
@@ -16,8 +16,53 @@ interface ClassEvent {
 }
 
 export default function ClassSchedule() {
-    const currentDate = new Date()
-    const currentTime = currentDate.toLocaleString("en-US", {
+    const [currentTime, setCurrentTime] = useState(new Date())
+
+    // Update time every second
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date())
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [])
+
+    // Get current week dates
+    const getCurrentWeekDates = () => {
+        const today = new Date()
+        const currentDay = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay // Adjust for Monday start
+
+        const monday = new Date(today)
+        monday.setDate(today.getDate() + mondayOffset)
+
+        const weekDates = []
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(monday)
+            date.setDate(monday.getDate() + i)
+            weekDates.push(date)
+        }
+
+        return weekDates
+    }
+
+    const weekDates = getCurrentWeekDates()
+    const today = new Date()
+
+    // Generate days array with current week dates
+    const days = weekDates.map((date, index) => {
+        const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        const isToday = date.toDateString() === today.toDateString()
+
+        return {
+            name: dayNames[index],
+            date: date.getDate().toString(),
+            isToday: isToday,
+        }
+    })
+
+    // Format current time for display
+    const formattedTime = currentTime.toLocaleString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -25,17 +70,6 @@ export default function ClassSchedule() {
         minute: "2-digit",
         hour12: true,
     })
-
-    // Days of the week with dates
-    const days = [
-        { name: "Mon", date: "30", isToday: false },
-        { name: "Tue", date: "1", isToday: true },
-        { name: "Wed", date: "2", isToday: false },
-        { name: "Thu", date: "3", isToday: false },
-        { name: "Fri", date: "4", isToday: false },
-        { name: "Sat", date: "5", isToday: false },
-        { name: "Sun", date: "6", isToday: false },
-    ]
 
     // Time slots
     const timeSlots = [
@@ -61,7 +95,7 @@ export default function ClassSchedule() {
             course: "ICT - 2308",
             room: "S 201",
             startTime: "8:30",
-            endTime: "10:30",
+            endTime: "10:30 AM",
             day: 0, // Monday
             color: "bg-blue-200",
             textColor: "text-blue-800",
@@ -71,7 +105,7 @@ export default function ClassSchedule() {
             course: "ICT - 2308",
             room: "S 201",
             startTime: "12:30",
-            endTime: "2:30",
+            endTime: "2:30 PM",
             day: 1, // Tuesday
             color: "bg-blue-200",
             textColor: "text-blue-800",
@@ -81,7 +115,7 @@ export default function ClassSchedule() {
             course: "ICT - 3308",
             room: "S 201",
             startTime: "8:30",
-            endTime: "10:30",
+            endTime: "10:30 AM",
             day: 2, // Wednesday
             color: "bg-red-200",
             textColor: "text-red-800",
@@ -91,7 +125,7 @@ export default function ClassSchedule() {
             course: "ICT - 1308",
             room: "S 202",
             startTime: "12:30",
-            endTime: "2:30",
+            endTime: "2:30 PM",
             day: 2, // Wednesday
             color: "bg-green-200",
             textColor: "text-green-800",
@@ -101,7 +135,7 @@ export default function ClassSchedule() {
             course: "ICT - 1308",
             room: "S 202",
             startTime: "8:30",
-            endTime: "10:30",
+            endTime: "10:30 AM",
             day: 3, // Thursday
             color: "bg-green-200",
             textColor: "text-green-800",
@@ -110,21 +144,11 @@ export default function ClassSchedule() {
             id: "6",
             course: "ICT - 4308",
             room: "S 205",
-            startTime: "10:30",
-            endTime: "12:30",
+            startTime: "10:30 AM",
+            endTime: "12:30 PM",
             day: 3, // Thursday
             color: "bg-yellow-200",
             textColor: "text-yellow-800",
-        },
-        {
-            id: "7",
-            course: "ICT - 2308",
-            room: "S 201",
-            startTime: "4:45",
-            endTime: "19:00",
-            day: 5, // Sat
-            color: "bg-blue-200",
-            textColor: "text-blue-800",
         },
     ]
 
@@ -219,11 +243,9 @@ export default function ClassSchedule() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <Link href="/lecturer/dashboard">
-                            <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
-                                <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                        </Link>
+                        <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
                         <h1 className="text-3xl font-bold text-gray-900">Class Schedule</h1>
                     </div>
                     <div className="flex items-center gap-4">
@@ -231,8 +253,20 @@ export default function ClassSchedule() {
                             Add Schedule
                         </Button>
                         <div className="text-right">
-                            <div className="text-blue-600 font-medium">Jul 1, 2025</div>
-                            <div className="text-gray-500 text-sm">9:41 AM</div>
+                            <div className="text-blue-600 font-medium">
+                                {currentTime.toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                })}
+                            </div>
+                            <div className="text-gray-500 text-sm">
+                                {currentTime.toLocaleTimeString("en-US", {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>
