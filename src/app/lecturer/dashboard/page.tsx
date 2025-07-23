@@ -63,7 +63,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/myStudents/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <Users className="h-8 w-8 text-primary" />
@@ -80,7 +80,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/classSchedule/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <CalendarCheck2 className="h-8 w-8 text-primary" />

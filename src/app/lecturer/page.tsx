@@ -28,7 +28,7 @@ export default function LectureLogin() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href="/lecturer/dashboard" className="w-full">
+          <Link href="/lectuer/dashboard" className="w-full">
             <Button className="w-full">Login</Button>
           </Link>
           <Link href="/" className="w-full">
