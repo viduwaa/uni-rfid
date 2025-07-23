@@ -9,12 +9,6 @@ import { ArrowLeft, Clock, GraduationCap, Play } from "lucide-react"
 export default function GetAttendance() {
   const [selectedCourse, setSelectedCourse] = useState("")
   const [selectedHall, setSelectedHall] = useState("")
-  const [isSessionActive, setIsSessionActive] = useState(false)
-  const [attendanceData, setAttendanceData] = useState({
-    present: 0,
-    total: 117,
-    rate: 0,
-  })
 
   const currentDateTime = new Date().toLocaleString("en-US", {
     weekday: "long",
@@ -25,26 +19,6 @@ export default function GetAttendance() {
     minute: "2-digit",
     hour12: true,
   })
-
-  const startAttendanceSession = () => {
-    setIsSessionActive(true)
-    // Simulate real-time attendance updates
-    let present = 0
-    const interval = setInterval(() => {
-      present += Math.floor(Math.random() * 3) + 1
-      if (present >= 117) {
-        present = 117
-        clearInterval(interval)
-      }
-      const rate = Math.round((present / 117) * 100)
-      setAttendanceData({ present, total: 117, rate })
-    }, 1000)
-  }
-
-  const stopAttendanceSession = () => {
-    setIsSessionActive(false)
-    setAttendanceData({ present: 0, total: 117, rate: 0 })
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -109,12 +83,11 @@ export default function GetAttendance() {
 
               {/* Start Button */}
               <Button
-                className="w-full bg-black hover:bg-gray-800 text-white py-3 cursor-pointer"
+                className="w-full bg-black hover:bg-gray-800 text-white py-3"
                 disabled={!selectedCourse || !selectedHall}
-                onClick={isSessionActive ? stopAttendanceSession : startAttendanceSession}
               >
                 <Play className="h-4 w-4 mr-2" />
-                {isSessionActive ? "Stop Attendance Session" : "Start Attendance Session"}
+                Start Attendance Session
               </Button>
             </CardContent>
           </Card>
@@ -129,15 +102,15 @@ export default function GetAttendance() {
                 </div>
                 <div className="flex gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{attendanceData.present}</div>
+                    <div className="text-2xl font-bold text-green-600">100</div>
                     <div className="text-xs text-gray-500">Present</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-700">{attendanceData.total}</div>
+                    <div className="text-2xl font-bold text-gray-700">117</div>
                     <div className="text-xs text-gray-500">Total</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{attendanceData.rate}%</div>
+                    <div className="text-2xl font-bold text-blue-600">85%</div>
                     <div className="text-xs text-gray-500">Rate</div>
                   </div>
                 </div>
@@ -147,13 +120,12 @@ export default function GetAttendance() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="mb-6">
                   <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-2" />
-                  <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-2" />
+                  <div className="flex gap-2 justify-center">
+                    <div className="w-8 h-6 bg-gray-200 rounded-full"></div>
+                    <div className="w-8 h-6 bg-gray-200 rounded-full"></div>
+                  </div>
                 </div>
-                <p className="text-gray-500 text-sm max-w-xs">
-                  {isSessionActive
-                    ? `Recording attendance for ${selectedCourse} in ${selectedHall}`
-                    : "Select a course and lecture hall to view attendance"}
-                </p>
+                <p className="text-gray-500 text-sm max-w-xs">Select a course and lecture hall to view attendance</p>
               </div>
             </CardContent>
           </Card>
