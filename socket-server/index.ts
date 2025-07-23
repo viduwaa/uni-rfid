@@ -72,6 +72,12 @@ io.on("connection", (socket) => {
         io.emit("card-write-success", result);
     });
 
+    socket.on("write-failed", (result) => {
+        console.log("❌ Card write failed:", result);
+
+        io.emit("card-write-failed", result);
+    });
+
     socket.on("disconnect", () => {
         console.log("❌ Device disconnected");
     });
