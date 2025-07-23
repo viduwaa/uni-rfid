@@ -46,7 +46,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/genarateReports/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <ChartColumn className="h-8 w-8 text-primary" />

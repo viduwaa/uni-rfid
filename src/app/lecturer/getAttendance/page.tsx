@@ -1,10 +1,9 @@
-"use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Clock, GraduationCap, Play } from "lucide-react"
+import Link from "next/link"
 
 export default function GetAttendance() {
   const [selectedCourse, setSelectedCourse] = useState("")
@@ -25,9 +24,11 @@ export default function GetAttendance() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <Link href="/lecturer/dashboard">
+            <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900">Get Attendance</h1>
         </div>
 
@@ -82,13 +83,15 @@ export default function GetAttendance() {
               </div>
 
               {/* Start Button */}
-              <Button
-                className="w-full bg-black hover:bg-gray-800 text-white py-3"
-                disabled={!selectedCourse || !selectedHall}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Start Attendance Session
-              </Button>
+              <Link href="#">
+                <Button
+                  className="w-full bg-black hover:bg-gray-800 text-white py-3"
+                  disabled={!selectedCourse || !selectedHall}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Start Attendance Session
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -120,10 +123,6 @@ export default function GetAttendance() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="mb-6">
                   <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-2" />
-                  <div className="flex gap-2 justify-center">
-                    <div className="w-8 h-6 bg-gray-200 rounded-full"></div>
-                    <div className="w-8 h-6 bg-gray-200 rounded-full"></div>
-                  </div>
                 </div>
                 <p className="text-gray-500 text-sm max-w-xs">Select a course and lecture hall to view attendance</p>
               </div>
