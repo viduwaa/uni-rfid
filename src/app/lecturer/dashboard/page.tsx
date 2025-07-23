@@ -95,7 +95,7 @@ export default function LectureDashboard() {
             </Card>
           </Link>
 
-          <Link href="#" className="block">
+          <Link href="/lecturer/attendanceHistory/" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <History className="h-8 w-8 text-primary" />

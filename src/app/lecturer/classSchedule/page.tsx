@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, MapPin, Clock, Plus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import Link from "next/link"
 
 interface ClassEvent {
     id: string
@@ -310,9 +311,11 @@ export default function ClassSchedule() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
+                        <Link href="/lecturer/dashboard">
+                            <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                        </Link>
                         <h1 className="text-3xl font-bold text-gray-900">Class Schedule</h1>
                     </div>
                     <div className="flex items-center gap-4">
