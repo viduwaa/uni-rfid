@@ -79,8 +79,32 @@ export default function Home() {
 
           <Card className="transition-all hover:shadow-md">
             <CardHeader>
-              <Coffee className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Canteen Portal</CardTitle>
+              <CircleUserRound className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Student Portal</CardTitle>
+              <CardDescription>
+                View academic performance and personal records
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Check grades, GPA, attendance, and access course-related
+                information. Stay updated with academic progress and
+                notifications.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/student/" className="w-full">
+                <Button className="w-full cursor-pointer" variant="outline">
+                  Student Login
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          <Card className="transition-all hover:shadow-md">
+            <CardHeader>
+              <SquareLibrary className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Library Portal</CardTitle>
               <CardDescription>
                 Manage canteen transactions and services
               </CardDescription>
@@ -102,8 +126,8 @@ export default function Home() {
 
           <Card className="transition-all hover:shadow-md">
             <CardHeader>
-              <SquareLibrary className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Library Portal</CardTitle>
+              <Users className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Student Portal</CardTitle>
               <CardDescription>
                 Manage book inventories, borrowing records, and fines
               </CardDescription>
@@ -123,29 +147,7 @@ export default function Home() {
             </CardFooter>
           </Card>
 
-          <Card className="transition-all hover:shadow-md">
-            <CardHeader>
-              <Users className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Student Portal</CardTitle>
-              <CardDescription>
-                View academic performance and personal records
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Check grades, GPA, attendance, and access course-related
-                information. Stay updated with academic progress and
-                notifications.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Link href="/canteen/login" className="w-full">
-                <Button className="w-full cursor-pointer" variant="outline">
-                  Student Login
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
+          
         </div>
       </div>
     </div>

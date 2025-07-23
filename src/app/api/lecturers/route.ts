@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
-import { insertLecturer, insertStudent } from "@/lib/queries";
+import { insertLecturer } from "@/lib/queries";
 import { LecturerForm } from "@/types/lecturers";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 
 export const config = {
     api: {
@@ -11,6 +13,16 @@ export const config = {
 
 export async function POST(request: NextRequest) {
     try {
+        // Check if user is admin
+        const session = await getServerSession(authOptions);
+        console.log(session?.user.role)
+        if (!session || session.user.role !== "admin") {
+            return NextResponse.json(
+                { message: "Unauthorized. Only admins can create lecturers." },
+                { status: 403 }
+            );
+        }
+
         const formData = await request.formData();
 
         let photoURL = null;
@@ -34,17 +46,18 @@ export async function POST(request: NextRequest) {
             initName: formData.get("initName") as string,
             registerNumber: formData.get("regNo") as string,
             email: formData.get("email") as string,
-            nicNo:formData.get("nic") as string,
+            nicNo: formData.get("nic") as string,
             faculty: formData.get("faculty") as string,
             position: formData.get("position") as string,
             address: formData.get("address") as string,
             phoneNumber: formData.get("phone") as string,
             dateOfBirth: formData.get("dob") as string,
-            bio: formData.get("bio") as string
+            bio: formData.get("bio") as string,
         };
 
         console.log(lecturersData.phoneNumber);
         await insertLecturer(lecturersData, photoURL);
+
 
 
         return NextResponse.json({
@@ -55,13 +68,16 @@ export async function POST(request: NextRequest) {
         console.error("API Error:", error);
 
         //inform user reg no or email exists
-        if((error as Error).name == "Duplicate Error" ){
-            return NextResponse.json({
-                success: false,
-                message: (error as Error).message
-            },{
-                status : 400
-            })
+        if ((error as Error).name == "Duplicate Error") {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: (error as Error).message,
+                },
+                {
+                    status: 400,
+                }
+            );
         }
 
         //inform user about server error

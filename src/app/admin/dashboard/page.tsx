@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
+import LogoutButton from "@/components/Logout";
 
 export default function AdminDashboard() {
   return (
@@ -116,9 +117,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="mt-8 flex justify-end px-5">
-          <Link href="/">
-            <Button variant="outline">Logout</Button>
-          </Link>
+          <LogoutButton/>
         </div>
       </div>
     </div>
