@@ -115,7 +115,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/canteen/login" className="w-full">
+              <Link href="/library/" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Library Login
                 </Button>
