@@ -92,7 +92,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/canteen/login" className="w-full">
+              <Link href="/canteen/" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Canteen Login
                 </Button>

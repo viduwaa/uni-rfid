@@ -45,3 +45,6 @@ next-env.d.ts
 /certs
 
 .vscode
+
+# clerk configuration (can include secrets)
+/.clerk/
