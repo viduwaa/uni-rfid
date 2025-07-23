@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, MapPin, Clock } from "lucide-react"
+import { ArrowLeft, MapPin, Clock, Plus } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 
 interface ClassEvent {
     id: string
@@ -17,6 +19,47 @@ interface ClassEvent {
 
 export default function ClassSchedule() {
     const [currentTime, setCurrentTime] = useState(new Date())
+    const [isAddScheduleOpen, setIsAddScheduleOpen] = useState(false)
+    const [formData, setFormData] = useState({
+        course: "",
+        lectureHall: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+    })
+
+    // Generate time slots from 6:00 AM to 6:00 PM in 15-minute intervals
+    const generateTimeSlots = () => {
+        const slots = []
+        for (let hour = 6; hour <= 18; hour++) {
+            for (let minute = 0; minute < 60; minute += 15) {
+                const time24 = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+
+                // Convert to 12-hour format for display
+                let displayHour = hour
+                let period = "AM"
+
+                if (hour === 0) {
+                    displayHour = 12
+                } else if (hour === 12) {
+                    period = "PM"
+                } else if (hour > 12) {
+                    displayHour = hour - 12
+                    period = "PM"
+                }
+
+                const displayTime = `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`
+
+                slots.push({
+                    value: time24,
+                    label: displayTime,
+                })
+            }
+        }
+        return slots
+    }
+
+    const timeSlots = generateTimeSlots()
 
     // Update time every second
     useEffect(() => {
@@ -71,8 +114,8 @@ export default function ClassSchedule() {
         hour12: true,
     })
 
-    // Time slots
-    const timeSlots = [
+    // Calendar time slots for display
+    const calendarTimeSlots = [
         "6 AM",
         "7 AM",
         "8 AM",
@@ -95,7 +138,7 @@ export default function ClassSchedule() {
             course: "ICT - 2308",
             room: "S 201",
             startTime: "8:30",
-            endTime: "10:30 AM",
+            endTime: "10:30",
             day: 0, // Monday
             color: "bg-blue-200",
             textColor: "text-blue-800",
@@ -105,7 +148,7 @@ export default function ClassSchedule() {
             course: "ICT - 2308",
             room: "S 201",
             startTime: "12:30",
-            endTime: "2:30 PM",
+            endTime: "2:30",
             day: 1, // Tuesday
             color: "bg-blue-200",
             textColor: "text-blue-800",
@@ -115,7 +158,7 @@ export default function ClassSchedule() {
             course: "ICT - 3308",
             room: "S 201",
             startTime: "8:30",
-            endTime: "10:30 AM",
+            endTime: "10:30",
             day: 2, // Wednesday
             color: "bg-red-200",
             textColor: "text-red-800",
@@ -125,7 +168,7 @@ export default function ClassSchedule() {
             course: "ICT - 1308",
             room: "S 202",
             startTime: "12:30",
-            endTime: "2:30 PM",
+            endTime: "2:30",
             day: 2, // Wednesday
             color: "bg-green-200",
             textColor: "text-green-800",
@@ -135,7 +178,7 @@ export default function ClassSchedule() {
             course: "ICT - 1308",
             room: "S 202",
             startTime: "8:30",
-            endTime: "10:30 AM",
+            endTime: "10:30",
             day: 3, // Thursday
             color: "bg-green-200",
             textColor: "text-green-800",
@@ -144,8 +187,8 @@ export default function ClassSchedule() {
             id: "6",
             course: "ICT - 4308",
             room: "S 205",
-            startTime: "10:30 AM",
-            endTime: "12:30 PM",
+            startTime: "10:30",
+            endTime: "12:30",
             day: 3, // Thursday
             color: "bg-yellow-200",
             textColor: "text-yellow-800",
@@ -237,6 +280,30 @@ export default function ClassSchedule() {
         }
     }
 
+    const handleAddSchedule = () => {
+        console.log("Adding schedule:", formData)
+        // Here you would typically save the schedule
+        setIsAddScheduleOpen(false)
+        setFormData({
+            course: "",
+            lectureHall: "",
+            date: "",
+            startTime: "",
+            endTime: "",
+        })
+    }
+
+    const handleCancel = () => {
+        setIsAddScheduleOpen(false)
+        setFormData({
+            course: "",
+            lectureHall: "",
+            date: "",
+            startTime: "",
+            endTime: "",
+        })
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
@@ -249,7 +316,7 @@ export default function ClassSchedule() {
                         <h1 className="text-3xl font-bold text-gray-900">Class Schedule</h1>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" className="bg-white">
+                        <Button variant="outline" className="bg-white" onClick={() => setIsAddScheduleOpen(true)}>
                             Add Schedule
                         </Button>
                         <div className="text-right">
@@ -295,7 +362,7 @@ export default function ClassSchedule() {
                             <div className="grid grid-cols-8">
                                 {/* Time column */}
                                 <div className="border-r bg-gray-50">
-                                    {timeSlots.map((time, index) => (
+                                    {calendarTimeSlots.map((time, index) => (
                                         <div
                                             key={index}
                                             className="h-15 p-3 border-b text-sm text-gray-600 flex items-center"
@@ -309,7 +376,7 @@ export default function ClassSchedule() {
                                 {/* Day columns */}
                                 {days.map((day, dayIndex) => (
                                     <div key={dayIndex} className="border-r relative">
-                                        {timeSlots.map((_, timeIndex) => (
+                                        {calendarTimeSlots.map((_, timeIndex) => (
                                             <div key={timeIndex} className="border-b" style={{ height: "60px" }}></div>
                                         ))}
 
@@ -348,6 +415,132 @@ export default function ClassSchedule() {
                     </CardContent>
                 </Card>
             </div>
+            {/* Add Schedule Modal */}
+            {isAddScheduleOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div className="p-6">
+                            <div className="mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">Add Schedule</h2>
+                                <p className="text-sm text-gray-600 mt-1">Schedule a future lecture</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Course Selection */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Course</label>
+                                    <Select
+                                        value={formData.course}
+                                        onValueChange={(value) => setFormData({ ...formData, course: value })}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Course" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ICT-1308">ICT - 1308</SelectItem>
+                                            <SelectItem value="ICT-2308">ICT - 2308</SelectItem>
+                                            <SelectItem value="ICT-3308">ICT - 3308</SelectItem>
+                                            <SelectItem value="ICT-4308">ICT - 4308</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Lecture Hall Selection */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Lecture Hall</label>
+                                    <Select
+                                        value={formData.lectureHall}
+                                        onValueChange={(value) => setFormData({ ...formData, lectureHall: value })}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Lecture Hall" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="S 201">S 201</SelectItem>
+                                            <SelectItem value="S 202">S 202</SelectItem>
+                                            <SelectItem value="S 205">S 205</SelectItem>
+                                            <SelectItem value="Computer Lab 1">Computer Lab 1</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Date Selection */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Date</label>
+                                    <Input
+                                        type="date"
+                                        value={formData.date}
+                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        min={new Date().toISOString().split("T")[0]}
+                                        className="w-full"
+                                    />
+                                </div>
+
+                                {/* Time Selection */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700">Start Time</label>
+                                        <Select
+                                            value={formData.startTime}
+                                            onValueChange={(value) => setFormData({ ...formData, startTime: value })}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Start Time" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {timeSlots.map((slot) => (
+                                                    <SelectItem key={slot.value} value={slot.value}>
+                                                        {slot.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700">End Time</label>
+                                        <Select
+                                            value={formData.endTime}
+                                            onValueChange={(value) => setFormData({ ...formData, endTime: value })}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select End Time" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {timeSlots.map((slot) => (
+                                                    <SelectItem key={slot.value} value={slot.value}>
+                                                        {slot.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="space-y-3 mt-6">
+                                <Button
+                                    className="w-full bg-black hover:bg-gray-800 text-white py-3 cursor-pointer"
+                                    onClick={handleAddSchedule}
+                                    disabled={
+                                        !formData.course ||
+                                        !formData.lectureHall ||
+                                        !formData.date ||
+                                        !formData.startTime ||
+                                        !formData.endTime
+                                    }
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add a Schedule
+                                </Button>
+                                <Button variant="outline" className="w-full py-3 cursor-pointer bg-transparent" onClick={handleCancel}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

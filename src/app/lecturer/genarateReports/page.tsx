@@ -108,11 +108,7 @@ export default function GenerateReports() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link href="/lecturer/dashboard">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-lg bg-transparent"
-            >
+            <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
