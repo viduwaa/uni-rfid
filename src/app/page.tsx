@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coffee, BookOpen, ShieldCheck,SquareLibrary,Users } from "lucide-react";
+import { CircleUserRound, BookOpen, ShieldCheck,SquareLibrary,Users, Hamburger } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,7 +116,7 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/canteen/" className="w-full">
+              <Link href="/library/" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Canteen Login
                 </Button>
@@ -126,16 +126,15 @@ export default function Home() {
 
           <Card className="transition-all hover:shadow-md">
             <CardHeader>
-              <Users className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Student Portal</CardTitle>
+              <Hamburger className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Canteen Portal</CardTitle>
               <CardDescription>
-                Manage book inventories, borrowing records, and fines
+               Manage canteen transactions and services
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Track issued books, handle returns, manage library users, and
-                update book availability and categories.
+                Process food purchases, manage meal plans, and track student canteen usage.
               </p>
             </CardContent>
             <CardFooter>
