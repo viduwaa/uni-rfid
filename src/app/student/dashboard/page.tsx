@@ -28,6 +28,7 @@ export default function StudentDashboard() {
           </p>
         </div>
 
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
           <Link href="/student/grades" className="block">
             <Card className="h-full transition-all hover:shadow-md">

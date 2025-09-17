@@ -133,43 +133,6 @@ export default function StudentGrades() {
           <p className="text-muted-foreground">View your academic performance</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-2xl font-medium text-foreground">Overall GPA</CardTitle>
-              <Award className="h-10 w-10 text-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{calculateGPA(gradesData)}</div>
-              <p className="text-sm text-muted-foreground">Out of 4.0</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-2xl font-medium text-foreground">Total Courses</CardTitle>
-              <BookOpen className="h-10 w-10 text-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{gradesData.length}</div>
-              <p className="text-sm text-muted-foreground">All years</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-2xl font-medium text-foreground">Total Credits</CardTitle>
-              <TrendingUp className="h-10 w-10 text-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">
-                {gradesData.reduce((sum, grade) => sum + grade.credits, 0)}
-              </div>
-              <p className="text-sm text-muted-foreground">Total enrolled</p>
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="flex gap-2 mb-6">
           <Button
             variant={selectedYear === "All Years" ? "default" : "outline"}
@@ -257,52 +220,6 @@ export default function StudentGrades() {
             )}
           </CardContent>
         </Card>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
-          {["1st Year", "2nd Year", "3rd Year", "4th Year"].map((year) => {
-            const yearGrades = gradesData.filter(g => g.year === year);
-            const yearCredits = yearGrades.reduce((sum, g) => sum + g.credits, 0);
-            const gradePoints: { [key: string]: number } = {
-              "A": 4.0, "A-": 3.7, "B+": 3.3, "B": 3.0, "B-": 2.7, 
-              "C+": 2.3, "C": 2.0, "C-": 1.7, "D": 1.0, "F": 0.0,
-            };
-            const yearGPA = yearGrades.length > 0 
-              ? (yearGrades.reduce((sum, g) => sum + (gradePoints[g.grade] || 0), 0) / yearGrades.length).toFixed(2)
-              : "0.00";
-            
-            return (
-              <Card 
-                key={year} 
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedYear === year ? 'ring-2 ring-primary bg-primary/10' : 'hover:bg-muted/50'
-                }`}
-                onClick={() => setSelectedYear(year)}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className={`text-lg ${selectedYear === year ? 'text-primary' : 'text-foreground'}`}>
-                    {year}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Courses:</span>
-                      <span className="font-semibold text-foreground">{yearGrades.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Credits:</span>
-                      <span className="font-semibold text-foreground">{yearCredits}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">GPA:</span>
-                      <span className="font-semibold text-foreground">{yearGPA}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
 
         <div className="mt-8 flex justify-end">
           <Button>
