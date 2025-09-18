@@ -47,7 +47,7 @@ export default function StudentDashboard() {
             </Card>
           </Link>
 
-          <Link href=" " className="block">
+          <Link href="/student/gpa-tracking" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <ChartLine className="h-8 w-8 text-primary" />
@@ -64,7 +64,7 @@ export default function StudentDashboard() {
             </Card>
           </Link>
 
-          <Link href=" " className="block">
+          <Link href="/student/attendance" className="block">
             <Card className="h-full transition-all hover:shadow-md">
               <CardHeader>
                 <CalendarClock className="h-8 w-8 text-primary" />
