@@ -130,7 +130,6 @@ export default function StudentGrades() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">My Grades</h1>
-          <p className="text-muted-foreground">View your academic performance</p>
         </div>
 
         <div className="flex gap-2 mb-6">
