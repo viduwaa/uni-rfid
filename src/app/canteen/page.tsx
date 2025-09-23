@@ -1,190 +1,339 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
-import { DollarSign, Utensils, History, CheckCircle, Power } from "lucide-react"
-import Link from "next/link"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, } from "@/components/ui/card"
+import { CheckCircle, DollarSign, AlertTriangle, LogOut } from "lucide-react"
 
 interface MenuItem {
-  id: number
+  id: string
   name: string
-  category: string
+  category: 'Main' | 'Snack' | 'Drink' | 'Dessert'
   price: number
-  available: boolean
+  description?: string
+  is_available: boolean
+  is_active: boolean
+}
+
+interface CartItem extends MenuItem {
+  quantity: number
+}
+
+interface StudentInfo {
+  user_id: string
+  register_number: string
+  full_name: string
+  card_uid: string
+  balance: number
+  transactionId: string
 }
 
 export default function CanteenPortal() {
-  // State with proper typing
-  const [transactionStatus, setTransactionStatus] = useState<boolean>(false)
   const [currentBalance, setCurrentBalance] = useState<number | null>(null)
-  const [studentInfo, setStudentInfo] = useState<{
-    id: string
-    name: string
-    balance: number
-    photo: string
-  } | null>(null)
-  const [cart, setCart] = useState<MenuItem[]>([])
+  const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
+  const [cart, setCart] = useState<CartItem[]>([])
   const [total, setTotal] = useState<number>(0)
   const [dailyTotal, setDailyTotal] = useState<number>(0)
-  const [transactionSuccess, setTransactionSuccess] = useState<boolean>(false)
+  const [orderConfirmed, setOrderConfirmed] = useState<boolean>(false)
+  const [paymentProcessing, setPaymentProcessing] = useState<boolean>(false)
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('canteen-menu-items')
-      return saved ? JSON.parse(saved) : [
-        { id: 1, name: "Chicken Rice", category: "Main", price: 3.50, available: false },
-        { id: 2, name: "Fried Noodles", category: "Main", price: 3.00, available: false },
-        { id: 3, name: "Sandwich", category: "Snack", price: 2.50, available: false },
-        { id: 4, name: "Fruit Juice", category: "Drink", price: 1.50, available: false },
-        { id: 5, name: "Mineral Water", category: "Drink", price: 1.00, available: false },
-        { id: 6, name: "Ice Cream", category: "Dessert", price: 2.00, available: false },
-      ]
+      const saved = localStorage.getItem('university-canteen-menu-items')
+      return saved ? JSON.parse(saved) : []
     }
     return []
   })
 
-  // Save to localStorage whenever menuItems changes
+  // Get current date
+  const getCurrentDate = () => {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  // Load menu items from API
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('canteen-menu-items', JSON.stringify(menuItems))
+    const loadMenuItems = async () => {
+      try {
+        const response = await fetch('/api/canteen/menu-items?available=true')
+        const data = await response.json()
+        if (data.success) {
+          setMenuItems(data.data)
+          localStorage.setItem('university-canteen-menu-items', JSON.stringify(data.data))
+        }
+      } catch (error) {
+        console.error('Failed to load menu items:', error)
+      }
     }
-  }, [menuItems])
+
+    loadMenuItems()
+  }, [])
+
+  // Load daily total from API
+  useEffect(() => {
+    const loadDailySummary = async () => {
+      try {
+        const response = await fetch('/api/canteen/dashboard/daily-summary')
+        const data = await response.json()
+        if (data.success) {
+          setDailyTotal(data.data.total_revenue || 0)
+        }
+      } catch (error) {
+        console.error('Failed to load daily summary:', error)
+      }
+    }
+
+    loadDailySummary()
+  }, [])
+
+  // Calculate total whenever cart changes
+  useEffect(() => {
+    const newTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    setTotal(newTotal)
+  }, [cart])
 
   const addToCart = (item: MenuItem) => {
-    setCart([...cart, item])
-    setTotal(total + item.price)
-  }
-
-  // Mock function to simulate RFID scan
-  const handleRFIDScan = () => {
-    if (!transactionSuccess) return
+    if (orderConfirmed) return
     
-    const mockStudent = {
-      id: 'STU-2023-001',
-      name: 'John Doe',
-      balance: 150.50,
-      photo: '/default-avatar.jpg'
+    const existingItem = cart.find(cartItem => cartItem.id === item.id)
+    if (existingItem) {
+      setCart(cart.map(cartItem => 
+        cartItem.id === item.id 
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      ))
+    } else {
+      setCart([...cart, { ...item, quantity: 1 }])
     }
-    setStudentInfo(mockStudent)
-    setCurrentBalance(mockStudent.balance)
+  }
+
+  const removeFromCart = (itemId: string) => {
+    if (orderConfirmed) return
+    setCart(cart.filter(item => item.id !== itemId))
+  }
+
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    if (orderConfirmed || newQuantity < 0) return
     
-    // Process payment after card tap
-    if (currentBalance && currentBalance >= total) {
-      const newBalance = currentBalance - total
-      setCurrentBalance(newBalance)
-      setDailyTotal(dailyTotal + total)
-      
-      // Show success state
-      setTimeout(() => {
-        setStudentInfo(null)
-        setCurrentBalance(null)
-        setCart([])
-        setTotal(0)
-        setTransactionSuccess(false)
-      }, 2000)
+    if (newQuantity === 0) {
+      removeFromCart(itemId)
+    } else {
+      setCart(cart.map(item => 
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      ))
     }
   }
 
-  // Toggle transaction status
-  const toggleTransactions = () => {
-    setTransactionStatus(!transactionStatus)
-    if (!transactionStatus) {
-      setStudentInfo(null)
-      setCurrentBalance(null)
-      setCart([])
-      setTotal(0)
-      setTransactionSuccess(false)
-    }
-  }
-
-  // Process payment (now just prepares for RFID tap)
-  const prepareForPayment = () => {
+  const confirmOrder = () => {
     if (cart.length === 0) return
-    setTransactionSuccess(true)
+    setOrderConfirmed(true)
+    setPaymentProcessing(true)
   }
+
+  const handleRFIDScan = async () => {
+    if (!orderConfirmed || !paymentProcessing) return
+    
+    try {
+      // Simulate RFID scan - in real implementation, this would get card_uid from RFID reader
+      const mockCardUID = 'CARD001'
+      
+      // Get student info by card
+      const studentResponse = await fetch(`/api/students/card/${mockCardUID}`)
+      const studentData = await studentResponse.json()
+      
+      if (!studentData.success) {
+        alert('Card not found or inactive')
+        return
+      }
+
+      const student = studentData.data
+      const mockStudent: StudentInfo = {
+        user_id: student.user_id,
+        register_number: student.register_number,
+        full_name: student.full_name,
+        card_uid: mockCardUID,
+        balance: student.balance,
+        transactionId: `TXN-${Date.now()}`
+      }
+
+      setStudentInfo(mockStudent)
+      setCurrentBalance(mockStudent.balance)
+      
+      // Process payment after card tap
+      setTimeout(async () => {
+        if (mockStudent.balance >= total) {
+          try {
+            // Create transaction
+            const transactionResponse = await fetch('/api/canteen/transactions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                student_id: student.user_id,
+                card_uid: mockCardUID,
+                items: cart.map(item => ({
+                  menu_item_id: item.id,
+                  quantity: item.quantity
+                }))
+              })
+            })
+
+            const transactionData = await transactionResponse.json()
+            
+            if (transactionData.success) {
+              const newBalance = mockStudent.balance - total
+              setCurrentBalance(newBalance)
+              setDailyTotal(prevDaily => prevDaily + total)
+              
+              // Show success and reset after 2 seconds
+              setTimeout(() => {
+                resetTransaction()
+              }, 2000)
+            } else {
+              alert('Transaction failed: ' + transactionData.message)
+              setTimeout(() => {
+                setStudentInfo(null)
+                setCurrentBalance(null)
+                setPaymentProcessing(false)
+              }, 3000)
+            }
+          } catch (error) {
+            console.error('Transaction error:', error)
+            alert('Transaction failed due to system error')
+          }
+        } else {
+          // Insufficient funds - don't clear cart
+          setTimeout(() => {
+            setStudentInfo(null)
+            setCurrentBalance(null)
+            setPaymentProcessing(false)
+          }, 3000)
+        }
+      }, 1000)
+    } catch (error) {
+      console.error('RFID scan error:', error)
+      alert('Failed to process card scan')
+    }
+  }
+
+  const resetTransaction = () => {
+    setStudentInfo(null)
+    setCurrentBalance(null)
+    setCart([])
+    setTotal(0)
+    setOrderConfirmed(false)
+    setPaymentProcessing(false)
+  }
+
+  const cancelOrder = () => {
+    setOrderConfirmed(false)
+    setPaymentProcessing(false)
+    setStudentInfo(null)
+    setCurrentBalance(null)
+  }
+
+  // Group available menu items by category
+  const availableItems = menuItems.filter(item => item.is_available && item.is_active)
+  const groupedItems = availableItems.reduce((groups, item) => {
+    if (!groups[item.category]) {
+      groups[item.category] = []
+    }
+    groups[item.category].push(item)
+    return groups
+  }, {} as Record<string, MenuItem[]>)
+
+  const categories = ['Main', 'Snack', 'Drink', 'Dessert'] as const
+  const availableCategories = categories.filter(category => groupedItems[category]?.length > 0)
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
       {/* Daily Summary Header */}
-      <div className="flex justify-between items-center mb-6 p-4 bg-blue-50 rounded-lg">
+      <div className="flex justify-between items-center mb-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
         <div>
-          <h1 className="text-3xl font-bold">Canteen Portal</h1>
-          <p className="text-muted-foreground">Daily Transactions</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Canteen Portal</h1>
+          <p className="text-gray-600 dark:text-gray-400">Daily Transactions - {getCurrentDate()}</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-green-600">
-            ${dailyTotal.toFixed(2)}
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            Rs.{dailyTotal.toFixed(2)}
           </div>
-          <p className="text-sm text-muted-foreground">Today's Total</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Today's Total</p>
         </div>
       </div>
 
-      {/* Transaction Control */}
-      <div className="flex justify-end mb-6">
-        <Button 
-          variant={transactionStatus ? "destructive" : "default"}
-          onClick={toggleTransactions}
-          className="gap-2"
-        >
-          <Power className="h-4 w-4" />
-          {transactionStatus ? "Stop Transactions" : "Start Transactions"}
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Student Info Card */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Student Information</CardTitle>
+            <CardTitle>Payment Status</CardTitle>
             <CardDescription>
-              {transactionStatus 
-                ? transactionSuccess 
-                  ? "Tap card to complete payment" 
-                  : "Scan RFID card to begin" 
-                : "Transactions are currently disabled"}
+              {paymentProcessing 
+                ? "Tap card to complete payment" 
+                : orderConfirmed 
+                  ? "Order confirmed - waiting for payment"
+                  : "Add items and confirm order"}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {studentInfo ? (
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={studentInfo.photo} 
-                    alt={studentInfo.name}
-                    className="h-16 w-16 rounded-full object-cover"
-                  />
-                  <div>
-                    <h3 className="font-medium">{studentInfo.name}</h3>
-                    <p className="text-sm text-muted-foreground">{studentInfo.id}</p>
-                  </div>
-                </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Current Balance</p>
+                  <p className="text-sm font-medium">Student ID</p>
+                  <div className="font-mono text-lg">{studentInfo.register_number}</div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Student Name</p>
+                  <div className="text-sm">{studentInfo.full_name}</div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Card Balance</p>
                   <div className="text-2xl font-bold">
                     ${currentBalance?.toFixed(2)}
                   </div>
                 </div>
+                
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Payment Amount</p>
+                  <p className="text-sm font-medium">Transaction Amount</p>
                   <div className="text-xl font-bold text-red-600">
                     -${total.toFixed(2)}
                   </div>
                 </div>
-                {currentBalance && total > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">New Balance</p>
-                    <div className="text-xl font-bold text-green-600">
-                      ${(currentBalance - total).toFixed(2)}
-                    </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Status</p>
+                  <div className={`flex items-center gap-2 ${
+                    currentBalance && currentBalance >= total 
+                      ? 'text-green-600' 
+                      : 'text-red-600'
+                  }`}>
+                    {currentBalance && currentBalance >= total ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Sufficient Balance</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>Insufficient Balance</span>
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Transaction ID</p>
+                  <div className="font-mono text-sm">{studentInfo.transactionId}</div>
+                </div>
+                
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => {
-                    setStudentInfo(null)
-                    setCurrentBalance(null)
-                    setTransactionSuccess(false)
-                  }}
+                  onClick={cancelOrder}
                 >
                   Cancel Transaction
                 </Button>
@@ -193,56 +342,78 @@ export default function CanteenPortal() {
               <div className="flex flex-col items-center justify-center py-8">
                 <Button 
                   onClick={handleRFIDScan}
-                  disabled={!transactionStatus || !transactionSuccess}
+                  disabled={!orderConfirmed || !paymentProcessing}
+                  className="mb-4"
                 >
-                  {transactionSuccess ? "Tap Card to Pay" : "Simulate RFID Scan"}
+                  Simulate RFID Scan
                 </Button>
-                <p className="mt-4 text-sm text-muted-foreground text-center">
-                  {transactionStatus 
-                    ? transactionSuccess
-                      ? "Waiting for student to tap card"
-                      : "Add items and confirm total first"
-                    : "Enable transactions first"}
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                  {orderConfirmed 
+                    ? "Waiting for student to tap card"
+                    : "Confirm order first to enable payment"}
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Transaction Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className={transactionSuccess ? "border-2 border-green-500" : ""}>
+        {/* Today's Menu */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Current Transaction */}
+          <Card className={orderConfirmed ? "border-2 border-green-500" : ""}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {transactionSuccess && <CheckCircle className="h-5 w-5 text-green-500" />}
-                Current Transaction
-              </CardTitle>
-              {transactionSuccess && (
-                <CardDescription className="text-green-500">
-                  Payment ready - waiting for card tap
-                </CardDescription>
-              )}
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    {orderConfirmed && <CheckCircle className="h-5 w-5 text-green-500" />}
+                    Current Transaction
+                  </CardTitle>
+                  {orderConfirmed && (
+                    <CardDescription className="text-green-500">
+                      Order confirmed - ready for payment
+                    </CardDescription>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {cart.length > 0 ? (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    {cart.map((item, index) => (
-                      <div key={item.id} className="flex justify-between items-center p-2 border rounded">
-                        <div>
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">{item.category}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{item.category}</p>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="font-medium">${item.price.toFixed(2)}</span>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              disabled={orderConfirmed}
+                            >
+                              -
+                            </Button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              disabled={orderConfirmed}
+                            >
+                              +
+                            </Button>
+                          </div>
+                          <span className="font-medium w-16 text-right">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => {
-                              setCart(cart.filter((_, i) => i !== index))
-                              setTotal(total - item.price)
-                              setTransactionSuccess(false)
-                            }}
+                            onClick={() => removeFromCart(item.id)}
+                            disabled={orderConfirmed}
                           >
                             Remove
                           </Button>
@@ -251,85 +422,92 @@ export default function CanteenPortal() {
                     ))}
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t">
-                    <span className="font-bold">Total</span>
+                    <span className="font-bold text-lg">Total</span>
                     <span className="font-bold text-xl">${total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline"
-                      onClick={() => {
-                        setCart([])
-                        setTotal(0)
-                        setTransactionSuccess(false)
-                      }}
+                      onClick={resetTransaction}
+                      disabled={paymentProcessing}
                     >
                       Clear All
                     </Button>
                     <Button 
-                      onClick={prepareForPayment}
-                      disabled={!transactionStatus || cart.length === 0 || transactionSuccess}
+                      onClick={confirmOrder}
+                      disabled={cart.length === 0 || orderConfirmed}
                     >
-                      Confirm Total
+                      Confirm Order
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-gray-600 dark:text-gray-400">
                   No items added yet
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Today's Menu */}
+          {/* Today's Menu by Category */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle>Today's Menu</CardTitle>
                   <CardDescription>
-                    {menuItems.filter(item => item.available).length} items available
+                    {availableItems.length} items available across {availableCategories.length} categories
                   </CardDescription>
                 </div>
-                <Link href="/canteen/menu-management">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Utensils className="h-4 w-4" />
-                    Manage Menu
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = '/canteen/menu-management'}
+                >
+                  Manage Menu
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {menuItems.filter(item => item.available).length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {menuItems
-                    .filter(item => item.available)
-                    .map(item => (
-                      <Button
-                        key={item.id}
-                        variant="outline"
-                        className="h-auto py-3 flex flex-col items-start"
-                        onClick={() => addToCart(item)}
-                        disabled={!transactionStatus || transactionSuccess}
-                      >
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          ${item.price.toFixed(2)}
-                        </span>
-                      </Button>
-                    ))}
+              {availableCategories.length > 0 ? (
+                <div className="space-y-6">
+                  {availableCategories.map(category => (
+                    <div key={category} className="space-y-3">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b pb-2">
+                        {category}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {groupedItems[category].map(item => (
+                          <Button
+                            key={item.id}
+                            variant="outline"
+                            className="h-auto py-3 flex flex-col items-start hover:bg-blue-50 dark:hover:bg-blue-950"
+                            onClick={() => addToCart(item)}
+                            disabled={orderConfirmed}
+                          >
+                            <span className="font-medium text-left">{item.name}</span>
+                            <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                              ${item.price.toFixed(2)}
+                            </span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-8 space-y-4">
-                  <Utensils className="h-10 w-10 mx-auto text-muted-foreground" />
-                  <p className="text-muted-foreground">
+                 
+                  <p className="text-gray-600 dark:text-gray-400">
                     No items available today
                   </p>
-                  <Link href="/canteen/menu-management">
-                    <Button variant="outline" className="mt-4">
-                      Update Menu Availability
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => window.location.href = '/canteen/menu-management'}
+                  >
+                    Update Menu Availability
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -339,18 +517,28 @@ export default function CanteenPortal() {
 
       {/* Navigation Card */}
       <div className="mt-6">
-        <Link href="/canteen/transactions">
-          <Card className="hover:shadow-md transition-all h-full">
-            <CardHeader className="flex flex-row items-center gap-4">
-              <History className="h-6 w-6 text-primary" />
-              <div>
-                <CardTitle>Transaction History</CardTitle>
-                <CardDescription>View all past transactions</CardDescription>
-              </div>
-            </CardHeader>
-          </Card>
-        </Link>
+        <Card 
+          className="hover:shadow-md transition-all h-full cursor-pointer"
+          onClick={() => window.location.href = '/canteen/transactions'}
+        >
+          <CardHeader className="flex flex-row items-center gap-4">
+            <DollarSign className="h-6 w-6 text-primary" />
+            <div>
+              <CardTitle>Transaction History</CardTitle>
+              <CardDescription>View all past transactions</CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
+
+      <div className="mt-8 flex justify-end px-5">
+            <Button variant="outline" size="sm"
+                  onClick={() => window.location.href = '/'}>
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          
+        </div>
     </div>
   )
 }
