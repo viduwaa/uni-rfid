@@ -1,6 +1,7 @@
 import { BaseStudent, StudentForm } from "@/types/student";
 import { pool } from "./db";
 import { LecturerForm } from "@/types/lecturers";
+import { sendLoginCredentials } from "./email";
 const bcrypt = require("bcrypt");
 
 export const insertStudent = async (
@@ -121,6 +122,15 @@ export const insertLecturer = async (
             [lecturerForm.email, lecturerForm.fullName, lec_pw]
         );
 
+        if (lecturerForm.fullName && lecturerForm.email && lecturerForm.nicNo) {
+            await sendLoginCredentials(
+                lecturerForm.email,
+                lecturerForm.fullName,
+                lecturerForm.nicNo,
+                "lecturer"
+            );
+        }
+
         const userId = userResponse.rows[0].id;
 
         const lecturerResponse = await client.query(
@@ -179,18 +189,18 @@ export const notIssued = async () => {
             `SELECT * FROM students WHERE card_id IS null ORDER BY created_at DESC`
         );
 
-        return notIssuedStudents.rows
+        return notIssuedStudents.rows;
     } catch (error) {
-        console.error('Database query error:', error);
-    }finally{
-        client.release()
+        console.error("Database query error:", error);
+    } finally {
+        client.release();
     }
 };
 
-export const insertCardDetails = async(cardData : BaseStudent)=>{
-    const client = await pool.connect()
+export const insertCardDetails = async (cardData: BaseStudent) => {
+    const client = await pool.connect();
 
-    try{
+    try {
         const cardInsertResponse = await client.query(
             `INSERT INTO rfid_cards (
                 card_uid,
@@ -204,20 +214,37 @@ export const insertCardDetails = async(cardData : BaseStudent)=>{
                 $3,
                 $4,
                 $5
-            )RETURNING id`,[
+            )RETURNING id`,
+            [
                 cardData.card_id,
                 cardData.user_id,
                 new Date().toISOString(),
-                'ACTIVE',
-                cardData.credits
+                "ACTIVE",
+                cardData.credits,
             ]
         );
 
         return cardInsertResponse.rows[0];
-    }catch (error){
+    } catch (error) {
         console.error("Insert to DB error", error);
         throw error;
-    }finally{
-        client.release()
+    } finally {
+        client.release();
+    }
+};
+
+export async function getUserByEmail(email: string) {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(
+            "SELECT id, email, name, password, role, created_at FROM users WHERE email = $1",
+            [email]
+        );
+        return result.rows[0] || null;
+    } catch (error) {
+        console.error("Error fetching user by email:", error);
+        throw error;
+    } finally {
+        client.release();
     }
 }

@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Coffee, BookOpen, ShieldCheck,SquareLibrary,Users } from "lucide-react";
+import { CircleUserRound, BookOpen, ShieldCheck,SquareLibrary,Users, Hamburger } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,53 +79,7 @@ export default function Home() {
 
           <Card className="transition-all hover:shadow-md">
             <CardHeader>
-              <Coffee className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Canteen Portal</CardTitle>
-              <CardDescription>
-                Manage canteen transactions and services
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Process food purchases, manage meal plans, and track student
-                canteen usage.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Link href="/canteen/login" className="w-full">
-                <Button className="w-full cursor-pointer" variant="outline">
-                  Canteen Login
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-
-          <Card className="transition-all hover:shadow-md">
-            <CardHeader>
-              <SquareLibrary className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Library Portal</CardTitle>
-              <CardDescription>
-                Manage book inventories, borrowing records, and fines
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Track issued books, handle returns, manage library users, and
-                update book availability and categories.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Link href="/library/" className="w-full">
-                <Button className="w-full cursor-pointer" variant="outline">
-                  Library Login
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-
-          <Card className="transition-all hover:shadow-md">
-            <CardHeader>
-              <Users className="h-8 w-8 text-primary" />
+              <CircleUserRound className="h-8 w-8 text-primary" />
               <CardTitle className="mt-2">Student Portal</CardTitle>
               <CardDescription>
                 View academic performance and personal records
@@ -139,13 +93,60 @@ export default function Home() {
               </p>
             </CardContent>
             <CardFooter>
-              <Link href="/canteen/login" className="w-full">
+              <Link href="/student/" className="w-full">
                 <Button className="w-full cursor-pointer" variant="outline">
                   Student Login
                 </Button>
               </Link>
             </CardFooter>
           </Card>
+
+          <Card className="transition-all hover:shadow-md">
+            <CardHeader>
+              <SquareLibrary className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Library Portal</CardTitle>
+              <CardDescription>
+                Manage canteen transactions and services
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Process food purchases, manage meal plans, and track student
+                canteen usage.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/library/" className="w-full">
+                <Button className="w-full cursor-pointer" variant="outline">
+                  Canteen Login
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          <Card className="transition-all hover:shadow-md">
+            <CardHeader>
+              <Hamburger className="h-8 w-8 text-primary" />
+              <CardTitle className="mt-2">Canteen Portal</CardTitle>
+              <CardDescription>
+               Manage canteen transactions and services
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Process food purchases, manage meal plans, and track student canteen usage.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/library/" className="w-full">
+                <Button className="w-full cursor-pointer" variant="outline">
+                  Library Login
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          
         </div>
       </div>
     </div>
