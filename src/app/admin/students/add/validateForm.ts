@@ -8,6 +8,7 @@ export const validateForm = (formData: FormData): StudentForm => {
         fullName: formData.get("fullName") as string,
         initName: formData.get("initName") as string,
         registerNumber: formData.get("registerNumber") as string,
+        indexNumber: formData.get("indexNumber") as string,
         email: formData.get("email") as string,
         nicno:formData.get("nicno") as string,
         faculty: formData.get("faculty") as string,
@@ -37,6 +38,13 @@ export const validateForm = (formData: FormData): StudentForm => {
         validationErrors.registerNumber = "Registration number is required";
     } else if (data.registerNumber.length < 5) {
         validationErrors.registerNumber = "Enter proper Registration number";
+    }
+
+    //index number validation
+    if (!data.indexNumber) {
+        validationErrors.indexNumber = "Index number is required";
+    } else if (data.indexNumber.length != 4) {
+        validationErrors.indexNumber = "Enter proper Index number";
     }
 
     //email validation
