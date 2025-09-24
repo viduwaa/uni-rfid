@@ -34,14 +34,16 @@ export default function GPATracking() {
   const [grades, setGrades] = useState<
     { subject: string; grade: string; credits: number; year: string; semester: string }[]
   >([
-    { subject: "Mathematics", grade: "A", credits: 3, year: "1", semester: "1st Semester" },
-    { subject: "Physics", grade: "B+", credits: 4, year: "2", semester: "1st Semester" },
+    { subject: "Mathematics", grade: "A", credits: 3, year: "1st Year", semester: "1st Semester" },
+    { subject: "Physics", grade: "B+", credits: 4, year: "2nd Year", semester: "1st Semester" },
   ]);
   const [newSubject, setNewSubject] = useState("");
   const [newGrade, setNewGrade] = useState("A");
   const [newCredits, setNewCredits] = useState(0);
-  const [newYear, setNewYear] = useState("");
-  const [newSemester, setNewSemester] = useState("");
+  const [newYear, setNewYear] = useState("1st Year");
+  const [newSemester, setNewSemester] = useState("1st Semester");
+  const semesterOptions = ["1st Semester", "2nd Semester"];
+  const yearOptions = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
 
   const handleAddGrade = () => {
     if (newSubject && newGrade && newCredits > 0 && newYear && newSemester) {
@@ -119,26 +121,49 @@ export default function GPATracking() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-2xl font-medium text-foreground">
-                Semester by Semester GPA
+                Year by Year GPA
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Semester</TableHead>
+                    <TableHead>Year</TableHead>
                     <TableHead>GPA</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {gpaData.map((record, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {record.semester}
-                      </TableCell>
-                      <TableCell>{record.gpa}</TableCell>
-                    </TableRow>
-                  ))}
+                  {["1st Year", "2nd Year", "3rd Year", "4th Year"].map((year, index) => {
+                    // Filter grades for this year
+                    const yearGrades = grades.filter((g) => g.year === year);
+                    if (yearGrades.length === 0) return null;
+                    // Calculate GPA for this year
+                    const totalCredits = yearGrades.reduce((sum, record) => sum + record.credits, 0);
+                    const weightedGrades = yearGrades.reduce((sum, record) => {
+                      const gradePoints: Record<string, number> = {
+                        "A+": 4.0,
+                        "A": 4.0,
+                        "A-": 3.7,
+                        "B+": 3.3,
+                        "B": 3.0,
+                        "B-": 2.7,
+                        "C+": 2.3,
+                        "C": 2.0,
+                        "C-": 1.7,
+                        "D+": 1.3,
+                        "D": 1.0,
+                        "E": 0.0,
+                      };
+                      return sum + gradePoints[record.grade] * record.credits;
+                    }, 0);
+                    const yearGPA = totalCredits > 0 ? (weightedGrades / totalCredits).toFixed(2) : "-";
+                    return (
+                      <TableRow key={year}>
+                        <TableCell className="font-medium">{year}</TableCell>
+                        <TableCell>{yearGPA}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -158,25 +183,29 @@ export default function GPATracking() {
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Year
                 </label>
-                <input
-                  type="text"
-                  placeholder="Year"
+                <select
                   value={newYear}
                   onChange={(e) => setNewYear(e.target.value)}
                   className="border rounded p-2 w-full"
-                />
+                >
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Semester
                 </label>
-                <input
-                  type="text"
-                  placeholder="Semester"
+                <select
                   value={newSemester}
                   onChange={(e) => setNewSemester(e.target.value)}
                   className="border rounded p-2 w-full"
-                />
+                >
+                  {semesterOptions.map((semester) => (
+                    <option key={semester} value={semester}>{semester}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
