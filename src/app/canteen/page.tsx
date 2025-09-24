@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, } from "@/components/ui/card"
 import { CheckCircle, DollarSign, AlertTriangle, LogOut } from "lucide-react"
+import DeviceStatus from '@/components/DeviceStatus'
 
 interface MenuItem {
   id: string
@@ -35,13 +36,7 @@ export default function CanteenPortal() {
   const [dailyTotal, setDailyTotal] = useState<number>(0)
   const [orderConfirmed, setOrderConfirmed] = useState<boolean>(false)
   const [paymentProcessing, setPaymentProcessing] = useState<boolean>(false)
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('university-canteen-menu-items')
-      return saved ? JSON.parse(saved) : []
-    }
-    return []
-  })
+  const [menuItems, setMenuItems] = useState<MenuItem[]>()
 
   // Get current date
   const getCurrentDate = () => {
@@ -53,24 +48,56 @@ export default function CanteenPortal() {
     })
   }
 
-  // Load menu items from API
-  useEffect(() => {
-    const loadMenuItems = async () => {
-      try {
-        const response = await fetch('/api/canteen/menu-items?available=true')
-        const data = await response.json()
-        if (data.success) {
-          setMenuItems(data.data)
-          localStorage.setItem('university-canteen-menu-items', JSON.stringify(data.data))
-        }
-      } catch (error) {
-        console.error('Failed to load menu items:', error)
+// Load menu items from API
+useEffect(() => {
+  const loadMenuItems = async () => {
+    try {
+      const response = await fetch('/api/canteen/menu-items')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
+
+      const data = await response.json()
+      console.log('API Response:', data)
+      
+      if (data.success) {
+        let items = []
+        
+        // Handle different response structures
+        if (Array.isArray(data.data)) {
+          // Direct array response
+          items = data.data
+        } else if (data.data?.existingItems) {
+          // Nested structure response
+          items = data.data.existingItems
+        } else {
+          console.warn('Unexpected response structure:', data)
+          items = []
+        }
+
+        // Filter for available items and convert price
+        const availableItems = items
+          .filter((item: any) => item.is_available && item.is_active)
+          .map((item: any) => ({
+            ...item,
+            price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+          }))
+
+        console.log('Processed items:', availableItems)
+        setMenuItems(availableItems)
+      } else {
+        console.error('API error:', data.message)
+        setMenuItems([])
+      }
+    } catch (error) {
+      console.error('Failed to load menu items:', error)
+      setMenuItems([])
     }
+  }
 
-    loadMenuItems()
-  }, [])
-
+  loadMenuItems()
+}, [])
   // Load daily total from API
   useEffect(() => {
     const loadDailySummary = async () => {
@@ -235,8 +262,11 @@ export default function CanteenPortal() {
     setCurrentBalance(null)
   }
 
-  // Group available menu items by category
-  const availableItems = menuItems.filter(item => item.is_available && item.is_active)
+  // Safe filtering with array check
+
+  const safeMenuItems = Array.isArray(menuItems) ? menuItems : []
+  const availableItems = safeMenuItems.filter(item => item.is_available && item.is_active)
+
   const groupedItems = availableItems.reduce((groups, item) => {
     if (!groups[item.category]) {
       groups[item.category] = []
@@ -256,6 +286,7 @@ export default function CanteenPortal() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Canteen Portal</h1>
           <p className="text-gray-600 dark:text-gray-400">Daily Transactions - {getCurrentDate()}</p>
         </div>
+        <DeviceStatus/>
         <div className="text-right">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             Rs.{dailyTotal.toFixed(2)}
@@ -497,16 +528,15 @@ export default function CanteenPortal() {
                 </div>
               ) : (
                 <div className="text-center py-8 space-y-4">
-                 
                   <p className="text-gray-600 dark:text-gray-400">
-                    No items available today
+                    {safeMenuItems.length === 0 ? 'Loading menu items...' : 'No items available today'}
                   </p>
                   <Button 
                     variant="outline" 
                     className="mt-4"
                     onClick={() => window.location.href = '/canteen/menu-management'}
                   >
-                    Update Menu Availability
+                    {safeMenuItems.length === 0 ? 'Manage Menu' : 'Update Menu Availability'}
                   </Button>
                 </div>
               )}
@@ -532,13 +562,12 @@ export default function CanteenPortal() {
       </div>
 
       <div className="mt-8 flex justify-end px-5">
-            <Button variant="outline" size="sm"
-                  onClick={() => window.location.href = '/'}>
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          
-        </div>
+        <Button variant="outline" size="sm"
+              onClick={() => window.location.href = '/'}>
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      </div>
     </div>
   )
 }

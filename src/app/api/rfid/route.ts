@@ -9,40 +9,99 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const SOCKET_SERVER_URL =
-  process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "http://localhost:4000";
+    process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "http://localhost:4000";
+
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const action = searchParams.get("action");
+
+        if (action === "status") {
+            // Return NFC writer status or similar
+            return NextResponse.json({
+                success: true,
+                data: {
+                    nfc_writer_status: "ready",
+                    socket_server: SOCKET_SERVER_URL,
+                    timestamp: new Date().toISOString(),
+                },
+            });
+        }
+
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Invalid action or missing parameters",
+            },
+            { status: 400 }
+        );
+    } catch (error) {
+        console.error("GET API Error:", error);
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Failed to fetch data",
+                error: (error as Error).message,
+            },
+            { status: 500 }
+        );
+    }
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userid");
-    const formData = await request.formData();
+    try {
+        const body = await request.json();
+        const { user_id, credits, action } = body;
 
-    const cardData: BaseStudent = {
-      full_name: formData.get("fullName") as string,
-      register_number: formData.get("regNo") as string,
-      nic_no: formData.get("nic") as string,
-      faculty: formData.get("faculty") as string,
-      phone: formData.get("phone") as string,
-      credits: formData.get("credits") as string,
-      user_id: userId as string,
-    };
+        console.log('Received data:', { user_id, credits, action });
 
-    //await insertCardDetails(cardData);
+        // Validate required fields
+        if (!user_id || !credits || !action) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Missing required fields: user_id, credits, or action",
+                },
+                { status: 400 }
+            );
+        }
 
-    return NextResponse.json({
-      success: true,
-      status: 201,
-    });
-  } catch (error) {
-    console.error("API Error:", error);
-    //inform user about server error
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to insert lecturer",
-        error: (error as Error).message,
-      },
-      { status: 500 }
-    );
-  }
+        switch (action) {
+            case "issue_card":
+                // Just confirm the card data is ready for writing
+                // Database insertion will happen after successful NFC write
+                const cardPreparation = {
+                    user_id,
+                    initial_balance: parseFloat(credits),
+                    prepared_at: new Date().toISOString(),
+                    status: 'PREPARED_FOR_WRITING'
+                };
+
+                return NextResponse.json({
+                    success: true,
+                    message: "Card data prepared successfully. Ready for NFC writing.",
+                    data: cardPreparation
+                });
+
+            default:
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Invalid action",
+                    },
+                    { status: 400 }
+                );
+        }
+
+    } catch (error) {
+        console.error("API Error:", error);
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Internal server error",
+                error: (error as Error).message,
+            },
+            { status: 500 }
+        );
+    }
 }

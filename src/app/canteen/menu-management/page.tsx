@@ -33,25 +33,28 @@ export default function MenuManagement() {
 
   // Load menu items from API
   useEffect(() => {
-    const loadMenuItems = async () => {
-      try {
-        // Use the correct API endpoint
-        const response = await fetch('/api/canteen/menu-items')
-        const data = await response.json()
-        if (data.success) {
-          setMenuItems(data.data)
-        } else {
-          console.error('API error:', data.message)
-        }
-      } catch (error) {
-        console.error('Failed to load menu items:', error)
-      } finally {
-        setLoading(false)
+  const loadMenuItems = async () => {
+    try {
+      // Use the correct API endpoint
+      const response = await fetch('/api/canteen/menu-items')
+      const data = await response.json()
+      
+      if (data.success) {
+        // Fix: Access the existingItems array from the nested data structure
+        const items = data.data?.existingItems || []
+        setMenuItems(items)
+      } else {
+        console.error('API error:', data.message)
       }
+    } catch (error) {
+      console.error('Failed to load menu items:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    loadMenuItems()
-  }, [])
+  loadMenuItems()
+}, [])
 
   // Toggle item availability
   const toggleAvailability = async (id: string) => {
@@ -143,7 +146,10 @@ export default function MenuManagement() {
       
       if (data.success) {
         // Add to local state
-        setMenuItems(prevItems => [...prevItems, data.data])
+        setMenuItems(prevItems => {
+          const safeItems = Array.isArray(prevItems) ? prevItems : []
+          return [...safeItems, data.data]
+        })
         
         // Reset form
         setNewItem({
@@ -283,98 +289,106 @@ export default function MenuManagement() {
 
       {/* Menu Items Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Menu Items Management</CardTitle>
-          <CardDescription>
-            {menuItems.filter(item => item.is_available && item.is_active).length} of {menuItems.filter(item => item.is_active).length} items available
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {menuItems.filter(item => item.is_active).length === 0 ? (
-            <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-              <Utensils className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No menu items added yet</p>
-              <p className="text-sm">Use the form above to add your first menu item</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Item</th>
-                    <th className="text-left p-3 font-medium">Category</th>
-                    <th className="text-right p-3 font-medium">Price</th>
-                    <th className="text-left p-3 font-medium">Description</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Availability</th>
-                    <th className="text-left p-3 font-medium">Delete</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {menuItems
-                    .filter(item => item.is_active)
-                    .map((item) => (
-                      <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="p-3 font-medium">{item.name}</td>
-                        <td className="p-3">
-                          <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {item.category}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right font-semibold">
-                          Rs.{item.price.toFixed(2)}
-                        </td>
-                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                          {item.description || 'No description'}
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            item.is_available 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          }`}>
-                            {item.is_available ? 'Available' : 'Unavailable'}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleAvailability(item.id)}
-                            className="flex items-center gap-2"
-                          >
-                            {item.is_available ? (
-                              <>
-                                <ToggleRight className="h-4 w-4 text-green-600" />
-                                <span>Disable</span>
-                              </>
-                            ) : (
-                              <>
-                                <ToggleLeft className="h-4 w-4 text-gray-400" />
-                                <span>Enable</span>
-                              </>
-                            )}
-                          </Button>
-                        </td>
-                        <td className="p-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteItem(item.id)}
-                            className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              <CardHeader>
+                <CardTitle>Menu Items Management</CardTitle>
+                <CardDescription>
+                  {menuItems && Array.isArray(menuItems) ? (
+                    <>
+                      {menuItems.filter(item => item.is_available && item.is_active).length} of {menuItems.filter(item => item.is_active).length} items available
+                    </>
+                  ) : (
+                    'No menu items available'
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!menuItems || !Array.isArray(menuItems) || menuItems.filter(item => item.is_active).length === 0 ? (
+                  <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+                    <Utensils className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>{!menuItems || !Array.isArray(menuItems) ? 'Loading menu items...' : 'No menu items added yet'}</p>
+                    <p className="text-sm">
+                      {!menuItems || !Array.isArray(menuItems) ? 'Please wait while we fetch the menu' : 'Use the form above to add your first menu item'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 font-medium">Item</th>
+                          <th className="text-left p-3 font-medium">Category</th>
+                          <th className="text-right p-3 font-medium">Price</th>
+                          <th className="text-left p-3 font-medium">Description</th>
+                          <th className="text-left p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Availability</th>
+                          <th className="text-left p-3 font-medium">Delete</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {menuItems
+                          .filter(item => item.is_active)
+                          .map((item) => (
+                            <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <td className="p-3 font-medium">{item.name}</td>
+                              <td className="p-3">
+                                <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                  {item.category}
+                                </span>
+                              </td>
+                              <td className="p-3 text-right font-semibold">
+                                Rs.{typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || 0).toFixed(2)}
+                              </td>
+                              <td className="p-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                                {item.description || 'No description'}
+                              </td>
+                              <td className="p-3">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  item.is_available 
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                }`}>
+                                  {item.is_available ? 'Available' : 'Unavailable'}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => toggleAvailability(item.id)}
+                                  className="flex items-center gap-2"
+                                >
+                                  {item.is_available ? (
+                                    <>
+                                      <ToggleRight className="h-4 w-4 text-green-600" />
+                                      <span>Disable</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ToggleLeft className="h-4 w-4 text-gray-400" />
+                                      <span>Enable</span>
+                                    </>
+                                  )}
+                                </Button>
+                              </td>
+                              <td className="p-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteItem(item.id)}
+                                  className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
     </div>
   )
 }

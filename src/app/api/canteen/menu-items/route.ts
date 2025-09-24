@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { updateMenuItemAvailability } from "@/lib/canteenQueries";
 
 export async function GET(request: NextRequest) {
     const client = await pool.connect();
@@ -51,4 +52,22 @@ export async function GET(request: NextRequest) {
     } finally {
         client.release();
     }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { id, is_available } = await request.json()
+
+    const updatedItem = await updateMenuItemAvailability(id, is_available)
+    
+    return NextResponse.json({
+      success: true,
+      data: updatedItem
+    })
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: 'Failed to update item' },
+      { status: 500 }
+    )
+  }
 }

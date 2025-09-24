@@ -33,10 +33,9 @@ export default function RFIDManagement() {
     return (
         <>
             <div className="container mx-auto">
-                
                 <div className="p-6 space-y-6">
-                    <div className="w-full grid items-center grid-cols-2 justify-around">
-                        <div className="flex">
+                    <div className="w-full grid items-center grid-cols-3 gap-4">
+                        <div className="flex items-center">
                             <Link href="/admin/dashboard" className="mr-4">
                                 <Button variant="outline" size="icon">
                                     <ArrowLeft className="h-4 w-4" />
@@ -48,63 +47,90 @@ export default function RFIDManagement() {
                                     RFID Card Management
                                 </h1>
                                 <p className="text-muted-foreground">
-                                    Register new cards or manage existing cards
+                                    Modern card management system
                                 </p>
                             </div>
                         </div>
-                        <div className="ml-auto">
-                            <DeviceStatus/>
-                            
+
+                        <div className="flex justify-center">
+                            <div className="flex gap-2">
+                                <Button
+                                    variant={
+                                        showIssueNew ? "default" : "outline"
+                                    }
+                                    size="sm"
+                                    onClick={() => setShowIssueNew(true)}
+                                    className="flex items-center gap-1"
+                                >
+                                    <CreditCard className="h-4 w-4" />
+                                    Issue New
+                                </Button>
+                                <Button
+                                    variant={
+                                        !showIssueNew ? "default" : "outline"
+                                    }
+                                    size="sm"
+                                    onClick={() => setShowIssueNew(false)}
+                                    className="flex items-center gap-1"
+                                >
+                                    <UserCog className="h-4 w-4" />
+                                    Manage Existing
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <DeviceStatus />
                         </div>
                     </div>
-                   
-                    {/* Add new | Manage Existing Card */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <Card
-                            className={`h-full transition-all cursor-pointer hover:shadow-lg ${
-                                showIssueNew
-                                    ? "bg-gray-100 dark:bg-gray-900"
-                                    : "hover:bg-gray-100 dark:hover:bg-gray-900"
-                            }`}
-                            onClick={() => setShowIssueNew(true)}
-                        >
-                            <CardHeader>
-                                <CreditCard className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
-                                    Issue New RFID Card
-                                </CardTitle>
-                                <CardDescription>
-                                    Add new card to a new user
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Search by card ID or student name
-                                </p>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <Card>
+                            <CardContent className="flex items-center p-4">
+                                <CreditCard className="h-8 w-8 text-blue-600 mr-3" />
+                                <div>
+                                    <p className="text-2xl font-bold">--</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Active Cards
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
 
-                        <Card
-                            className={`h-full transition-all cursor-pointer hover:shadow-lg ${
-                                !showIssueNew
-                                    ? "bg-gray-100 dark:bg-gray-900"
-                                    : "hover:bg-gray-100 dark:hover:bg-gray-900"
-                            }`}
-                            onClick={() => setShowIssueNew(false)}
-                        >
-                            <CardHeader>
-                                <UserCog className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
-                                    Manage Existing Card
-                                </CardTitle>
-                                <CardDescription>
-                                    Update or view existing card details
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Search by card ID or student name
-                                </p>
+                        <Card>
+                            <CardContent className="flex items-center p-4">
+                                <UserCog className="h-8 w-8 text-green-600 mr-3" />
+                                <div>
+                                    <p className="text-2xl font-bold">--</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Pending Issues
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="flex items-center p-4">
+                                <IdCard className="h-8 w-8 text-orange-600 mr-3" />
+                                <div>
+                                    <p className="text-2xl font-bold">--</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Total Balance
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="flex items-center p-4">
+                                <UserCog className="h-8 w-8 text-purple-600 mr-3" />
+                                <div>
+                                    <p className="text-2xl font-bold">--</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Recent Activity
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>

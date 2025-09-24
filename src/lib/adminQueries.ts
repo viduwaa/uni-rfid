@@ -39,6 +39,15 @@ export const insertStudent = async (
             [studentForm.email, studentForm.fullName, std_pw]
         );
 
+        if (studentForm.fullName && studentForm.email && studentForm.nicNumber) {
+            await sendLoginCredentials(
+                studentForm.email,
+                studentForm.fullName,
+                studentForm.nicNumber,
+                "student"
+            );
+        }
+
         const userId = userResponse.rows[0].id;
 
         const studentResponse = await client.query(
@@ -185,13 +194,36 @@ export const notIssued = async () => {
     const client = await pool.connect();
 
     try {
-        const notIssuedStudents = await client.query(
-            `SELECT * FROM students WHERE card_id IS null ORDER BY created_at DESC`
-        );
+        const notIssuedStudents = await client.query(`
+            SELECT 
+                s.user_id,
+                s.register_number,
+                s.full_name,
+                s.initial_name,
+                s.nic_no,
+                s.email,
+                s.faculty,
+                s.year_of_study,
+                s.address,
+                s.phone,
+                s.photo,
+                s.date_of_birth,
+                s.created_at,
+                s.updated_at
+            FROM 
+                students s
+            LEFT JOIN 
+                rfid_cards r ON s.user_id = r.assigned_student
+            WHERE 
+                r.assigned_student IS NULL
+            ORDER BY 
+                s.created_at DESC
+        `);
 
         return notIssuedStudents.rows;
     } catch (error) {
         console.error("Database query error:", error);
+        throw error; // Optionally rethrow the error for upstream handling
     } finally {
         client.release();
     }

@@ -26,7 +26,7 @@ export async function sendLoginCredentials(
     console.log('📧 Attempting to send email to:', email);
     
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: "UNI RFID System " +"<"+process.env.EMAIL_FROM!+">",
       to: email,
       subject: `Welcome to Our Platform - Your Login Credentials`,
       html: `
