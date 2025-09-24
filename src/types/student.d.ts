@@ -2,6 +2,7 @@ export interface StudentForm {
     fullName?: string;
     initName?: string;
     registerNumber?: string;
+    indexNumber?: stingr;
     email?: string;
     faculty?: string;
     yearOfStudy?: string;
@@ -15,6 +16,7 @@ export interface StudentForm {
 export interface BaseStudent {
   id?: string; // UUID
   user_id?: string; // UUID
+  index_number?: string;
   register_number?: string;
   full_name?: string;
   initial_name?: string;

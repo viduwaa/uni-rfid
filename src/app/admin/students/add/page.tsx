@@ -253,6 +253,22 @@ export default function AddStudent() {
                                             placeholder="UNI2023001"
                                             name="registerNumber"
                                             required
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                const form = e.target.form;
+                                                const batchInput = form?.elements.namedItem("Batch") as HTMLInputElement | null;
+
+                                                // Match: 3 letters + 4 digits
+                                                const match = value.match(/^[A-Z]{3}(\d{4})/i);
+                                                if (match && batchInput) {
+                                                    const year = parseInt(match[1]);
+                                                    if (!isNaN(year)) {
+                                                        const previous = (year - 1).toString().slice(2);
+                                                        const current = year.toString().slice(2);
+                                                        batchInput.value = `${previous}/${current}`;
+                                                    }
+                                                }
+                                            }}
                                         />
                                         {validationError?.registerNumber && (
                                             <span className="text-red-500 text-sm">
@@ -277,7 +293,43 @@ export default function AddStudent() {
                                     </div>
                                 </div>
 
-                                {/* Faculty */}
+                                {/* Index Numbur and Batch */}
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="indexNumber">
+                                            Index Number
+                                        </Label>
+                                        <Input
+                                            className="w-32"
+                                            id="indexNumber"
+                                            placeholder="2098"
+                                            name="indexNumber"
+                                            required
+                                        />
+                                        {validationError?.indexNumber && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.indexNumber}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="Batch">
+                                            Batch
+                                        </Label>
+                                        <Input
+                                            className="w-32"
+                                            id="Batch"
+                                            placeholder="18/19"
+                                            name="Batch"
+                                            required
+                                        />
+                                    </div>
+
+                                </div>
+
+
+                                {/* Faculty and Year of Study*/}
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label htmlFor="faculty">Faculty</Label>
@@ -313,7 +365,6 @@ export default function AddStudent() {
                                         )}
                                     </div>
 
-                                    {/* Year of Study */}
                                     <div className="space-y-2">
                                         <Label htmlFor="year">
                                             Year of Study

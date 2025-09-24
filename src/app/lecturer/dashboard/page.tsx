@@ -69,12 +69,12 @@ export default function LectureDashboard() {
                 <Users className="h-8 w-8 text-primary" />
                 <CardTitle className="mt-2">My Students</CardTitle>
                 <CardDescription>
-                  View students enrolled in your courses.
+                  View students enrolled in your courses and add marks.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Access students information and attendance history for your course.
+                  Access students information, add marks and attendance history for your course.
                 </p>
               </CardContent>
             </Card>
