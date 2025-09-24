@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface LoginFormProps {
-  role: "admin" | "lecturer" | "student";
+  role: "admin" | "lecturer" | "student"|"canteen";
 }
 
 export default function LoginForm({ role }: LoginFormProps) {
@@ -69,6 +69,8 @@ export default function LoginForm({ role }: LoginFormProps) {
       case "student":
         router.push("/student/dashboard");
         break;
+      case "canteen":
+        router.push("/canteen/dashboard")
       default:
         router.push("/");
     }
