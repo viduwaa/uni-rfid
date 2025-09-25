@@ -60,6 +60,8 @@ export async function POST(
         const { studentId } = await params;
         const { courseId } = await request.json();
 
+
+
         if (!courseId) {
             return NextResponse.json(
                 {
@@ -72,7 +74,7 @@ export async function POST(
 
         // Check if student exists
         const studentCheck = await client.query(
-            "SELECT id FROM students WHERE id = $1",
+            "SELECT user_id FROM students WHERE user_id = $1",
             [studentId]
         );
 
@@ -120,8 +122,8 @@ export async function POST(
 
         // Enroll student
         const insertQuery = `
-      INSERT INTO student_courses (student_id, course_id, enrollment_date)
-      VALUES ($1, $2, CURRENT_TIMESTAMP)
+      INSERT INTO student_courses (student_id, course_id)
+      VALUES ($1, $2)
       RETURNING *
     `;
 

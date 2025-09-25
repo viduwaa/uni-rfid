@@ -47,6 +47,7 @@ import {
     Home,
 } from "lucide-react";
 import Link from "next/link";
+import StudentCourseEnrollmentDialog from "./StudentCourseEnrollmentDialog";
 
 interface Student {
     user_id: string;
@@ -75,15 +76,6 @@ interface Student {
     }>;
 }
 
-interface Course {
-    id: string;
-    course_code: string;
-    course_name: string;
-    faculty: string;
-    year: number;
-    credits: number;
-}
-
 export default function StudentManagement() {
     const [students, setStudents] = useState<Student[]>([]);
     const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
@@ -93,7 +85,6 @@ export default function StudentManagement() {
     const [loading, setLoading] = useState(true);
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
     const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
     const [selectedStudentForEnroll, setSelectedStudentForEnroll] =
         useState<Student | null>(null);
@@ -109,7 +100,6 @@ export default function StudentManagement() {
 
     useEffect(() => {
         fetchStudents();
-        fetchAvailableCourses();
     }, []);
 
     useEffect(() => {
@@ -128,18 +118,6 @@ export default function StudentManagement() {
             toast.error("Failed to fetch students");
         } finally {
             setLoading(false);
-        }
-    };
-
-    const fetchAvailableCourses = async () => {
-        try {
-            const response = await fetch("/api/admin/courses");
-            if (response.ok) {
-                const data = await response.json();
-                setAvailableCourses(data.courses);
-            }
-        } catch (error) {
-            console.error("Error fetching courses:", error);
         }
     };
 
@@ -214,37 +192,6 @@ export default function StudentManagement() {
                 console.error("Error deleting student:", error);
                 toast.error("Failed to delete student");
             }
-        }
-    };
-
-    const handleEnrollStudent = async (courseId: string) => {
-        if (!selectedStudentForEnroll) return;
-
-        try {
-            const response = await fetch(
-                `/api/admin/student-courses/${selectedStudentForEnroll.user_id}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        courseId: courseId,
-                    }),
-                }
-            );
-
-            if (response.ok) {
-                toast.success("Student enrolled successfully");
-                fetchStudents();
-                setIsEnrollDialogOpen(false);
-                setSelectedStudentForEnroll(null);
-            } else {
-                throw new Error("Failed to enroll student");
-            }
-        } catch (error) {
-            console.error("Error enrolling student:", error);
-            toast.error("Failed to enroll student");
         }
     };
 
@@ -799,105 +746,15 @@ export default function StudentManagement() {
             )}
 
             {/* Course Enrollment Dialog */}
-            {selectedStudentForEnroll && (
-                <Dialog
-                    open={isEnrollDialogOpen}
-                    onOpenChange={setIsEnrollDialogOpen}
-                >
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Enroll Student -{" "}
-                                {selectedStudentForEnroll.full_name}
-                            </DialogTitle>
-                            <DialogDescription>
-                                Select courses to enroll the student in.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-4">
-                            <div>
-                                <Label className="text-sm font-medium">
-                                    Current Enrollments:
-                                </Label>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {selectedStudentForEnroll.enrolled_courses?.map(
-                                        (course) => (
-                                            <Badge
-                                                key={course.id}
-                                                variant="outline"
-                                            >
-                                                {course.course_code} -{" "}
-                                                {course.course_name}
-                                            </Badge>
-                                        )
-                                    ) || (
-                                        <span className="text-sm text-muted-foreground">
-                                            No enrollments
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label className="text-sm font-medium">
-                                    Available Courses:
-                                </Label>
-                                <div className="max-h-60 overflow-y-auto space-y-2 mt-2">
-                                    {availableCourses
-                                        .filter(
-                                            (course) =>
-                                                course.faculty ===
-                                                    selectedStudentForEnroll.faculty &&
-                                                course.year ===
-                                                    selectedStudentForEnroll.year_of_study &&
-                                                !selectedStudentForEnroll.enrolled_courses?.some(
-                                                    (ec) => ec.id === course.id
-                                                )
-                                        )
-                                        .map((course) => (
-                                            <div
-                                                key={course.id}
-                                                className="flex items-center justify-between p-2 border rounded"
-                                            >
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {course.course_code}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {course.course_name}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {course.credits} credits
-                                                    </p>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleEnrollStudent(
-                                                            course.id
-                                                        )
-                                                    }
-                                                >
-                                                    Enroll
-                                                </Button>
-                                            </div>
-                                        ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsEnrollDialogOpen(false)}
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            )}
+            <StudentCourseEnrollmentDialog
+                student={selectedStudentForEnroll}
+                isOpen={isEnrollDialogOpen}
+                onClose={() => {
+                    setIsEnrollDialogOpen(false);
+                    setSelectedStudentForEnroll(null);
+                }}
+                onStudentUpdate={fetchStudents}
+            />
         </div>
     );
 }
