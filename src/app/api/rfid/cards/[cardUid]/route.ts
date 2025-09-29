@@ -4,8 +4,9 @@ import { pool } from "@/lib/db";
 // Handle card-specific operations
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { cardUid: string } }
+    context: { params: Promise<{ cardUid: string }> }
 ) {
+    const params = await context.params;
     try {
         const { action } = await request.json();
         const cardUid = params.cardUid;
