@@ -1,20 +1,20 @@
 export interface CanteenItem {
     name: string;
-    category: 'Main' | 'Snack' | 'Drink' | 'Dessert'; // Make sure these match your ENUM
+    category: "Main" | "Snack" | "Drink" | "Dessert"; // Make sure these match your ENUM
     price: number;
     description?: string;
 }
 
 export interface MenuItem {
-    id: string;
-    name: string;
-    category: 'Main' | 'Snack' | 'Drink' | 'Dessert'; // Make sure these match your ENUM
+    menu_item_id: string | number;
+    item_name: string;
+    category: "Main" | "Snack" | "Drink" | "Dessert";
     price: number;
     description?: string;
     is_available: boolean;
-    is_active: boolean;
-    created_at: Date;
-    updated_at: Date;
+    is_active?: boolean;
+    created_at?: Date;
+    updated_at?: Date;
 }
 export interface Student {
     user_id: string;
@@ -49,6 +49,8 @@ export interface TransactionRequest {
     student_id: string;
     card_uid?: string | null;
     items: TransactionItem[];
+    payment_method?: "card" | "manual"; // Add manual payment support
+    manual_payment_amount?: number; // For manual payments
 }
 
 export interface BalanceUpdate {
@@ -104,4 +106,3 @@ export interface CardData {
     faculty: string;
     timestamp?: number;
 }
-
