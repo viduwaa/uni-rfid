@@ -312,25 +312,25 @@ export default function LibraryReports() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  ${financialData.total_fines.toFixed(2)}
+                  ${financialData.total_fines}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Fines</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  ${financialData.paid_fines.toFixed(2)}
+                  ${financialData.paid_fines}
                 </div>
                 <div className="text-sm text-muted-foreground">Paid</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  ${financialData.pending_fines.toFixed(2)}
+                  ${financialData.pending_fines}
                 </div>
                 <div className="text-sm text-muted-foreground">Pending</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-600">
-                  ${financialData.waived_fines.toFixed(2)}
+                  ${financialData.waived_fines}
                 </div>
                 <div className="text-sm text-muted-foreground">Waived</div>
               </div>
