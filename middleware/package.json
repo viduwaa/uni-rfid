@@ -1,16 +1,18 @@
 {
-  "name": "middleware",
-  "version": "1.0.0",
-  "main": "nfc-middleware.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "nfc-pcsc": "^0.8.1",
-    "socket.io-client": "^4.8.1"
-  }
+    "name": "middleware",
+    "version": "1.0.0",
+    "main": "nfc-middleware.js",
+    "type": "module",
+    "scripts": {
+        "start": "node nfc-middleware.js",
+        "dev": "node nfc-middleware.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "nfc-pcsc": "^0.8.1",
+        "socket.io-client": "^4.8.1"
+    }
 }
