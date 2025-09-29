@@ -143,9 +143,9 @@ export default function AddMenu({
         <>
             <div className="relative flex-1 p-4">
                 <div className="absolute flex-1 z-5 inset-0 backdrop-blur-[2px]"></div>
-                <div className="container relative -top-10 w-3/4 mx-auto z-10">
+                <div className="container relative -top-10 mx-auto z-10">
                     <Card className="grid grid-cols-4 p-4 gap-2">
-                        <Card className="col-span-3">
+                        <Card className="col-span-3 ">
                             <div
                                 className="absolute cursor-pointer rounded-full bg-gray-700 text-white dark:bg-gray-800 hover:text-red-500 p-2 right-[-15] top-[-15]"
                                 onClick={onClose}
