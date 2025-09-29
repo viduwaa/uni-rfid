@@ -1,345 +1,649 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { ArrowLeft, Calendar, TrendingUp, Users, BarChart3, Download, FileBarChart } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import {
+    ArrowLeft,
+    Calendar as CalendarIcon,
+    Search,
+    Users,
+    UserCheck,
+    Clock,
+    Filter,
+    Download,
+} from "lucide-react";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/breadcrumb";
+
+interface Course {
+    id: string;
+    course_code: string;
+    course_name: string;
+    faculty: string;
+    year: number;
+    enrolled_students: number;
+}
+
+interface AttendanceRecord {
+    id: string;
+    date: string;
+    checked_in: string;
+    created_at: string;
+    student_id: string;
+    register_number: string;
+    student_name: string;
+    student_faculty: string;
+    year_of_study: number;
+    course_id: string;
+    course_code: string;
+    course_name: string;
+    course_faculty: string;
+    course_year: number;
+}
+
+interface AttendanceSummary {
+    total_present: number;
+    total_enrolled: number;
+    attendance_percentage: number;
+}
 
 export default function AttendanceHistory() {
-  const [selectedCourse, setSelectedCourse] = useState("")
-  const [dateRangeEnabled, setDateRangeEnabled] = useState(false)
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [attendanceRecords, setAttendanceRecords] = useState<
+        AttendanceRecord[]
+    >([]);
+    const [summary, setSummary] = useState<AttendanceSummary | null>(null);
+    const [selectedCourse, setSelectedCourse] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [startDate, setStartDate] = useState<Date>();
+    const [endDate, setEndDate] = useState<Date>();
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const recordsPerPage = 10;
 
-  const statisticsData = [
-    {
-      title: "Total Session",
-      value: "3",
-      icon: Calendar,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-    },
-    {
-      title: "Avg Attendance",
-      value: "92.2%",
-      icon: TrendingUp,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Total Students",
-      value: "3",
-      icon: Users,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-    },
-    {
-      title: "Good Attendance",
-      value: "3",
-      icon: BarChart3,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
-    },
-  ]
+    useEffect(() => {
+        fetchCourses();
 
-  // Session data (when date range is enabled)
-  const sessionData = [
-    {
-      date: "2024-01-15",
-      course: "CS101",
-      hall: "Lecture Hall A",
-      present: 42,
-      total: 45,
-      rate: 93.3,
-      duration: "1h 30m",
-    },
-    {
-      date: "2024-01-14",
-      course: "CS201",
-      hall: "Computer Lab 1",
-      present: 28,
-      total: 30,
-      rate: 93.3,
-      duration: "2h 00m",
-    },
-    {
-      date: "2024-01-13",
-      course: "CS301",
-      hall: "Lecture Hall B",
-      present: 45,
-      total: 50,
-      rate: 90.0,
-      duration: "1h 45m",
-    },
-  ]
+        // Set default date range (last 7 days)
+        const today = new Date();
+        const sevenDaysAgo = new Date(
+            today.getTime() - 7 * 24 * 60 * 60 * 1000
+        );
+        setEndDate(today);
+        setStartDate(sevenDaysAgo);
+    }, []);
 
-  // Student data (when date range is disabled)
-  const studentData = [
-    {
-      registrationNo: "ITT/2022/084",
-      index: "2056",
-      name: "S.K.P.Sanidu",
-      present: 3,
-      total: 5,
-      rate: 60.0,
-      result: "A-",
-    },
-    {
-      registrationNo: "ITT/2022/038",
-      index: "2056",
-      name: "L.K.Nuwan",
-      present: 4,
-      total: 5,
-      rate: 80.0,
-      result: "B-",
-    },
-    {
-      registrationNo: "ITT/2022/045",
-      index: "2056",
-      name: "J.K.Ruwani",
-      present: 1,
-      total: 5,
-      rate: 20.0,
-      result: "C+",
-    },
-  ]
+    useEffect(() => {
+        if (startDate && endDate) {
+            fetchAttendanceHistory();
+        }
+    }, [selectedCourse, startDate, endDate]);
 
-  const handleGenerateReport = () => {
-    console.log("Generating report with:", {
-      selectedCourse,
-      dateRangeEnabled,
-      startDate,
-      endDate,
-    })
-  }
+    const fetchCourses = async () => {
+        try {
+            const response = await fetch("/api/lecturer/courses");
+            const data = await response.json();
 
-  const handleExportCSV = () => {
-    console.log("Exporting to CSV...")
-  }
+            if (data.success) {
+                setCourses(data.courses);
+            } else {
+                toast.error(data.message || "Failed to fetch courses");
+            }
+        } catch (error) {
+            toast.error("Error fetching courses");
+            console.error("Error fetching courses:", error);
+        }
+    };
 
-  const getRateColor = (rate: number) => {
-    if (rate >= 80) return "text-green-600"
-    if (rate >= 60) return "text-yellow-600"
-    return "text-red-600"
-  }
+    const fetchAttendanceHistory = async () => {
+        setIsLoading(true);
+        try {
+            const params = new URLSearchParams();
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/lecturer/dashboard">
-            <Button variant="outline" size="icon" className="rounded-lg bg-transparent">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Attendance History</h1>
-        </div>
+            if (selectedCourse) params.append("courseId", selectedCourse);
+            if (startDate)
+                params.append("startDate", format(startDate, "yyyy-MM-dd"));
+            if (endDate)
+                params.append("endDate", format(endDate, "yyyy-MM-dd"));
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Attendance Filter Card */}
-          <Card className="bg-white shadow-sm lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Attendance Filter</CardTitle>
-              <p className="text-sm text-gray-600">Configure your attendance parameters</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Course Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Course</label>
-                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cs101">Computer Science 101</SelectItem>
-                    <SelectItem value="cs201">Computer Science 201</SelectItem>
-                    <SelectItem value="cs301">Computer Science 301</SelectItem>
-                    <SelectItem value="math201">Mathematics 201</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            const response = await fetch(
+                `/api/lecturer/attendance?${params.toString()}`
+            );
+            const data = await response.json();
 
-              {/* Date Range Checkbox */}
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="dateRange"
-                  checked={dateRangeEnabled}
-                  onChange={(e) => setDateRangeEnabled(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
-                />
-                <label htmlFor="dateRange" className="text-sm font-medium text-gray-700 cursor-pointer">
-                  Date Range
-                </label>
-              </div>
+            if (data.success) {
+                setAttendanceRecords(data.attendance);
+                setSummary(data.summary);
+            } else {
+                toast.error(
+                    data.message || "Failed to fetch attendance history"
+                );
+            }
+        } catch (error) {
+            toast.error("Error fetching attendance history");
+            console.error("Error fetching attendance history:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-              {/* Conditional Date Fields */}
-              {dateRangeEnabled && (
-                <>
-                  {/* Start Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Select Date</label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      max={new Date().toISOString().split("T")[0]}
-                      className="w-full"
-                      placeholder="mm/dd/yyyy"
-                    />
-                  </div>
+    const clearFilters = () => {
+        setSelectedCourse("");
+        setSearchTerm("");
+        const today = new Date();
+        const sevenDaysAgo = new Date(
+            today.getTime() - 7 * 24 * 60 * 60 * 1000
+        );
+        setEndDate(today);
+        setStartDate(sevenDaysAgo);
+        setCurrentPage(1);
+    };
 
-                  {/* End Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">End Date</label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      max={new Date().toISOString().split("T")[0]}
-                      className="w-full"
-                      placeholder="mm/dd/yyyy"
-                    />
-                  </div>
-                </>
-              )}
+    const exportToCSV = () => {
+        if (filteredRecords.length === 0) {
+            toast.error("No data to export");
+            return;
+        }
 
-              {/* Action Buttons */}
-              <div className="space-y-3 pt-4">
-                <Button
-                  className="w-full bg-black hover:bg-gray-800 text-white py-3 cursor-pointer"
-                  onClick={handleGenerateReport}
+        const headers = [
+            "Date",
+            "Time",
+            "Course",
+            "Student Name",
+            "Register Number",
+            "Faculty",
+            "Year",
+        ];
+        const csvContent = [
+            headers.join(","),
+            ...filteredRecords.map((record) =>
+                [
+                    record.date,
+                    record.checked_in,
+                    `${record.course_code} - ${record.course_name}`,
+                    record.student_name,
+                    record.register_number,
+                    record.student_faculty,
+                    record.year_of_study,
+                ].join(",")
+            ),
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `attendance-history-${format(new Date(), "yyyy-MM-dd")}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast.success("Attendance history exported successfully");
+    };
+
+    const filteredRecords = attendanceRecords.filter(
+        (record) =>
+            record.student_name
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+            record.register_number
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+            record.course_code
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+            record.course_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const paginatedRecords = filteredRecords.slice(
+        (currentPage - 1) * recordsPerPage,
+        currentPage * recordsPerPage
+    );
+
+    const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+
+    return (
+        <div className="min-h-screen bg-gray-50 p-6">
+            <div className="max-w-7xl mx-auto">
+                <PageHeader
+                    title="Attendance History"
+                    breadcrumbs={[
+                        { label: "Dashboard", href: "/lecturer/dashboard" },
+                        { label: "Attendance History", current: true },
+                    ]}
+                    backButton={{
+                        href: "/lecturer/dashboard",
+                        label: "Back to Dashboard",
+                    }}
                 >
-                  <FileBarChart className="h-4 w-4 mr-2" />
-                  Generate Report
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full py-3 cursor-pointer bg-transparent"
-                  onClick={handleExportCSV}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export to CSV
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                    {summary && (
+                        <Badge variant="outline">
+                            {summary.attendance_percentage}% Average Attendance
+                        </Badge>
+                    )}
+                </PageHeader>
 
-          {/* Right Side Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {statisticsData.map((stat, index) => {
-                const IconComponent = stat.icon
-                return (
-                  <Card key={index} className="bg-white shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">{stat.title}</p>
-                          <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                {/* Summary Cards */}
+                {summary && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                    <UserCheck className="h-8 w-8 text-green-600" />
+                                    <div>
+                                        <p className="text-2xl font-bold">
+                                            {summary.total_present}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Total Present
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                    <Users className="h-8 w-8 text-blue-600" />
+                                    <div>
+                                        <p className="text-2xl font-bold">
+                                            {summary.total_enrolled}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Total Enrolled
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                    <Clock className="h-8 w-8 text-purple-600" />
+                                    <div>
+                                        <p className="text-2xl font-bold">
+                                            {summary.attendance_percentage}%
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Attendance Rate
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {/* Filters */}
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                            <Filter className="h-5 w-5" />
+                            Filters
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Search
+                                </label>
+                                <div className="relative">
+                                    <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                                    <Input
+                                        placeholder="Search records..."
+                                        value={searchTerm}
+                                        onChange={(e) =>
+                                            setSearchTerm(e.target.value)
+                                        }
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Course
+                                </label>
+                                <Select
+                                    value={selectedCourse}
+                                    onValueChange={setSelectedCourse}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="All Courses" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">
+                                            All Courses
+                                        </SelectItem>
+                                        {courses.map((course) => (
+                                            <SelectItem
+                                                key={course.id}
+                                                value={course.id}
+                                            >
+                                                {course.course_code}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Start Date
+                                </label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start text-left font-normal"
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {startDate
+                                                ? format(startDate, "PPP")
+                                                : "Pick a date"}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent
+                                        className="w-auto p-0"
+                                        align="start"
+                                    >
+                                        <Calendar
+                                            mode="single"
+                                            selected={startDate}
+                                            onSelect={setStartDate}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">
+                                    End Date
+                                </label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start text-left font-normal"
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {endDate
+                                                ? format(endDate, "PPP")
+                                                : "Pick a date"}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent
+                                        className="w-auto p-0"
+                                        align="start"
+                                    >
+                                        <Calendar
+                                            mode="single"
+                                            selected={endDate}
+                                            onSelect={setEndDate}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="flex items-end">
+                                <Button
+                                    variant="outline"
+                                    onClick={clearFilters}
+                                    className="w-full"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+
+                            <div className="flex items-end">
+                                <Button
+                                    variant="outline"
+                                    onClick={exportToCSV}
+                                    className="w-full"
+                                    disabled={filteredRecords.length === 0}
+                                >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Export CSV
+                                </Button>
+                            </div>
                         </div>
-                        <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                          <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                        </div>
-                      </div>
                     </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
+                </Card>
 
-            {/* Dynamic Report Table */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">
-                  {dateRangeEnabled ? "Session Attendance Report" : "Attendance Report"}
-                </CardTitle>
-                <p className="text-sm text-gray-600">
-                  {dateRangeEnabled
-                    ? "Detailed attendance data for each session"
-                    : "Detailed attendance data for each session"}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  {dateRangeEnabled ? (
-                    // Session Report Table
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Date</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Hall</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Present/Total</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Rate</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Duration</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sessionData.map((row, index) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.date}</td>
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.course}</td>
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.hall}</td>
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              {row.present}/{row.total}
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className={`text-sm font-medium ${getRateColor(row.rate)}`}>{row.rate}%</span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.duration}</td>
-                            <td className="py-3 px-4">
-                              <Button variant="outline" size="sm" className="text-xs bg-transparent">
-                                See details
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    // Student Report Table
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Registration No</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Index</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Present/Total</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Rate</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">Result</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {studentData.map((row, index) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.registrationNo}</td>
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.index}</td>
-                            <td className="py-3 px-4 text-sm text-gray-900">{row.name}</td>
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              {row.present}/{row.total}
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className={`text-sm font-medium ${getRateColor(row.rate)}`}>{row.rate}%</span>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 font-medium">{row.result}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                {/* Attendance Records */}
+                <Card className="bg-white shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-semibold">
+                            Attendance Records
+                            <span className="text-sm font-normal text-gray-500 ml-2">
+                                ({filteredRecords.length} records)
+                            </span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="text-center py-8 text-gray-500">
+                                Loading attendance history...
+                            </div>
+                        ) : filteredRecords.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                No attendance records found for the selected
+                                criteria
+                            </div>
+                        ) : (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-200">
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                                                    Date & Time
+                                                </th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                                                    Course
+                                                </th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                                                    Student
+                                                </th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                                                    Register Number
+                                                </th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                                                    Faculty
+                                                </th>
+                                                <th className="text-left py-3 px-4 font-medium text-gray-700">
+                                                    Year
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginatedRecords.map((record) => (
+                                                <tr
+                                                    key={record.id}
+                                                    className="border-b border-gray-100 hover:bg-gray-50"
+                                                >
+                                                    <td className="py-3 px-4">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                {new Date(
+                                                                    record.date
+                                                                ).toLocaleDateString()}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {
+                                                                    record.checked_in
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                {
+                                                                    record.course_code
+                                                                }
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {
+                                                                    record.course_name
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4 text-sm text-gray-900">
+                                                        {record.student_name}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-sm text-gray-900">
+                                                        {record.register_number}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-sm text-gray-900">
+                                                        {record.student_faculty}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-sm text-gray-900">
+                                                        Year{" "}
+                                                        {record.year_of_study}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-between mt-6">
+                                        <div className="text-sm text-gray-500">
+                                            Showing{" "}
+                                            {(currentPage - 1) *
+                                                recordsPerPage +
+                                                1}{" "}
+                                            to{" "}
+                                            {Math.min(
+                                                currentPage * recordsPerPage,
+                                                filteredRecords.length
+                                            )}{" "}
+                                            of {filteredRecords.length} records
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setCurrentPage(
+                                                        Math.max(
+                                                            1,
+                                                            currentPage - 1
+                                                        )
+                                                    )
+                                                }
+                                                disabled={currentPage === 1}
+                                            >
+                                                Previous
+                                            </Button>
+                                            <div className="flex items-center gap-1">
+                                                {Array.from(
+                                                    { length: totalPages },
+                                                    (_, i) => i + 1
+                                                )
+                                                    .filter(
+                                                        (page) =>
+                                                            page === 1 ||
+                                                            page ===
+                                                                totalPages ||
+                                                            Math.abs(
+                                                                page -
+                                                                    currentPage
+                                                            ) <= 1
+                                                    )
+                                                    .map(
+                                                        (
+                                                            page,
+                                                            index,
+                                                            array
+                                                        ) => (
+                                                            <div
+                                                                key={page}
+                                                                className="flex items-center"
+                                                            >
+                                                                {index > 0 &&
+                                                                    array[
+                                                                        index -
+                                                                            1
+                                                                    ] !==
+                                                                        page -
+                                                                            1 && (
+                                                                        <span className="mx-2 text-gray-400">
+                                                                            ...
+                                                                        </span>
+                                                                    )}
+                                                                <Button
+                                                                    variant={
+                                                                        currentPage ===
+                                                                        page
+                                                                            ? "default"
+                                                                            : "outline"
+                                                                    }
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        setCurrentPage(
+                                                                            page
+                                                                        )
+                                                                    }
+                                                                    className="w-8 h-8 p-0"
+                                                                >
+                                                                    {page}
+                                                                </Button>
+                                                            </div>
+                                                        )
+                                                    )}
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setCurrentPage(
+                                                        Math.min(
+                                                            totalPages,
+                                                            currentPage + 1
+                                                        )
+                                                    )
+                                                }
+                                                disabled={
+                                                    currentPage === totalPages
+                                                }
+                                            >
+                                                Next
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-      </div>
-    </div>
-  )
+    );
 }
