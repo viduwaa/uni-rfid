@@ -1,17 +1,20 @@
+// Empty export to make this a module
+export {};
+
 // import { inserMenuItems } from "@/lib/canteenQueries";
 // import { canteenItem } from "@/types/canteen";
 
 // // Helper Functions
 // const updateBalance = async (userId, amount, description, cardUID = null) => {
 //   const client = await pool.connect();
-  
+
 //   try {
 //     await client.query('BEGIN');
 
 //     // Get current balance and card info
 //     const cardResult = await client.query(`
-//       SELECT balance, card_uid 
-//       FROM rfid_cards 
+//       SELECT balance, card_uid
+//       FROM rfid_cards
 //       WHERE assigned_student = $1 AND status = 'ACTIVE'
 //     `, [userId]);
 
@@ -37,8 +40,8 @@
 
 //     // Update balance
 //     await client.query(
-//       `UPDATE rfid_cards 
-//        SET balance = $1, updated_at = CURRENT_TIMESTAMP 
+//       `UPDATE rfid_cards
+//        SET balance = $1, updated_at = CURRENT_TIMESTAMP
 //        WHERE assigned_student = $2 AND status = 'ACTIVE'`,
 //       [newBalance, userId]
 //     );
@@ -70,7 +73,6 @@
 //     client.release();
 //   }
 // };
-
 
 // // =====================
 // // API ROUTES
@@ -143,14 +145,14 @@
 //   const { name, category, price, description, is_available } = req.body;
 
 //   const result = await pool.query(
-//     `UPDATE menu_items 
+//     `UPDATE menu_items
 //      SET name = COALESCE($1, name),
 //          category = COALESCE($2, category),
 //          price = COALESCE($3, price),
 //          description = COALESCE($4, description),
 //          is_available = COALESCE($5, is_available),
 //          updated_at = CURRENT_TIMESTAMP
-//      WHERE id = $6 AND is_active = TRUE 
+//      WHERE id = $6 AND is_active = TRUE
 //      RETURNING *`,
 //     [name, category, price ? parseFloat(price) : null, description, is_available, id]
 //   );
@@ -174,10 +176,10 @@
 //   const { id } = req.params;
 
 //   const result = await pool.query(
-//     `UPDATE menu_items 
+//     `UPDATE menu_items
 //      SET is_available = NOT is_available,
 //          updated_at = CURRENT_TIMESTAMP
-//      WHERE id = $1 AND is_active = TRUE 
+//      WHERE id = $1 AND is_active = TRUE
 //      RETURNING *`,
 //     [id]
 //   );
@@ -201,10 +203,10 @@
 //   const { id } = req.params;
 
 //   const result = await pool.query(
-//     `UPDATE menu_items 
+//     `UPDATE menu_items
 //      SET is_active = FALSE,
 //          updated_at = CURRENT_TIMESTAMP
-//      WHERE id = $1 AND is_active = TRUE 
+//      WHERE id = $1 AND is_active = TRUE
 //      RETURNING *`,
 //     [id]
 //   );
@@ -231,7 +233,7 @@
 //   const { cardUID } = req.params;
 
 //   const result = await pool.query(`
-//     SELECT 
+//     SELECT
 //       s.user_id,
 //       s.register_number,
 //       s.full_name,
@@ -263,7 +265,7 @@
 //   const { userId } = req.params;
 
 //   const result = await pool.query(`
-//     SELECT 
+//     SELECT
 //       s.register_number,
 //       s.full_name,
 //       r.balance,
@@ -300,7 +302,7 @@
 
 //   try {
 //     const result = await updateBalance(userId, amount, description, card_uid);
-    
+
 //     if (!result.success) {
 //       return res.status(400).json(result);
 //     }
@@ -327,7 +329,7 @@
 //   }
 
 //   const client = await pool.connect();
-  
+
 //   try {
 //     await client.query('BEGIN');
 
@@ -337,7 +339,7 @@
 //     // Calculate total amount and validate menu items
 //     let totalAmount = 0;
 //     const menuItemIds = items.map(item => item.menu_item_id);
-    
+
 //     const menuResult = await client.query(
 //       'SELECT id, price FROM menu_items WHERE id = ANY($1::uuid[]) AND is_available = TRUE AND is_active = TRUE',
 //       [menuItemIds]
@@ -359,7 +361,7 @@
 //     // Check student balance
 //     const balanceResult = await client.query(`
 //       SELECT r.balance, r.card_uid, s.register_number, s.full_name
-//       FROM rfid_cards r 
+//       FROM rfid_cards r
 //       JOIN students s ON r.assigned_student = s.user_id
 //       WHERE r.assigned_student = $1 AND r.status = 'ACTIVE'
 //     `, [student_id]);
@@ -374,7 +376,7 @@
 
 //     const currentBalance = parseFloat(balanceResult.rows[0].balance);
 //     const studentCardUID = balanceResult.rows[0].card_uid;
-    
+
 //     if (currentBalance < totalAmount) {
 //       await client.query('ROLLBACK');
 //       return res.status(400).json({
@@ -390,7 +392,7 @@
 
 //     // Create canteen transaction
 //     const transactionResult = await client.query(
-//       `INSERT INTO canteen_transactions 
+//       `INSERT INTO canteen_transactions
 //        (transaction_id, student_id, card_id, amount, status, description)
 //        VALUES ($1, $2, $3, $4, 'completed', $5) RETURNING *`,
 //       [transactionId, student_id, card_uid || studentCardUID, totalAmount, `Canteen purchase - ${items.length} items`]
@@ -429,8 +431,8 @@
 //     await client.query(
 //       `INSERT INTO daily_sales (date, total_transactions, total_revenue)
 //        VALUES ($1, 1, $2)
-//        ON CONFLICT (date) 
-//        DO UPDATE SET 
+//        ON CONFLICT (date)
+//        DO UPDATE SET
 //          total_transactions = daily_sales.total_transactions + 1,
 //          total_revenue = daily_sales.total_revenue + $2,
 //          updated_at = CURRENT_TIMESTAMP`,
@@ -441,7 +443,7 @@
 
 //     // Get complete transaction details
 //     const completeTransaction = await pool.query(`
-//       SELECT 
+//       SELECT
 //         ct.*,
 //         s.register_number,
 //         s.full_name,
@@ -454,7 +456,7 @@
 //               'unit_price', cti.unit_price,
 //               'total_price', cti.total_price
 //             ) ORDER BY cti.created_at
-//           ) FILTER (WHERE mi.id IS NOT NULL), 
+//           ) FILTER (WHERE mi.id IS NOT NULL),
 //           '[]'::json
 //         ) as items
 //       FROM canteen_transactions ct
@@ -491,18 +493,18 @@
 
 // // Get transaction history with corrected parameter syntax
 // app.get('/api/transactions', asyncHandler(async (req, res) => {
-//   const { 
-//     student_id, 
-//     food_name, 
-//     start_date, 
-//     end_date, 
-//     status, 
-//     page = 1, 
-//     limit = 50 
+//   const {
+//     student_id,
+//     food_name,
+//     start_date,
+//     end_date,
+//     status,
+//     page = 1,
+//     limit = 50
 //   } = req.query;
 
 //   let query = `
-//     SELECT 
+//     SELECT
 //       ct.id,
 //       ct.transaction_id,
 //       ct.student_id,
@@ -520,7 +522,7 @@
 //             'unit_price', cti.unit_price,
 //             'total_price', cti.total_price
 //           ) ORDER BY cti.created_at
-//         ) FILTER (WHERE mi.id IS NOT NULL), 
+//         ) FILTER (WHERE mi.id IS NOT NULL),
 //         '[]'::json
 //       ) as items
 //     FROM canteen_transactions ct
@@ -649,10 +651,10 @@
 //   if (result.rows.length === 0) {
 //     // Calculate from transactions if daily_sales entry doesn't exist
 //     const transactionResult = await pool.query(`
-//       SELECT 
+//       SELECT
 //         COUNT(*) as total_transactions,
 //         COALESCE(SUM(amount), 0) as total_revenue
-//       FROM canteen_transactions 
+//       FROM canteen_transactions
 //       WHERE DATE(created_at) = $1 AND status = 'completed'
 //     `, [targetDate]);
 
@@ -684,7 +686,7 @@
 //   const offset = (parseInt(page) - 1) * parseInt(limit);
 
 //   const result = await pool.query(`
-//     SELECT 
+//     SELECT
 //       bh.*,
 //       ct.transaction_id,
 //       ct.description as transaction_description
@@ -726,7 +728,7 @@
 
 //   try {
 //     const result = await updateBalance(userId, parseFloat(amount), description);
-    
+
 //     if (!result.success) {
 //       return res.status(400).json(result);
 //     }

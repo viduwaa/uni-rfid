@@ -1,73 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/lib/db";
-import { updateMenuItemAvailability } from "@/lib/canteenQueries";
+import {
+    getAllMenuItems,
+    updateMenuItemAvailability,
+} from "@/lib/canteenQueries";
 
 export async function GET(request: NextRequest) {
-    const client = await pool.connect();
     try {
-        // Check if table exists
-        const tableExists = await client.query(`
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_name = 'menu_items'
-            );
-        `);
+        const { searchParams } = new URL(request.url);
+        const availableOnly = searchParams.get("available") === "true";
 
-        // Get table structure
-        const tableStructure = await client.query(`
-            SELECT column_name, data_type, is_nullable, column_default
-            FROM information_schema.columns
-            WHERE table_name = 'menu_items'
-            ORDER BY ordinal_position;
-        `);
-
-        // Check ENUM values
-        const enumValues = await client.query(`
-            SELECT unnest(enum_range(NULL::food_category)) as category_values;
-        `);
-
-        // Get existing menu items
-        const existingItems = await client.query(`
-            SELECT * FROM menu_items LIMIT 5;
-        `);
+        const menuItems = await getAllMenuItems(availableOnly);
 
         return NextResponse.json({
             success: true,
-            data: {
-                tableExists: tableExists.rows[0].exists,
-                tableStructure: tableStructure.rows,
-                enumValues: enumValues.rows,
-                existingItems: existingItems.rows,
-                totalItems: existingItems.rowCount
-            }
+            data: menuItems,
         });
     } catch (error) {
-        console.error("Debug error:", error);
+        console.error("Error fetching menu items:", error);
+        return NextResponse.json(
+            {
+                success: false,
+                error: (error as Error).message,
+            },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        // This endpoint could be used to refresh menu availability
+        // For now, just return success
         return NextResponse.json({
-            success: false,
-            error: (error as Error).message,
-            stack: (error as Error).stack
-        }, { status: 500 });
-    } finally {
-        client.release();
+            success: true,
+            message: "Menu availability refreshed",
+        });
+    } catch (error) {
+        console.error("Error refreshing menu availability:", error);
+        return NextResponse.json(
+            {
+                success: false,
+                error: (error as Error).message,
+            },
+            { status: 500 }
+        );
     }
 }
 
 export async function PATCH(request: NextRequest) {
-  try {
-    const { id, is_available } = await request.json()
+    try {
+        const { id, is_available } = await request.json();
 
-    const updatedItem = await updateMenuItemAvailability(id, is_available)
-    
-    return NextResponse.json({
-      success: true,
-      data: updatedItem
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to update item' },
-      { status: 500 }
-    )
-  }
+        const updatedItem = await updateMenuItemAvailability(id, is_available);
+
+        return NextResponse.json({
+            success: true,
+            data: updatedItem,
+        });
+    } catch (error) {
+        return NextResponse.json(
+            { success: false, message: "Failed to update item" },
+            { status: 500 }
+        );
+    }
 }

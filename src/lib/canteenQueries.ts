@@ -135,7 +135,8 @@ export const getAllMenuItems = async (
 ): Promise<MenuItem[]> => {
     const client = await pool.connect();
     try {
-        let query = "SELECT * FROM menu_items WHERE is_active = TRUE";
+        let query =
+            "SELECT id as menu_item_id, name as item_name, category, price, description, is_available, is_active, created_at, updated_at FROM menu_items WHERE is_active = TRUE";
         if (availableOnly) {
             query += " AND is_available = TRUE";
         }
@@ -144,6 +145,7 @@ export const getAllMenuItems = async (
         console.log("Executing query:", query); // Add this for debugging
         const result = await client.query(query);
         console.log("Query result count:", result.rows.length); // Add this for debugging
+        console.log("Sample menu item:", result.rows[0]); // Add this for debugging
 
         return result.rows;
     } catch (error) {
@@ -291,7 +293,13 @@ export const createTransaction = async (
     try {
         await client.query("BEGIN");
 
-        const { student_id, card_uid, items } = transactionData;
+        const {
+            student_id,
+            card_uid,
+            items,
+            payment_method = "card",
+            manual_payment_amount,
+        } = transactionData;
 
         // Generate transaction ID
         const transactionId = "TXN-" + Date.now();
@@ -300,17 +308,27 @@ export const createTransaction = async (
         let totalAmount = 0;
         const menuItemIds = items.map((item) => item.menu_item_id);
 
+        console.log("Looking for menu item IDs:", menuItemIds);
+
         const menuResult = await client.query(
-            "SELECT id, price FROM menu_items WHERE id = ANY($1::uuid[]) AND is_available = TRUE AND is_active = TRUE",
+            "SELECT id, price, name FROM menu_items WHERE id = ANY($1::uuid[]) AND is_available = TRUE AND is_active = TRUE",
             [menuItemIds]
         );
+
+        console.log("Found menu items:", menuResult.rows);
 
         const menuMap = new Map(
             menuResult.rows.map((item) => [item.id, parseFloat(item.price)])
         );
 
+        console.log("Menu map:", Array.from(menuMap.entries()));
+
         for (const item of items) {
             if (!menuMap.has(item.menu_item_id)) {
+                console.error(
+                    `Menu item ${item.menu_item_id} not found. Available IDs:`,
+                    Array.from(menuMap.keys())
+                );
                 throw new Error(
                     `Menu item ${item.menu_item_id} not found or unavailable`
                 );
@@ -337,9 +355,20 @@ export const createTransaction = async (
         const currentBalance = parseFloat(balanceResult.rows[0].balance);
         const studentCardUID = balanceResult.rows[0].card_uid;
 
-        if (currentBalance < totalAmount) {
+        // For card payments, check balance. For manual payments, skip balance check
+        if (payment_method === "card" && currentBalance < totalAmount) {
             throw new Error("Insufficient balance");
         }
+
+        // Determine payment amount and description based on payment method
+        const paymentAmount =
+            payment_method === "manual"
+                ? manual_payment_amount || 0
+                : totalAmount;
+        const paymentDescription =
+            payment_method === "manual"
+                ? `Manual payment - ${items.length} items (Paid: Rs.${paymentAmount})`
+                : `Canteen purchase - ${items.length} items`;
 
         // Create canteen transaction
         const transactionResult = await client.query(
@@ -350,8 +379,8 @@ export const createTransaction = async (
                 transactionId,
                 student_id,
                 card_uid || studentCardUID,
-                totalAmount,
-                `Canteen purchase - ${items.length} items`,
+                paymentAmount, // Use payment amount instead of total
+                paymentDescription,
             ]
         );
 
@@ -374,27 +403,44 @@ export const createTransaction = async (
             );
         }
 
-        // Update student balance
-        const newBalance = currentBalance - totalAmount;
-        await client.query(
-            "UPDATE rfid_cards SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE assigned_student = $2",
-            [newBalance, student_id]
-        );
+        // Update student balance and record history only for card payments
+        if (payment_method === "card") {
+            const newBalance = currentBalance - totalAmount;
+            await client.query(
+                "UPDATE rfid_cards SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE assigned_student = $2",
+                [newBalance, student_id]
+            );
 
-        // Record balance history
-        await client.query(
-            `INSERT INTO balance_history (student_id, card_id, amount, balance_before, balance_after, description, transaction_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-                student_id,
-                card_uid || studentCardUID,
-                -totalAmount,
-                currentBalance,
-                newBalance,
-                `Purchase: ${transactionId}`,
-                transaction.id,
-            ]
-        );
+            // Record balance history for card payments
+            await client.query(
+                `INSERT INTO balance_history (student_id, card_id, amount, balance_before, balance_after, description, transaction_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [
+                    student_id,
+                    card_uid || studentCardUID,
+                    -totalAmount,
+                    currentBalance,
+                    newBalance,
+                    `Purchase: ${transactionId}`,
+                    transaction.id,
+                ]
+            );
+        } else {
+            // Record balance history for manual payments (no balance deduction)
+            await client.query(
+                `INSERT INTO balance_history (student_id, card_id, amount, balance_before, balance_after, description, transaction_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [
+                    student_id,
+                    card_uid || studentCardUID,
+                    0, // No amount deducted for manual payments
+                    currentBalance,
+                    currentBalance, // Balance remains same
+                    `Manual payment: ${transactionId}`,
+                    transaction.id,
+                ]
+            );
+        }
 
         await client.query("COMMIT");
 
