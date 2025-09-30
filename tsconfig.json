@@ -21,10 +21,16 @@
         "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"]
-        },
-        "allowImportingTsExtensions": true
+        }
     },
-    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "middleware/index.ts", "src/app/api/socket.js", "middleware/nfc-middleware.js"],
-    "exclude": ["node_modules"],
-    
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        ".next/types/**/*.ts",
+        "middleware/index.ts",
+        "src/app/api/socket.js",
+        "middleware/nfc-middleware.js"
+    ],
+    "exclude": ["node_modules"]
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
-import { insertStudent, notIssued } from "@/lib/queries";
+import { insertStudent, notIssued } from "@/lib/adminQueries";
 import { StudentForm } from "@/types/student";
 
 export const config = {
@@ -71,7 +71,6 @@ export async function POST(request: NextRequest) {
         }
 
         await insertStudent(studentData, photoURL);
-        
 
         return NextResponse.json({
             success: true,
@@ -107,7 +106,32 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const cardNotIssued = searchParams.get("notissued");
+        const registerNumber = searchParams.get("register_number");
 
+        // Handle get student by register number for NFC card reading
+        if (registerNumber) {
+            const { getStudentByRegisterNumber } = await import(
+                "@/lib/canteenQueries"
+            );
+            const student = await getStudentByRegisterNumber(registerNumber);
+
+            if (student) {
+                return NextResponse.json({
+                    success: true,
+                    data: student,
+                });
+            } else {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Student not found",
+                    },
+                    { status: 404 }
+                );
+            }
+        }
+
+        // Handle get students without cards issued
         if (cardNotIssued == "true") {
             const students = await notIssued();
 
@@ -123,10 +147,12 @@ export async function GET(request: NextRequest) {
             message: "Invalid query parameter",
         });
     } catch (error) {
+        console.error("API Error:", error);
         return NextResponse.json(
             {
                 success: false,
                 message: "Failed to fetch students",
+                error: (error as Error).message,
             },
             { status: 500 }
         );

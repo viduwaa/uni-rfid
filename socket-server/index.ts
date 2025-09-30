@@ -68,14 +68,15 @@ io.on("connection", (socket) => {
     socket.on("write-complete", (result) => {
         console.log("✅ Card write complete:", result);
 
-        // Optionally broadcast to frontend or other systems
-        io.emit("card-write-success", result);
+        // Broadcast to frontend with the same event name
+        io.emit("write-complete", result);
     });
 
     socket.on("write-failed", (result) => {
         console.log("❌ Card write failed:", result);
 
-        io.emit("card-write-failed", result);
+        // Broadcast to frontend with the same event name
+        io.emit("write-failed", result);
     });
 
     socket.on("disconnect", () => {

@@ -31,5 +31,5 @@ export interface BaseStudent {
   date_of_birth?: Date | null;
   created_at?: Date;
   updated_at?: Date;
-  credits?:string
+  credits?:number;
 }

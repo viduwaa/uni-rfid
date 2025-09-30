@@ -9,82 +9,114 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CircleUser } from "lucide-react";
+import { CircleUser, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { BaseStudent } from "@/types/student";
-import dotenv from "dotenv";
 import { useState } from "react";
 import { toast } from "sonner";
 import WriteCardComponent from "@/components/WriteCard";
 
-// Load environment variables
-dotenv.config();
-let blob_token = process.env.NEXT_PUBLIC_BLOB_TOKEN;
+const blob_token = process.env.NEXT_PUBLIC_BLOB_TOKEN;
 
 interface AddMenuProps {
     onClose: () => void;
     studentData: BaseStudent;
+    onSuccess?: () => void;
 }
 
-export default function AddMenu({ onClose, studentData }: AddMenuProps) {
-    const [validationCheck, setValidationCheck] = useState("");
+export default function AddMenu({
+    onClose,
+    studentData,
+    onSuccess,
+}: AddMenuProps) {
+    const [formData, setFormData] = useState({
+        credits: "",
+    });
+    const [validationErrors, setValidationErrors] = useState<
+        Record<string, string>
+    >({});
     const [isWriting, setIsWriting] = useState(false);
-    const userID = studentData.user_id;
+    const [writeStatus, setWriteStatus] = useState<
+        "idle" | "preparing" | "writing" | "success" | "error"
+    >("idle");
+    const [isFormValid, setIsFormValid] = useState(false);
 
+    // Validate form data
+    const validateForm = (credits: string) => {
+        const errors: Record<string, string> = {};
+
+        if (!credits || credits.trim() === "") {
+            errors.credits = "Enter a credit value";
+        } else if (isNaN(parseFloat(credits))) {
+            errors.credits = "Value must be a number";
+        } else if (parseFloat(credits) < 0) {
+            errors.credits = "Value cannot be negative";
+        } else if (parseFloat(credits) > 10000) {
+            errors.credits = "Value seems too high (max 10,000)";
+        }
+
+        setValidationErrors(errors);
+        setIsFormValid(Object.keys(errors).length === 0);
+        return Object.keys(errors).length === 0;
+    };
+
+    // Handle form input changes
+    const handleInputChange = (field: string, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+
+        if (field === "credits") {
+            validateForm(value);
+        }
+    };
+
+  // Handle write process - simplified version
     const handleWrite = async (event: React.FormEvent) => {
         event.preventDefault();
 
-        //get form data
-        const form = event.currentTarget as HTMLFormElement;
-        const formData = new FormData(form);
-
-        //validate form data
-        const data = {
-            fullName: formData.get("fullName") as string,
-            registerNumber: formData.get("regNo") as string,
-            nicNo: formData.get("nic") as string,
-            faculty: formData.get("faculty") as string,
-            phoneNumber: formData.get("phone") as string,
-            credits: formData.get("credits") as string,
-        };
-
-        if (!data.credits || data.credits === "") {
-            setValidationCheck("Enter a credit value");
-            return; // Add return to prevent execution
-        } else if (isNaN(parseInt(data.credits))) {
-            setValidationCheck("Value cannot be a text");
-            return; // Add return to prevent execution
-        } else if (parseInt(data.credits) < 0) {
-            setValidationCheck("Value cannot be minus value");
-            return; // Add return to prevent execution
+        if (!validateForm(formData.credits)) {
+            toast.error("Please fix validation errors");
+            return;
         }
 
-        setValidationCheck("");
+        setWriteStatus("preparing");
         setIsWriting(true);
 
-        try {
-            const response = await fetch(
-                `/api/rfid?write=true&userid=${userID}`,
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
+        // Just set the writing status and let WriteCard handle the NFC write
+        // Database insertion will happen automatically after successful write
+        setWriteStatus("writing");
+        
+        toast.success(
+            "Please tap your card to the writer to complete the process"
+        );
+    };
 
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(
-                    data.message || "Write failed, please try again"
-                );
-            }
-        } catch (error) {
-            console.error("Error writing to the card", error);
-            toast.error("Error writing to the card", {
-                description: (error as Error).message + "\nPlease try again",
+    // Handle write completion from WriteCard component
+    const handleWriteComplete = (
+        success: boolean,
+        message: string,
+        cardUID?: string
+    ) => {
+        setIsWriting(false);
+
+        if (success) {
+            setWriteStatus("success");
+            toast.success("Card issued successfully!", {
+                description: `Card UID: ${cardUID}`,
             });
-        } finally {
-            setIsWriting(false);
+            
+            // Call parent success callback
+            onSuccess?.();
+            
+            // Auto-close after successful write and database save
+            setTimeout(() => {
+                onClose();
+            }, 2000);
+        } else {
+            setWriteStatus("error");
+            toast.error("Card write failed", {
+                description: message,
+            });
         }
     };
 
@@ -111,9 +143,9 @@ export default function AddMenu({ onClose, studentData }: AddMenuProps) {
         <>
             <div className="relative flex-1 p-4">
                 <div className="absolute flex-1 z-5 inset-0 backdrop-blur-[2px]"></div>
-                <div className="container relative -top-10 w-3/4 mx-auto z-10">
+                <div className="container relative -top-10 mx-auto z-10">
                     <Card className="grid grid-cols-4 p-4 gap-2">
-                        <Card className="col-span-3">
+                        <Card className="col-span-3 ">
                             <div
                                 className="absolute cursor-pointer rounded-full bg-gray-700 text-white dark:bg-gray-800 hover:text-red-500 p-2 right-[-15] top-[-15]"
                                 onClick={onClose}
@@ -144,7 +176,9 @@ export default function AddMenu({ onClose, studentData }: AddMenuProps) {
                             <CardContent>
                                 <form action="" onSubmit={handleWrite}>
                                     <div className="space-y-2 mb-4">
-                                        <Label htmlFor="fullName">Full Name</Label>
+                                        <Label htmlFor="fullName">
+                                            Full Name
+                                        </Label>
                                         <Input
                                             id="fullName"
                                             placeholder="Jane"
@@ -169,7 +203,9 @@ export default function AddMenu({ onClose, studentData }: AddMenuProps) {
                                                 placeholder="Jane"
                                                 disabled
                                                 readOnly
-                                                value={studentData.register_number}
+                                                value={
+                                                    studentData.register_number
+                                                }
                                             />
                                             <Input
                                                 id="regno"
@@ -193,13 +229,17 @@ export default function AddMenu({ onClose, studentData }: AddMenuProps) {
                                                 id="nic"
                                                 name="nic"
                                                 hidden
-                                                defaultValue={studentData.nic_no}
+                                                defaultValue={
+                                                    studentData.nic_no
+                                                }
                                             />
                                         </div>
                                     </div>
                                     <div className="grid gap-6 grid-cols-2">
                                         <div className="space-y-2 mb-4">
-                                            <Label htmlFor="faculty">Faculty</Label>
+                                            <Label htmlFor="faculty">
+                                                Faculty
+                                            </Label>
                                             <Input
                                                 id="faculty"
                                                 placeholder="Technology"
@@ -215,39 +255,109 @@ export default function AddMenu({ onClose, studentData }: AddMenuProps) {
                                             />
                                         </div>
                                         <div className="space-y-2 mb-4">
-                                            <Label htmlFor="credits">Credits</Label>
+                                            <Label htmlFor="credits">
+                                                Credits
+                                            </Label>
                                             <Input
                                                 id="credits"
                                                 name="credits"
+                                                value={formData.credits}
+                                                onChange={(e) =>
+                                                    handleInputChange(
+                                                        "credits",
+                                                        e.target.value
+                                                    )
+                                                }
                                                 placeholder="100"
                                                 required
-                                                className="border-2 border-green-400"
+                                                className={`border-2 ${
+                                                    validationErrors.credits
+                                                        ? "border-red-400 focus:border-red-500"
+                                                        : "border-green-400 focus:border-green-500"
+                                                }`}
                                             />
-                                            {validationCheck && (
-                                                <span className="text-red-500 text-sm">
-                                                    {validationCheck}
-                                                </span>
+                                            {validationErrors.credits && (
+                                                <div className="flex items-center gap-1 text-red-600 text-sm">
+                                                    <AlertCircle className="h-3 w-3" />
+                                                    <span>
+                                                        {
+                                                            validationErrors.credits
+                                                        }
+                                                    </span>
+                                                </div>
                                             )}
+                                            {isFormValid &&
+                                                formData.credits && (
+                                                    <div className="flex items-center gap-1 text-green-600 text-sm">
+                                                        <CheckCircle className="h-3 w-3" />
+                                                        <span>
+                                                            Valid amount: Rs.
+                                                            {parseFloat(
+                                                                formData.credits
+                                                            ).toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                )}
                                         </div>
                                     </div>
-                                    <div className="mt-3 flex justify-end">
-                                        <Button type="submit" disabled={isWriting}>
-                                            {isWriting
-                                                ? "Writing..."
-                                                : "Write to the card"}
+                                    <div className="mt-6 flex justify-between items-center">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <div
+                                                className={`w-2 h-2 rounded-full ${
+                                                    writeStatus === "success"
+                                                        ? "bg-green-500"
+                                                        : writeStatus ===
+                                                            "error"
+                                                          ? "bg-red-500"
+                                                          : writeStatus ===
+                                                              "writing"
+                                                            ? "bg-blue-500"
+                                                            : "bg-gray-300"
+                                                }`}
+                                            />
+                                            <span className="text-muted-foreground">
+                                                Status:{" "}
+                                                {writeStatus
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                    writeStatus.slice(1)}
+                                            </span>
+                                        </div>
+
+                                        <Button
+                                            type="submit"
+                                            disabled={isWriting || !isFormValid}
+                                            className={
+                                                writeStatus === "success"
+                                                    ? "bg-green-600 hover:bg-green-700"
+                                                    : writeStatus === "error"
+                                                      ? "bg-red-600 hover:bg-red-700"
+                                                      : ""
+                                            }
+                                        >
+                                            {writeStatus === "success"
+                                                ? "✅ Card Issued"
+                                                : writeStatus === "error"
+                                                  ? "❌ Retry Write"
+                                                  : writeStatus === "writing"
+                                                    ? "✍️ Writing to Card..."
+                                                    : writeStatus ===
+                                                        "preparing"
+                                                      ? "⏳ Preparing..."
+                                                      : "💳 Issue Card"}
                                         </Button>
                                     </div>
                                 </form>
                             </CardContent>
                         </Card>
-                        <Card className="">
+                        <div className="space-y-4">
                             <WriteCardComponent
-                            student={studentData}
-                            isWriting={isWriting}
-                        />
-                        </Card>
+                                student={studentData}
+                                isWriting={isWriting}
+                                onWriteComplete={handleWriteComplete}
+                            />
+                        </div>
                     </Card>
-                    
                 </div>
             </div>
         </>

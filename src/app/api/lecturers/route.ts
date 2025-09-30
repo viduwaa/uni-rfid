@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
-import { insertLecturer } from "@/lib/queries";
+import { insertLecturer } from "@/lib/adminQueries";
 import { LecturerForm } from "@/types/lecturers";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
     try {
         // Check if user is admin
         const session = await getServerSession(authOptions);
-        console.log(session?.user.role)
-        if (!session || session.user.role !== "admin") {
+        console.log(session?.user?.role);
+        if (!session || session.user?.role !== "admin") {
             return NextResponse.json(
                 { message: "Unauthorized. Only admins can create lecturers." },
                 { status: 403 }
@@ -57,8 +57,6 @@ export async function POST(request: NextRequest) {
 
         console.log(lecturersData.phoneNumber);
         await insertLecturer(lecturersData, photoURL);
-
-
 
         return NextResponse.json({
             success: true,

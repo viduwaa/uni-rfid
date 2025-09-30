@@ -87,7 +87,7 @@ export default function AddStudent() {
             toast.success("Student Registration success", {
                 description: (
                     <Link
-                        href="/admin/rfid/issue-new"
+                        href="/admin/rfid/"
                         className="text-blue-500 hover:underline"
                     >
                         Click here to card registration
@@ -419,7 +419,7 @@ export default function AddStudent() {
                                         </Label>
                                         <Input
                                             id="phone"
-                                            placeholder="+1 (555) 123-4567"
+                                            placeholder="+94 012 345-6789"
                                             name="phone"
                                         />
                                         {validationError?.phoneNumber && (
