@@ -16,6 +16,7 @@ import {
     Loader2,
     UtensilsCrossed,
 } from "lucide-react";
+import { getFacultyName } from "@/lib/utils";
 
 interface MenuItem {
     menu_item_id: string;
@@ -426,7 +427,7 @@ export default function StudentDisplay() {
                                                     Faculty
                                                 </p>
                                                 <p className="text-lg">
-                                                    {orderState.student.faculty}
+                                                    {getFacultyName(orderState.student.faculty)}
                                                 </p>
                                             </div>
                                             <div>

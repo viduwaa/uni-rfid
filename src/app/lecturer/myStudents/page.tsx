@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { getFacultyName } from "@/lib/utils";
 import {
     ArrowLeft,
     Search,
@@ -410,7 +411,7 @@ export default function MyStudents() {
                                                     {student.register_number}
                                                 </td>
                                                 <td className="py-3 px-4 text-sm text-gray-900">
-                                                    {student.faculty}
+                                                    {getFacultyName(student.faculty)}
                                                 </td>
                                                 <td className="py-3 px-4 text-sm text-gray-900">
                                                     Year {student.year_of_study}

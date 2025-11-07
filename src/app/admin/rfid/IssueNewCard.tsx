@@ -8,6 +8,7 @@ import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { BaseStudent } from "@/types/student";
 import AddMenu from "./AddMenu";
+import { getFacultyName } from "@/lib/utils";
 
 export default function IssueNewCard() {
     const [students, setStudents] = useState<BaseStudent[]>([]);
@@ -201,7 +202,7 @@ export default function IssueNewCard() {
                                                         }
                                                     </p>
                                                     <Badge variant="outline">
-                                                        {student.faculty}
+                                                        {getFacultyName(student.faculty || "")}
                                                     </Badge>
                                                 </div>
                                             </div>

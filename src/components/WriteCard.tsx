@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, CheckCircle, Clock, CreditCard } from "lucide-react";
+import { getFacultyName } from "@/lib/utils";
 
 interface WriteCardProps {
     student: BaseStudent;
@@ -305,7 +306,7 @@ export default function WriteCardComponent({
                                 {student.register_number}
                             </div>
                             <div>
-                                <strong>Faculty:</strong> {student.faculty}
+                                <strong>Faculty:</strong> {getFacultyName(student.faculty || "")}
                             </div>
                         </div>
                     </div>

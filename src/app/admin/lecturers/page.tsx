@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getFacultyName } from "@/lib/utils";
 import {
     Search,
     Edit,
@@ -450,7 +451,7 @@ export default function LecturerManagement() {
                                         <TableCell>{lecturer.email}</TableCell>
                                         <TableCell>
                                             <Badge variant="outline">
-                                                {lecturer.faculty}
+                                                {getFacultyName(lecturer.faculty)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
