@@ -9,6 +9,7 @@ import {
     getAttendanceSummary,
     calculateStudentGPA,
     getStudentCourses,
+    getStudentLibraryLoans,
 } from "@/lib/studentQueries";
 
 // GET /api/student/dashboard
@@ -44,12 +45,17 @@ export async function GET(request: NextRequest) {
         // Get enrolled courses
         const courses = await getStudentCourses(studentId);
 
+        // Get active borrowed books
+        const allBorrowedBooks = await getStudentLibraryLoans(studentId);
+        const borrowedBooks = allBorrowedBooks.filter(book => book.status === 'active');
+
         return NextResponse.json({
             success: true,
             data: {
                 student,
                 stats,
                 courses,
+                borrowedBooks,
             },
         });
     } catch (error) {

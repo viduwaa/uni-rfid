@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
 import {
     Card,
     CardContent,
@@ -9,6 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {
     Award,
     ChartLine,
@@ -20,6 +28,7 @@ import {
     GraduationCap,
     TrendingUp,
     Loader2,
+    Info,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";
@@ -27,6 +36,7 @@ import { getFacultyName } from "@/lib/utils";
 
 export default function StudentDashboard() {
     const { data, loading, error } = useStudentDashboard();
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     if (loading) {
         return (
@@ -73,10 +83,103 @@ export default function StudentDashboard() {
                             Year {data?.student?.year_of_study}
                         </Badge>
                     </div>
+                    <div className="mt-4">
+                        <Button
+                            onClick={() => setIsProfileOpen(true)}
+                            variant="outline"
+                            className="flex items-center space-x-2"
+                        >
+                            <Info className="h-4 w-4" />
+                            <span>View Profile Summary</span>
+                        </Button>
+                    </div>
                 </div>
 
+                {/* Profile Summary Dialog */}
+                <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+                    <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center space-x-2">
+                                <User className="h-5 w-5 text-blue-600" />
+                                <span>Student Profile Summary</span>
+                            </DialogTitle>
+                            <DialogDescription>
+                                Your complete student information
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Full Name:
+                                    </span>
+                                    <span className="font-semibold text-right">
+                                        {data?.student?.full_name}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Student ID:
+                                    </span>
+                                    <span className="font-semibold">
+                                        {data?.student?.register_number}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Faculty:
+                                    </span>
+                                    <span className="font-semibold text-right">
+                                        {getFacultyName(data?.student?.faculty || "")}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Year of Study:
+                                    </span>
+                                    <span className="font-semibold">
+                                        Year {data?.student?.year_of_study}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Email:
+                                    </span>
+                                    <span className="font-semibold text-right break-all">
+                                        {data?.student?.email}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Current GPA:
+                                    </span>
+                                    <span className="font-semibold">
+                                        {data?.stats?.currentGPA?.toFixed(2) || "0.00"}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start pb-3 border-b">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Enrolled Courses:
+                                    </span>
+                                    <span className="font-semibold">
+                                        {data?.stats?.totalCourses || 0}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-start">
+                                    <span className="text-sm text-gray-600 font-medium">
+                                        Card Balance:
+                                    </span>
+                                    <span className="font-semibold">
+                                        Rs. {data?.stats?.currentBalance?.toFixed(2) || "0.00"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
                 {/* Stats Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Card className="bg-white/70 backdrop-blur-sm border-blue-200">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
@@ -90,23 +193,6 @@ export default function StudentDashboard() {
                             </div>
                             <p className="text-xs text-gray-600">
                                 Active this semester
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-white/70 backdrop-blur-sm border-green-200">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Attendance
-                            </CardTitle>
-                            <CalendarClock className="h-4 w-4 text-green-600" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-700">
-                                {data?.stats?.totalAttendancePercentage || 0}%
-                            </div>
-                            <p className="text-xs text-gray-600">
-                                Overall attendance
                             </p>
                         </CardContent>
                     </Card>
@@ -321,8 +407,9 @@ export default function StudentDashboard() {
                     </Link>
                 </div>
 
-                {/* Additional Services */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Library Status & Current Courses */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Library Status */}
                     <Link href="/student/library" className="block group">
                         <Card className="h-full transition-all hover:shadow-lg hover:scale-105 bg-white/80 backdrop-blur-sm border-purple-200 group-hover:border-purple-300">
                             <CardHeader>
@@ -333,16 +420,64 @@ export default function StudentDashboard() {
                                             Library Status
                                         </CardTitle>
                                         <CardDescription className="text-sm">
-                                            Manage borrowed books
+                                            Active borrowed books
                                         </CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-gray-600">
-                                    View borrowed books, due dates, and manage
-                                    your library account.
-                                </p>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                        <span className="text-sm font-medium text-purple-900">
+                                            Active Books:
+                                        </span>
+                                        <Badge variant="default" className="bg-purple-600">
+                                            {data?.stats?.activeBorrowedBooks || 0}
+                                        </Badge>
+                                    </div>
+                                    
+                                    {data?.borrowedBooks && data.borrowedBooks.length > 0 ? (
+                                        <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                                            {data.borrowedBooks.slice(0, 3).map((book) => (
+                                                <div
+                                                    key={book.id}
+                                                    className="p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <div className="font-medium text-sm text-gray-900 truncate">
+                                                        {book.title}
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 mt-1">
+                                                        by {book.author}
+                                                    </div>
+                                                    <div className="flex justify-between items-center mt-2">
+                                                        <span className="text-xs text-gray-500">
+                                                            Due: {new Date(book.due_date).toLocaleDateString()}
+                                                        </span>
+                                                        {book.loan_status === 'overdue' ? (
+                                                            <Badge variant="destructive" className="text-xs">
+                                                                Overdue
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                Active
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {data.borrowedBooks.length > 3 && (
+                                                <p className="text-xs text-gray-500 text-center pt-2">
+                                                    +{data.borrowedBooks.length - 3} more books
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-600 text-center py-4">
+                                            No active borrowed books
+                                        </p>
+                                    )}
+                                </div>
+                                
                                 {((data?.stats?.overdueBooks ?? 0) > 0 ||
                                     (data?.stats?.pendingFines ?? 0) > 0) && (
                                     <div className="mt-3 p-2 bg-red-50 rounded-lg">
@@ -365,107 +500,57 @@ export default function StudentDashboard() {
                         </Card>
                     </Link>
 
-                    <Card className="h-full bg-white/80 backdrop-blur-sm border-gray-200">
-                        <CardHeader>
-                            <div className="flex items-center space-x-3">
-                                <User className="h-8 w-8 text-gray-600" />
-                                <div>
-                                    <CardTitle className="text-lg">
-                                        Quick Info
-                                    </CardTitle>
-                                    <CardDescription className="text-sm">
-                                        Student profile summary
-                                    </CardDescription>
+                    {/* Current Courses */}
+                    {data?.courses && data.courses.length > 0 && (
+                        <Card className="bg-white/80 backdrop-blur-sm h-full">
+                            <CardHeader>
+                                <CardTitle className="flex items-center space-x-2">
+                                    <BookOpen className="h-5 w-5" />
+                                    <span>Current Courses</span>
+                                </CardTitle>
+                                <CardDescription>
+                                    Courses you are enrolled in this semester
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto">
+                                    {data.courses.slice(0, 6).map((course) => (
+                                        <div
+                                            key={course.id}
+                                            className="p-4 border rounded-lg bg-gray-50"
+                                        >
+                                            <div className="font-medium text-sm">
+                                                {course.course_code}
+                                            </div>
+                                            <div className="text-sm text-gray-600 mt-1">
+                                                {course.course_name}
+                                            </div>
+                                            <div className="flex justify-between items-center mt-2">
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="text-xs"
+                                                >
+                                                    {course.credits} Credits
+                                                </Badge>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="text-xs"
+                                                >
+                                                    Year {course.year}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">
-                                        Student ID:
-                                    </span>
-                                    <span className="font-medium">
-                                        {data?.student?.register_number}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">
-                                        Faculty:
-                                    </span>
-                                    <span className="font-medium">
-                                        {getFacultyName(data?.student?.faculty || "")}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Year:</span>
-                                    <span className="font-medium">
-                                        Year {data?.student?.year_of_study}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">
-                                        Email:
-                                    </span>
-                                    <span className="font-medium truncate">
-                                        {data?.student?.email}
-                                    </span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                {data.courses.length > 6 && (
+                                    <p className="text-sm text-gray-500 mt-4 text-center">
+                                        +{data.courses.length - 6} more courses
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
-
-                {/* Current Courses */}
-                {data?.courses && data.courses.length > 0 && (
-                    <Card className="bg-white/80 backdrop-blur-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <BookOpen className="h-5 w-5" />
-                                <span>Current Courses</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Courses you are enrolled in this semester
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {data.courses.slice(0, 6).map((course) => (
-                                    <div
-                                        key={course.id}
-                                        className="p-4 border rounded-lg bg-gray-50"
-                                    >
-                                        <div className="font-medium text-sm">
-                                            {course.course_code}
-                                        </div>
-                                        <div className="text-sm text-gray-600 mt-1">
-                                            {course.course_name}
-                                        </div>
-                                        <div className="flex justify-between items-center mt-2">
-                                            <Badge
-                                                variant="secondary"
-                                                className="text-xs"
-                                            >
-                                                {course.credits} Credits
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className="text-xs"
-                                            >
-                                                Year {course.year}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            {data.courses.length > 6 && (
-                                <p className="text-sm text-gray-500 mt-4 text-center">
-                                    +{data.courses.length - 6} more courses
-                                </p>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
 
                 {/* Logout Button */}
                 <div className="flex justify-end">
