@@ -24,16 +24,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 
+
 export default function Home() {
     return (
         <div className="min-h-screen px-5">
             <div className="container mx-auto py-10">
                 <div className="mb-10 text-center">
                     <h1 className="text-4xl font-bold tracking-tight">
-                        University RFID Card System
+                        University Management System
                     </h1>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Manage attendance, canteen services, and student
+                        Integrated with RFID Card System | Manage attendance, canteen services, and student
                         information
                     </p>
                 </div>

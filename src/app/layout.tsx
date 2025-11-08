@@ -55,7 +55,7 @@ export default async function RootLayout({
                         disableTransitionOnChange
                     >
                         <PageLoadingBar />
-                        <div className="min-h-screen bg-background font-sans antialiased">
+                        <div className="min-h-screen font-sans antialiased">
                             <div className="relative flex min-h-screen flex-col">
                                 {/* Main content area */}
                                 <main className="flex-1">{children}</main>

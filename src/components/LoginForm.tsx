@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useMemo } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 
 interface LoginFormProps {
-    role: "admin" | "lecturer" | "student" | "canteen";
+    role: "admin" | "lecturer" | "student" | "canteen" | "library";
 }
 
 export default function LoginForm({ role }: LoginFormProps) {
@@ -28,6 +28,24 @@ export default function LoginForm({ role }: LoginFormProps) {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+
+    // Get role name based on the role prop
+    const roleName = useMemo(() => {
+        switch (role) {
+            case "admin":
+                return "Admin";
+            case "lecturer":
+                return "Lecturer";
+            case "student":
+                return "Student";
+            case "canteen":
+                return "Canteen";
+            case "library":
+                return "Library"
+            default:
+                return "";
+        }
+    }, [role]);
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
@@ -76,6 +94,9 @@ export default function LoginForm({ role }: LoginFormProps) {
                 case "canteen":
                     router.push("/canteen/dashboard");
                     break;
+                case "library":
+                    router.push("/library/dashboard");
+                    break;
                 default:
                     router.push("/");
             }
@@ -88,80 +109,91 @@ export default function LoginForm({ role }: LoginFormProps) {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center px-4">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold capitalize">
-                        {role} Login
-                    </CardTitle>
-                    <CardDescription>
-                        Enter your credentials to access the {role} dashboard.
-                    </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleLogin}>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder={`${role}@university.edu`}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Password</Label>
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-sm font-medium text-primary hover:underline"
-                                >
-                                    Forgot password?
-                                </Link>
+        <div className="flex flex-col min-h-screen items-center justify-center px-4">
+            <div className="flex flex-col flex-2 items-center justify-center">
+                <h1 className="text-4xl font-bold">
+                    University Management System
+                </h1>
+                <h3 className="text-md mt-2">{roleName} - Portal</h3>
+            </div>
+            <div className="flex-3 w-full max-w-md">
+                <Card>
+                    <CardHeader className="space-y-1">
+                        <CardTitle className="text-2xl font-bold capitalize">
+                            {role} Login
+                        </CardTitle>
+                        <CardDescription>
+                            Enter your credentials to access the {role}{" "}
+                            dashboard.
+                        </CardDescription>
+                    </CardHeader>
+                    <form onSubmit={handleLogin}>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder={`${role}@university.edu`}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
                             </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        {error && (
-                            <p className="text-sm text-red-500 font-medium">
-                                {error}
-                            </p>
-                        )}
-                    </CardContent>
-                    <CardFooter className="flex flex-col space-y-4 mt-8">
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <span className="flex items-center gap-2">
-                                    <Spinner size="sm" />
-                                    Logging in...
-                                </span>
-                            ) : (
-                                "Login"
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password">Password</Label>
+                                    <Link
+                                        href="/forgot-password"
+                                        className="text-sm font-medium text-primary hover:underline"
+                                    >
+                                        Forgot password?
+                                    </Link>
+                                </div>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                    required
+                                />
+                            </div>
+                            {error && (
+                                <p className="text-sm text-red-500 font-medium">
+                                    {error}
+                                </p>
                             )}
-                        </Button>
-                        <Link href="/" className="w-full">
+                        </CardContent>
+                        <CardFooter className="flex flex-col space-y-4 mt-8">
                             <Button
-                                variant="outline"
+                                type="submit"
                                 className="w-full"
                                 disabled={isLoading}
                             >
-                                Back to Home
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <Spinner size="sm" />
+                                        Logging in...
+                                    </span>
+                                ) : (
+                                    "Login"
+                                )}
                             </Button>
-                        </Link>
-                    </CardFooter>
-                </form>
-            </Card>
+                            <Link href="/" className="w-full">
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    disabled={isLoading}
+                                >
+                                    Back to Home
+                                </Button>
+                            </Link>
+                        </CardFooter>
+                    </form>
+                </Card>
+            </div>
         </div>
     );
 }
