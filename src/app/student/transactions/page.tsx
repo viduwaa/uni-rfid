@@ -98,7 +98,7 @@ export default function StudentTransactions() {
 
     const totalSpent = transactions
         .filter((t) => t.status === "completed")
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
     if (loading) {
         return (
@@ -170,7 +170,7 @@ export default function StudentTransactions() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-green-700">
-                                Rs. {totalSpent}
+                                Rs. {totalSpent.toFixed(2)}
                             </div>
                             <p className="text-xs text-gray-600">
                                 Completed transactions
@@ -260,7 +260,7 @@ export default function StudentTransactions() {
                                                 </TableCell>
                                                 <TableCell className="font-medium">
                                                     Rs.{" "}
-                                                    {transaction.amount}
+                                                    {parseFloat(transaction.amount.toString()).toFixed(2)}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge

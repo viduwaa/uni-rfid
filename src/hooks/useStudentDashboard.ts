@@ -17,6 +17,7 @@ export interface DashboardData {
         currentBalance: number;
         overdueBooks: number;
         pendingFines: number;
+        activeBorrowedBooks: number;
     };
     courses: Array<{
         id: string;
@@ -25,6 +26,17 @@ export interface DashboardData {
         faculty: string;
         year: number;
         credits: number;
+    }>;
+    borrowedBooks?: Array<{
+        id: string;
+        title: string;
+        author: string;
+        barcode: string;
+        borrowed_at: string;
+        due_date: string;
+        status: string;
+        loan_status: string;
+        days_overdue: number;
     }>;
 }
 
