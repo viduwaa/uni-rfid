@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 
 interface LoginFormProps {
     role: "admin" | "lecturer" | "student" | "canteen";
@@ -25,55 +26,64 @@ export default function LoginForm({ role }: LoginFormProps) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
         setError("");
+        setIsLoading(true);
 
-        const result = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-        });
+        try {
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
 
-        if (result?.error) {
-            setError("Invalid email or password");
-            return;
-        }
+            if (result?.error) {
+                setError("Invalid email or password");
+                return;
+            }
 
-        const res = await fetch("/api/auth/session");
-        const session = await res.json();
-        const userRole = session?.user?.role;
+            const res = await fetch("/api/auth/session");
+            const session = await res.json();
+            const userRole = session?.user?.role;
 
-        console.log(userRole);
+            console.log(userRole);
 
-        if (!userRole) {
-            setError("Unable to fetch session.");
-            return;
-        }
+            if (!userRole) {
+                setError("Unable to fetch session.");
+                return;
+            }
 
-        if (userRole !== role) {
-            setError(`You are not authorized to login as ${role}`);
-            return;
-        }
+            if (userRole !== role) {
+                setError(`You are not authorized to login as ${role}`);
+                return;
+            }
 
-        // Redirect based on role
-        switch (userRole) {
-            case "admin":
-                router.push("/admin/dashboard");
-                break;
-            case "lecturer":
-                router.push("/lecturer/dashboard");
-                break;
-            case "student":
-                router.push("/student/dashboard");
-                break;
-            case "canteen":
-                router.push("/canteen/dashboard");
-                break;
-            default:
-                router.push("/");
+            // Redirect based on role
+            switch (userRole) {
+                case "admin":
+                    router.push("/admin/dashboard");
+                    break;
+                case "lecturer":
+                    router.push("/lecturer/dashboard");
+                    break;
+                case "student":
+                    router.push("/student/dashboard");
+                    break;
+                case "canteen":
+                    router.push("/canteen/dashboard");
+                    break;
+                default:
+                    router.push("/");
+            }
+        } catch (err) {
+            setError("An error occurred during login");
+            console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -126,11 +136,26 @@ export default function LoginForm({ role }: LoginFormProps) {
                         )}
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4 mt-8">
-                        <Button type="submit" className="w-full">
-                            Login
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <span className="flex items-center gap-2">
+                                    <Spinner size="sm" />
+                                    Logging in...
+                                </span>
+                            ) : (
+                                "Login"
+                            )}
                         </Button>
                         <Link href="/" className="w-full">
-                            <Button variant="outline" className="w-full">
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                disabled={isLoading}
+                            >
                                 Back to Home
                             </Button>
                         </Link>
