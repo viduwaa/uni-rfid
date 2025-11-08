@@ -27,12 +27,11 @@ import {
     User,
     GraduationCap,
     TrendingUp,
-    Loader2,
-    Info,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";
 import { getFacultyName } from "@/lib/utils";
+import { SkeletonDashboard } from "@/components/ui/skeleton";
 
 export default function StudentDashboard() {
     const { data, loading, error } = useStudentDashboard();
@@ -40,8 +39,10 @@ export default function StudentDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                <div className="container mx-auto py-10 p-6">
+                    <SkeletonDashboard />
+                </div>
             </div>
         );
     }
