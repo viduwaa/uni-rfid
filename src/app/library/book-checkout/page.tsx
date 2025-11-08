@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import RFIDStudentReader from "@/components/RFIDStudentReader";
+import { getFacultyName } from "@/lib/utils";
 import type { BookWithAvailability, MemberSummary } from "@/types/library";
 
 interface CheckoutBook extends BookWithAvailability {
@@ -481,7 +482,7 @@ export default function BookCheckout() {
                                                         {student.full_name}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
-                                                        {student.faculty}
+                                                        {getFacultyName(student.faculty)}
                                                     </div>
                                                 </div>
                                             ))}

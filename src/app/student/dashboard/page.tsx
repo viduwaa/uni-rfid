@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";
+import { getFacultyName } from "@/lib/utils";
 
 export default function StudentDashboard() {
     const { data, loading, error } = useStudentDashboard();
@@ -66,7 +67,7 @@ export default function StudentDashboard() {
                             {data?.student?.register_number}
                         </Badge>
                         <Badge variant="outline">
-                            {data?.student?.faculty}
+                            {getFacultyName(data?.student?.faculty || "")}
                         </Badge>
                         <Badge variant="outline">
                             Year {data?.student?.year_of_study}
@@ -393,7 +394,7 @@ export default function StudentDashboard() {
                                         Faculty:
                                     </span>
                                     <span className="font-medium">
-                                        {data?.student?.faculty}
+                                        {getFacultyName(data?.student?.faculty || "")}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">

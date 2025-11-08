@@ -29,6 +29,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { getFacultyName } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
@@ -453,7 +454,7 @@ export default function StudentManagement() {
                                         <TableCell>{student.email}</TableCell>
                                         <TableCell>
                                             <Badge variant="outline">
-                                                {student.faculty}
+                                                {getFacultyName(student.faculty)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
