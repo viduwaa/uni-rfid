@@ -10,7 +10,11 @@ import { BaseStudent } from "@/types/student";
 import AddMenu from "./AddMenu";
 import { getFacultyName } from "@/lib/utils";
 
-export default function IssueNewCard() {
+interface IssueNewCardProps {
+    onCardIssued?: () => void;
+}
+
+export default function IssueNewCard({ onCardIssued }: IssueNewCardProps) {
     const [students, setStudents] = useState<BaseStudent[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectData, setSelectData] = useState<BaseStudent | null>(null);
@@ -75,6 +79,8 @@ export default function IssueNewCard() {
         refreshData();
         setView(false);
         setSelectData(null);
+        // Notify parent to refresh stats
+        onCardIssued?.();
     };
 
     return (
@@ -202,7 +208,10 @@ export default function IssueNewCard() {
                                                         }
                                                     </p>
                                                     <Badge variant="outline">
-                                                        {getFacultyName(student.faculty || "")}
+                                                        {getFacultyName(
+                                                            student.faculty ||
+                                                                ""
+                                                        )}
                                                     </Badge>
                                                 </div>
                                             </div>

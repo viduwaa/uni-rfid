@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
         ) {
             return NextResponse.json(
                 {
+                    success: false,
                     message:
                         "Unauthorized. Only lecturers can record attendance.",
                 },
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
         if (!studentId || !courseId || !date || !time) {
             return NextResponse.json(
                 {
+                    success: false,
                     message:
                         "Missing required fields: studentId, courseId, date, time",
                 },
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
 
         if (lecturerResult.rows.length === 0) {
             return NextResponse.json(
-                { message: "Lecturer not found" },
+                { success: false, message: "Lecturer not found" },
                 { status: 404 }
             );
         }
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
         // Check if attendance already exists for this student, course, and date
         const existingQuery = `
             SELECT id FROM attendance 
-            WHERE register_number = $1 AND course_id = $2 AND date = $3
+            WHERE student_id = $1 AND course_id = $2 AND date = $3
         `;
         const existingResult = await client.query(existingQuery, [
             studentId,
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
         if (existingResult.rows.length > 0) {
             return NextResponse.json(
                 {
+                    success: false,
                     message:
                         "Attendance already recorded for this student today",
                 },
@@ -120,6 +123,7 @@ export async function GET(request: NextRequest) {
         ) {
             return NextResponse.json(
                 {
+                    success: false,
                     message:
                         "Unauthorized. Only lecturers can view attendance.",
                 },
@@ -142,7 +146,7 @@ export async function GET(request: NextRequest) {
 
         if (lecturerResult.rows.length === 0) {
             return NextResponse.json(
-                { message: "Lecturer not found" },
+                { success: false, message: "Lecturer not found" },
                 { status: 404 }
             );
         }

@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getAttendanceReport, getAttendanceSummary } from "@/lib/reportQueries";
+import { ReportFilters } from "@/types/reports";
+
+export async function GET(request: NextRequest) {
+    try {
+        const searchParams = request.nextUrl.searchParams;
+
+        // Parse filters from query parameters
+        const filters: ReportFilters = {};
+
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate");
+        if (startDate && endDate) {
+            filters.dateRange = { startDate, endDate };
+        }
+
+        const faculty = searchParams.get("faculty");
+        if (faculty) filters.faculty = faculty;
+
+        const year = searchParams.get("year");
+        if (year) filters.year = parseInt(year);
+
+        const courseId = searchParams.get("courseId");
+        if (courseId) filters.courseId = courseId;
+
+        const lecturerId = searchParams.get("lecturerId");
+        if (lecturerId) filters.lecturerId = lecturerId;
+
+        const studentId = searchParams.get("studentId");
+        if (studentId) filters.studentId = studentId;
+
+        const includeDetails = searchParams.get("includeDetails") === "true";
+
+        // Fetch summary data
+        const summary = await getAttendanceSummary(filters);
+
+        // Optionally fetch detailed data
+        let details = null;
+        if (includeDetails) {
+            details = await getAttendanceReport(filters);
+        }
+
+        return NextResponse.json({
+            success: true,
+            data: {
+                summary,
+                details,
+            },
+            filters,
+            generated_at: new Date().toISOString(),
+            total_records: details ? details.length : 0,
+        });
+    } catch (error: any) {
+        console.error("Error generating attendance report:", error);
+        return NextResponse.json(
+            {
+                success: false,
+                error: "Failed to generate attendance report",
+                message: error.message,
+            },
+            { status: 500 }
+        );
+    }
+}

@@ -39,7 +39,11 @@ export const insertStudent = async (
             [studentForm.email, studentForm.fullName, std_pw]
         );
 
-        if (studentForm.fullName && studentForm.email && studentForm.nicNumber) {
+        if (
+            studentForm.fullName &&
+            studentForm.email &&
+            studentForm.nicNumber
+        ) {
             await sendLoginCredentials(
                 studentForm.email,
                 studentForm.fullName,
@@ -233,6 +237,16 @@ export const insertCardDetails = async (cardData: BaseStudent) => {
     const client = await pool.connect();
 
     try {
+        console.log(
+            "🔍 adminQueries - insertCardDetails called with:",
+            cardData
+        );
+        console.log(
+            "🔍 adminQueries - credits value:",
+            cardData.credits,
+            typeof cardData.credits
+        );
+
         const cardInsertResponse = await client.query(
             `INSERT INTO rfid_cards (
                 card_uid,
@@ -254,6 +268,11 @@ export const insertCardDetails = async (cardData: BaseStudent) => {
                 "ACTIVE",
                 cardData.credits,
             ]
+        );
+
+        console.log(
+            "✅ adminQueries - Card inserted successfully:",
+            cardInsertResponse.rows[0]
         );
 
         return cardInsertResponse.rows[0];
@@ -280,5 +299,3 @@ export async function getUserByEmail(email: string) {
         client.release();
     }
 }
-
-

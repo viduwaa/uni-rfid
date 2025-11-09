@@ -7,6 +7,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import LogoutButton from "@/components/Logout";
 import {
     BookPlus,
     BookOpenCheck,
@@ -17,9 +18,9 @@ import {
     FileSearch,
     BarChart3,
     Settings,
-    LogOut,
     CreditCard,
     ArrowLeftRight,
+    Tag,
 } from "lucide-react";
 
 export default function LibraryDashboard() {
@@ -57,54 +58,27 @@ export default function LibraryDashboard() {
                         </Card>
                     </Link>
 
-                    {/* Book Checkout */}
-                    <Link href="./book-checkout/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md border-2 border-blue-200 dark:border-blue-800">
+                    {/* Issue RFID Tags */}
+                    <Link href="./issue-tags/" className="block">
+                        <Card className="h-full transition-all hover:shadow-md border-2 border-purple-200 dark:border-purple-800">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
-                                    <BookOpenCheck className="h-8 w-8 text-blue-600" />
-                                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                                        UNIFIED
+                                    <Tag className="h-8 w-8 text-purple-600" />
+                                    <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded">
+                                        RFID
                                     </span>
                                 </div>
                                 <CardTitle className="mt-2">
-                                    Book Checkout
+                                    Issue Book Tags
                                 </CardTitle>
                                 <CardDescription>
-                                    RFID card & manual book lending
+                                    Write RFID tags to untagged books
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-muted-foreground">
-                                    Choose between RFID card scanning or manual
-                                    student search for book checkout
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* Book Returns */}
-                    <Link href="./book-returns" className="block">
-                        <Card className="h-full transition-all hover:shadow-md border-2 border-green-200 dark:border-green-800">
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <BookMarked className="h-8 w-8 text-green-600" />
-                                    <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                                        UNIFIED
-                                    </span>
-                                </div>
-                                <CardTitle className="mt-2">
-                                    Book Returns
-                                </CardTitle>
-                                <CardDescription>
-                                    RFID card & barcode return process
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Student card scanning or direct book barcode
-                                    scanning for returns with auto fine
-                                    calculation
+                                    Search and issue RFID tags to book copies
+                                    that don't have tags yet
                                 </p>
                             </CardContent>
                         </Card>
@@ -175,12 +149,7 @@ export default function LibraryDashboard() {
                 </div>
 
                 <div className="mt-8 flex justify-end px-5">
-                    <Link href="/">
-                        <Button variant="outline" className="gap-2">
-                            <LogOut className="h-4 w-4" />
-                            Logout
-                        </Button>
-                    </Link>
+                    <LogoutButton />
                 </div>
             </div>
         </div>

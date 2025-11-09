@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-    Card,
+    Card, 
     CardContent,
     CardDescription,
     CardFooter,
@@ -151,7 +151,7 @@ export default function ForgotPassword() {
                                 required
                                 disabled={isLoading}
                             />
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground mb-4">
                                 Enter the email address associated with your
                                 account.
                             </p>

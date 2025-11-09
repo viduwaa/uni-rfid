@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BookPlus, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -102,15 +103,15 @@ export default function AddNewBooks() {
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/library/dashboard" className="mr-4">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <BookPlus className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">Add New Books</h1>
-      </div>
+      <PageHeader
+        title="Add New Books"
+        breadcrumbs={[
+          { label: "Library", href: "/library/dashboard" },
+          { label: "Add New Books" },
+        ]}
+        backHref="/library/dashboard"
+        centerIcon={<BookPlus className="h-8 w-8 text-primary mx-auto" />}
+      />
 
       <Card>
         <div className="p-6 rounded-lg shadow-md">

@@ -20,7 +20,10 @@ import {
   Package,
   AlertTriangle,
   Loader2,
+  Home,
+  ChevronRight,
 } from "lucide-react";
+import formatCurrency from "@/lib/formatCurrency";
 import {
   Card,
   CardContent,
@@ -29,6 +32,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -203,37 +207,36 @@ export default function LibraryReports() {
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/library/dashboard" className="mr-4">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+      <PageHeader
+        title="Library Reports"
+        subtitle="Generate reports for circulation, finance and inventory"
+        breadcrumbs={[
+          { label: "Library", href: "/library/dashboard" },
+          { label: "Reports" },
+        ]}
+        backHref="/library/dashboard"
+        centerIcon={<BarChart3 className="h-8 w-8 text-primary mx-auto" />}
+        right={
+          <div className="hidden md:flex items-center justify-end gap-4">
+            <Select value={reportPeriod} onValueChange={setReportPeriod}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 Days</SelectItem>
+                <SelectItem value="30">Last 30 Days</SelectItem>
+                <SelectItem value="90">Last 3 Months</SelectItem>
+                <SelectItem value="365">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button onClick={() => fetchReports()} variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
+              Refresh
             </Button>
-          </Link>
-          <BarChart3 className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Library Reports</h1>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Select value={reportPeriod} onValueChange={setReportPeriod}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 Days</SelectItem>
-              <SelectItem value="30">Last 30 Days</SelectItem>
-              <SelectItem value="90">Last 3 Months</SelectItem>
-              <SelectItem value="365">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button onClick={() => fetchReports()} variant="outline">
-            <FileText className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* Circulation Report */}
       {circulationData && (
@@ -312,25 +315,25 @@ export default function LibraryReports() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  ${financialData.total_fines}
+                  {formatCurrency(financialData.total_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Fines</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  ${financialData.paid_fines}
+                  {formatCurrency(financialData.paid_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Paid</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  ${financialData.pending_fines}
+                  {formatCurrency(financialData.pending_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Pending</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-600">
-                  ${financialData.waived_fines}
+                  {formatCurrency(financialData.waived_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Waived</div>
               </div>

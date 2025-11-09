@@ -41,7 +41,7 @@ export default function LoginForm({ role }: LoginFormProps) {
             case "canteen":
                 return "Canteen";
             case "library":
-                return "Library"
+                return "Library";
             default:
                 return "";
         }
@@ -75,7 +75,10 @@ export default function LoginForm({ role }: LoginFormProps) {
                 return;
             }
 
-            if (userRole !== role) {
+            // Map library to librarian for role checking
+            const expectedRole = role === "library" ? "librarian" : role;
+
+            if (userRole !== expectedRole) {
                 setError(`You are not authorized to login as ${role}`);
                 return;
             }
@@ -94,7 +97,7 @@ export default function LoginForm({ role }: LoginFormProps) {
                 case "canteen":
                     router.push("/canteen/dashboard");
                     break;
-                case "library":
+                case "librarian":
                     router.push("/library/dashboard");
                     break;
                 default:
@@ -110,12 +113,17 @@ export default function LoginForm({ role }: LoginFormProps) {
 
     return (
         <div className="flex flex-col min-h-screen items-center justify-center px-4">
-            <div className="flex flex-col flex-2 items-center justify-center">
-                <h1 className="text-4xl font-bold">
-                    University Management System
-                </h1>
-                <h3 className="text-md mt-2">{roleName} - Portal</h3>
-            </div>
+            {role !== "library" ? (
+                <div className="flex flex-col flex-2 items-center justify-center">
+                    <h1 className="text-4xl font-bold">
+                        University Management System
+                    </h1>
+                    <h3 className="text-md mt-2">{roleName} - Portal</h3>
+                </div>
+            ) : (
+                <></>
+            )}
+            
             <div className="flex-3 w-full max-w-md">
                 <Card>
                     <CardHeader className="space-y-1">

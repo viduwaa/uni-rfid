@@ -3053,5 +3053,298 @@ GRANT SELECT(subpublications) ON TABLE pg_catalog.pg_subscription TO azure_pg_ad
 -- PostgreSQL database dump complete
 --
 
+-- =====================================================
+-- RFID Student Transactions Table Migration
+-- =====================================================
+-- This migration creates a comprehensive transaction
+-- tracking system for all RFID card activities
+-- =====================================================
+
+-- Drop existing table if it exists
+DROP TABLE IF EXISTS public.student_transactions CASCADE;
+
+-- Drop existing enums if they exist (to recreate with correct values)
+DROP TYPE IF EXISTS public.transaction_type CASCADE;
+DROP TYPE IF EXISTS public.transaction_status CASCADE;
+
+-- Create transaction type enum
+CREATE TYPE public.transaction_type AS ENUM (
+    'RECHARGE',
+    'PURCHASE',
+    'REFUND',
+    'ADJUSTMENT',
+    'FINE',
+    'REVERSAL'
+);
+
+-- Create transaction status enum
+CREATE TYPE public.transaction_status AS ENUM (
+    'PENDING',
+    'COMPLETED',
+    'FAILED',
+    'CANCELLED',
+    'REVERSED'
+);
+
+-- Create the student_transactions table
+CREATE TABLE IF NOT EXISTS public.student_transactions (
+    -- Primary identification
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    transaction_id character varying(100) UNIQUE NOT NULL,
+    
+    -- Student and card information
+    student_id uuid NOT NULL,
+    card_uid character varying(100) NOT NULL,
+    
+    -- Transaction details
+    transaction_type public.transaction_type NOT NULL,
+    transaction_status public.transaction_status DEFAULT 'COMPLETED',
+    
+    -- Financial information
+    amount numeric(10,2) NOT NULL,
+    balance_before numeric(10,2) NOT NULL,
+    balance_after numeric(10,2) NOT NULL,
+    
+    -- Additional context
+    description text,
+    reference_id character varying(100), -- Reference to canteen order, library fine, etc.
+    reference_type character varying(50), -- 'canteen_order', 'library_fine', 'manual_recharge', etc.
+    
+    -- Location and operator
+    location character varying(100), -- 'Admin Portal', 'Canteen', 'Library', etc.
+    operator_id uuid, -- ID of admin/staff who performed the transaction
+    operator_type character varying(50), -- 'admin', 'canteen_staff', 'library_staff'
+    
+    -- Payment method (for recharges)
+    payment_method character varying(50), -- 'CASH', 'CARD', 'ONLINE', 'ADMIN'
+    payment_reference character varying(100), -- Receipt number, transaction ID, etc.
+    
+    -- Metadata
+    metadata jsonb, -- Additional flexible data
+    notes text, -- Internal notes
+    
+    -- Timestamps
+    transaction_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Foreign key constraints
+    CONSTRAINT fk_student FOREIGN KEY (student_id) REFERENCES public.students(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_card FOREIGN KEY (card_uid) REFERENCES public.rfid_cards(card_uid) ON DELETE CASCADE,
+    
+    -- Check constraints
+    CONSTRAINT check_amount_not_zero CHECK (amount <> 0),
+    CONSTRAINT check_valid_balances CHECK (balance_before >= 0 AND balance_after >= 0)
+);
+
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_student_transactions_student_id ON public.student_transactions(student_id);
+CREATE INDEX IF NOT EXISTS idx_student_transactions_card_uid ON public.student_transactions(card_uid);
+CREATE INDEX IF NOT EXISTS idx_student_transactions_transaction_type ON public.student_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_student_transactions_transaction_date ON public.student_transactions(transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_student_transactions_reference ON public.student_transactions(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_student_transactions_status ON public.student_transactions(transaction_status);
+
+-- Create composite index for common queries
+CREATE INDEX IF NOT EXISTS idx_student_transactions_student_date ON public.student_transactions(student_id, transaction_date DESC);
+
+-- Create updated_at trigger function if it doesn't exist
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create trigger for automatic updated_at
+DROP TRIGGER IF EXISTS update_student_transactions_updated_at ON public.student_transactions;
+CREATE TRIGGER update_student_transactions_updated_at
+    BEFORE UPDATE ON public.student_transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create a function to generate unique transaction IDs
+CREATE OR REPLACE FUNCTION generate_transaction_id()
+RETURNS TEXT AS $$
+DECLARE
+    new_id TEXT;
+    done BOOL;
+BEGIN
+    done := FALSE;
+    WHILE NOT done LOOP
+        new_id := 'TXN' || TO_CHAR(NOW(), 'YYYYMMDD') || LPAD(FLOOR(RANDOM() * 1000000)::TEXT, 6, '0');
+        done := NOT EXISTS(SELECT 1 FROM student_transactions WHERE transaction_id = new_id);
+    END LOOP;
+    RETURN new_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+-- Add comments for documentation
+COMMENT ON TABLE public.student_transactions IS 'Comprehensive transaction log for all RFID card activities';
+COMMENT ON COLUMN public.student_transactions.transaction_type IS 'Type of transaction: RECHARGE, PURCHASE, REFUND, ADJUSTMENT, FINE, REVERSAL';
+COMMENT ON COLUMN public.student_transactions.reference_id IS 'Links to related records (e.g., canteen order ID, library fine ID)';
+COMMENT ON COLUMN public.student_transactions.balance_before IS 'Card balance before this transaction';
+COMMENT ON COLUMN public.student_transactions.balance_after IS 'Card balance after this transaction';
+COMMENT ON COLUMN public.student_transactions.metadata IS 'Flexible JSONB field for additional transaction data';
+
+-- =====================================================
+-- Sample Data Migration (Optional)
+-- =====================================================
+-- If you want to migrate existing canteen_transactions:
+/*
+INSERT INTO public.student_transactions (
+    student_id,
+    card_uid,
+    transaction_type,
+    transaction_status,
+    amount,
+    balance_before,
+    balance_after,
+    description,
+    reference_id,
+    reference_type,
+    location,
+    payment_method,
+    transaction_date,
+    transaction_id
+)
+SELECT 
+    ct.student_id,
+    ct.card_id,
+    'PURCHASE'::public.transaction_type,
+    CASE 
+        WHEN ct.status = 'completed' THEN 'COMPLETED'::public.transaction_status
+        WHEN ct.status = 'pending' THEN 'PENDING'::public.transaction_status
+        ELSE 'FAILED'::public.transaction_status
+    END,
+    -ABS(ct.amount), -- Negative for purchases
+    0, -- We don't have historical balance
+    0, -- We don't have historical balance
+    ct.description,
+    ct.id::text,
+    'canteen_order',
+    'Canteen',
+    ct.payment_method,
+    ct.transaction_date,
+    generate_transaction_id()
+FROM public.canteen_transactions ct
+WHERE ct.id NOT IN (
+    SELECT reference_id::uuid 
+    FROM public.student_transactions 
+    WHERE reference_type = 'canteen_order'
+);
+*/
+
+-- =====================================================
+-- Verification Queries
+-- =====================================================
+-- Check table structure
+-- SELECT column_name, data_type, is_nullable, column_default
+-- FROM information_schema.columns
+-- WHERE table_name = 'student_transactions'
+-- ORDER BY ordinal_position;
+
+-- Check indexes
+-- SELECT indexname, indexdef
+-- FROM pg_indexes
+-- WHERE tablename = 'student_transactions';
+
+-- Sample query to view recent transactions
+-- SELECT 
+--     st.transaction_id,
+--     s.full_name,
+--     st.transaction_type,
+--     st.amount,
+--     st.balance_after,
+--     st.description,
+--     st.transaction_date
+-- FROM student_transactions st
+-- JOIN students s ON st.student_id = s.user_id
+-- ORDER BY st.transaction_date DESC
+-- LIMIT 10;
+
+-- =====================================================
+-- Rollback (if needed)
+-- =====================================================
+-- DROP TABLE IF EXISTS public.student_transactions CASCADE;
+-- DROP TYPE IF EXISTS public.transaction_type CASCADE;
+-- DROP TYPE IF EXISTS public.transaction_status CASCADE;
+-- DROP FUNCTION IF EXISTS generate_transaction_id() CASCADE;
+
+-- Migration: Add RFID Tag support for Books
+-- Created: 2025-11-09
+-- Description: Creates book_rfid_tags table to store RFID tag information for book copies
+
+-- Create RFID tag status enum if not exists (reusing card_status enum)
+-- This enum already exists for student cards, we'll reuse it for consistency
+
+-- Create book_rfid_tags table
+CREATE TABLE IF NOT EXISTS public.book_rfid_tags (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    rfid_uid character varying(100) NOT NULL UNIQUE,
+    book_copy_id uuid,
+    assigned_date timestamp without time zone,
+    status public.card_status DEFAULT 'ACTIVE'::public.card_status,
+    notes text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Foreign key to book_copies
+    CONSTRAINT fk_book_copy
+        FOREIGN KEY (book_copy_id)
+        REFERENCES public.book_copies(id)
+        ON DELETE SET NULL
+);
+
+-- Add indexes for performance
+CREATE INDEX idx_book_rfid_tags_rfid_uid ON public.book_rfid_tags USING btree (rfid_uid);
+CREATE INDEX idx_book_rfid_tags_book_copy_id ON public.book_rfid_tags USING btree (book_copy_id);
+CREATE INDEX idx_book_rfid_tags_status ON public.book_rfid_tags USING btree (status);
+
+-- Add trigger to automatically update updated_at timestamp
+CREATE TRIGGER update_book_rfid_tags_updated_at 
+    BEFORE UPDATE ON public.book_rfid_tags 
+    FOR EACH ROW 
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Add comments for documentation
+COMMENT ON TABLE public.book_rfid_tags IS 'Stores RFID tag information for book copies';
+COMMENT ON COLUMN public.book_rfid_tags.rfid_uid IS 'Unique RFID tag identifier';
+COMMENT ON COLUMN public.book_rfid_tags.book_copy_id IS 'Reference to the book copy this tag is assigned to';
+COMMENT ON COLUMN public.book_rfid_tags.status IS 'Current status of the RFID tag (ACTIVE, INACTIVE, LOST, DAMAGED, RETURNED)';
+
+-- Grant permissions (adjust based on your setup)
+
+
+-- Optional: Add a column to book_copies to track if it has an RFID tag
+ALTER TABLE public.book_copies 
+ADD COLUMN IF NOT EXISTS has_rfid_tag boolean DEFAULT false;
+
+-- Create a view for book copies with RFID tag information
+CREATE OR REPLACE VIEW public.book_copies_with_rfid AS
+SELECT 
+    bc.*,
+    brt.id as rfid_tag_id,
+    brt.rfid_uid,
+    brt.assigned_date as rfid_assigned_date,
+    brt.status as rfid_status,
+    b.title as book_title,
+    b.author as book_author,
+    b.isbn,
+    b.category
+FROM public.book_copies bc
+LEFT JOIN public.book_rfid_tags brt ON bc.id = brt.book_copy_id
+JOIN public.books b ON bc.book_id = b.id
+ORDER BY b.title, bc.barcode;
+
+
+
+COMMENT ON VIEW public.book_copies_with_rfid IS 'Book copies with their RFID tag information';
+
+
+
 \unrestrict sUPjWIAj5mF1MHJEcwFBddSH8Ea7pavE7b1H3Ivhc5LOdKtOcUaxlOfRK0ZXYwK
 

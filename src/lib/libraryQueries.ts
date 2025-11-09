@@ -686,3 +686,109 @@ export async function getPopularBooksReport(
         })),
     };
 }
+
+// Book RFID Tag Management
+export async function createBookRFIDTag(
+    rfidUID: string,
+    bookCopyId: string,
+    notes?: string
+): Promise<any> {
+    const query = `
+    INSERT INTO book_rfid_tags (rfid_uid, book_copy_id, assigned_date, status, notes)
+    VALUES ($1, $2, CURRENT_TIMESTAMP, 'ACTIVE', $3)
+    RETURNING *
+  `;
+    const result = await pool.query(query, [rfidUID, bookCopyId, notes]);
+
+    // Update book_copies to mark it has RFID
+    await pool.query(
+        "UPDATE book_copies SET has_rfid_tag = true WHERE id = $1",
+        [bookCopyId]
+    );
+
+    return result.rows[0];
+}
+
+export async function getBookCopyByRFID(rfidUID: string): Promise<any> {
+    const query = `
+    SELECT 
+        bc.*,
+        b.title as book_title,
+        b.author as book_author,
+        b.isbn as book_isbn,
+        b.category,
+        brt.rfid_uid,
+        brt.assigned_date as rfid_assigned_date,
+        brt.status as rfid_status,
+        bl.id as current_loan_id,
+        bl.student_id as current_borrower_id,
+        s.full_name as current_borrower_name,
+        bl.due_date as current_due_date,
+        bl.borrowed_at as current_borrowed_at
+    FROM book_rfid_tags brt
+    JOIN book_copies bc ON brt.book_copy_id = bc.id
+    JOIN books b ON bc.book_id = b.id
+    LEFT JOIN book_loans bl ON bc.id = bl.book_copy_id AND bl.status = 'active'
+    LEFT JOIN students s ON bl.student_id = s.user_id
+    WHERE brt.rfid_uid = $1
+  `;
+    const result = await pool.query(query, [rfidUID]);
+    return result.rows[0] || null;
+}
+
+export async function updateBookRFIDStatus(
+    rfidUID: string,
+    status: string,
+    notes?: string
+): Promise<any> {
+    const query = `
+    UPDATE book_rfid_tags 
+    SET status = $2, notes = $3, updated_at = CURRENT_TIMESTAMP 
+    WHERE rfid_uid = $1
+    RETURNING *
+  `;
+    const result = await pool.query(query, [rfidUID, status, notes]);
+    return result.rows[0];
+}
+
+export async function getBookCopiesWithRFID(): Promise<any[]> {
+    const query = `SELECT * FROM book_copies_with_rfid ORDER BY book_title, barcode`;
+    const result = await pool.query(query);
+    return result.rows;
+}
+
+export async function deleteBookRFIDTag(rfidUID: string): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        // Get the book_copy_id first
+        const tagQuery =
+            "SELECT book_copy_id FROM book_rfid_tags WHERE rfid_uid = $1";
+        const tagResult = await client.query(tagQuery, [rfidUID]);
+
+        if (tagResult.rows.length > 0) {
+            const bookCopyId = tagResult.rows[0].book_copy_id;
+
+            // Delete the tag
+            await client.query(
+                "DELETE FROM book_rfid_tags WHERE rfid_uid = $1",
+                [rfidUID]
+            );
+
+            // Update book_copies
+            await client.query(
+                "UPDATE book_copies SET has_rfid_tag = false WHERE id = $1",
+                [bookCopyId]
+            );
+        }
+
+        await client.query("COMMIT");
+        return true;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+}

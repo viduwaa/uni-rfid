@@ -13,6 +13,7 @@ import { getFacultyName } from "@/lib/utils";
 interface WriteCardProps {
     student: BaseStudent;
     isWriting: boolean;
+    initialBalance?: number;
     onWriteComplete?: (
         success: boolean,
         message: string,
@@ -32,11 +33,13 @@ interface WriteResult {
     student?: any;
     error?: string;
     timestamp: number;
+    credits:number;
 }
 
 export default function WriteCardComponent({
     student,
     isWriting,
+    initialBalance,
     onWriteComplete,
 }: WriteCardProps) {
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -45,6 +48,8 @@ export default function WriteCardComponent({
         reader: null,
         error: null,
     });
+
+    console.log(initialBalance);
 
     const [writeStatus, setWriteStatus] = useState<
         "idle" | "waiting" | "writing" | "success" | "error"
@@ -106,35 +111,45 @@ export default function WriteCardComponent({
 
             // Save to database after successful write
             try {
-                const dbResponse = await fetch('/api/rfid/write-complete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+                console.log(
+                    "🔍 Initial Balance before DB save:",
+                    result.student.credits,
+                );
+                const requestBody = {
+                    student: {
+                        user_id: student.user_id,
+                        register_number: student.register_number,
+                        full_name: student.full_name,
+                        faculty: student.faculty,
+                        nic_no: student.nic_no,
                     },
-                    body: JSON.stringify({
-                        student: {
-                            user_id: student.user_id,
-                            register_number: student.register_number,
-                            full_name: student.full_name,
-                            faculty: student.faculty,
-                            nic_no: student.nic_no,
-                        },
-                        card: {
-                            uid: result.uid,
-                            write_timestamp: result.timestamp || Date.now(),
-                        },
-                        initial_balance: 0 // You can pass this from props if needed
-                    }),
+                    card: {
+                        uid: result.uid,
+                        write_timestamp: result.timestamp || Date.now(),
+                    },
+                    initial_balance: result.student.credits, // Use the passed initial balance
+                };
+                console.log(
+                    "🔍 Request body to API:",
+                    JSON.stringify(requestBody, null, 2)
+                );
+
+                const dbResponse = await fetch("/api/rfid/write-complete", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestBody),
                 });
 
                 const dbResult = await dbResponse.json();
-                
+
                 if (dbResult.success) {
                     console.log("✅ Database save successful:", dbResult);
                     setEventLog((prev) => [
                         ...prev,
                         `✅ Database: Card data saved successfully`,
-                        `🆔 Database ID: ${dbResult.data?.database_id || 'Generated'}`,
+                        `🆔 Database ID: ${dbResult.data?.database_id || "Generated"}`,
                     ]);
                 } else {
                     console.error("❌ Database save failed:", dbResult);
@@ -206,6 +221,7 @@ export default function WriteCardComponent({
             faculty: student.faculty,
             nic_no: student.nic_no,
             timestamp: Date.now(),
+            credits: initialBalance
         };
 
         console.log("📤 Sending write command to socket:", writeData);
@@ -306,7 +322,8 @@ export default function WriteCardComponent({
                                 {student.register_number}
                             </div>
                             <div>
-                                <strong>Faculty:</strong> {getFacultyName(student.faculty || "")}
+                                <strong>Faculty:</strong>{" "}
+                                {getFacultyName(student.faculty || "")}
                             </div>
                         </div>
                     </div>

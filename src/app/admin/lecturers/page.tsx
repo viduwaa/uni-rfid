@@ -6,749 +6,732 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getFacultyName } from "@/lib/utils";
 import {
-    Search,
-    Edit,
-    Trash2,
-    Users,
-    BookOpen,
-    Plus,
-    GraduationCap,
-    Save,
-    X,
-    UserCheck,
-    Award,
-    ArrowLeft,
-    Home,
+  Search,
+  Edit,
+  Trash2,
+  Users,
+  BookOpen,
+  Plus,
+  GraduationCap,
+  Save,
+  X,
+  UserCheck,
+  Award,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import Link from "next/link";
 import CourseAssignmentDialog from "./CourseAssignmentDialog";
+import PageHeader from "@/components/PageHeader";
 
 interface Lecturer {
-    id: string;
-    user_id: string;
-    staff_id: string;
-    nic_no: string;
-    full_name: string;
-    initial_name: string;
-    email: string;
-    faculty: string;
-    position: string;
-    specialization?: string;
-    address?: string;
-    phone?: string;
-    photo?: string;
-    date_of_birth?: string;
-    created_at: string;
-    updated_at: string;
-    assigned_courses?: Array<{
-        id: string;
-        course_code: string;
-        course_name: string;
-        faculty: string;
-        year: number;
-        credits: number;
-    }>;
-}
-
-interface Course {
+  id: string;
+  user_id: string;
+  staff_id: string;
+  nic_no: string;
+  full_name: string;
+  initial_name: string;
+  email: string;
+  faculty: string;
+  position: string;
+  specialization?: string;
+  address?: string;
+  phone?: string;
+  photo?: string;
+  date_of_birth?: string;
+  created_at: string;
+  updated_at: string;
+  assigned_courses?: Array<{
     id: string;
     course_code: string;
     course_name: string;
     faculty: string;
     year: number;
     credits: number;
+  }>;
+}
+
+interface Course {
+  id: string;
+  course_code: string;
+  course_name: string;
+  faculty: string;
+  year: number;
+  credits: number;
 }
 
 export default function LecturerManagement() {
-    const [lecturers, setLecturers] = useState<Lecturer[]>([]);
-    const [filteredLecturers, setFilteredLecturers] = useState<Lecturer[]>([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedFaculty, setSelectedFaculty] = useState("all");
-    const [loading, setLoading] = useState(true);
-    const [editingLecturer, setEditingLecturer] = useState<Lecturer | null>(
-        null
-    );
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-    const [selectedLecturerForAssign, setSelectedLecturerForAssign] =
-        useState<Lecturer | null>(null);
+  const [lecturers, setLecturers] = useState<Lecturer[]>([]);
+  const [filteredLecturers, setFilteredLecturers] = useState<Lecturer[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [editingLecturer, setEditingLecturer] = useState<Lecturer | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [selectedLecturerForAssign, setSelectedLecturerForAssign] =
+    useState<Lecturer | null>(null);
 
-    const faculties = [
-        "Faculty of Technology",
-        "Faculty of Applied Sciences",
-        "Faculty of Social Sciences & Humanities",
-        "Faculty of Management Studies",
-        "Faculty of Medicine",
-        "Faculty of Agriculture",
-    ];
+  const faculties = [
+    "Faculty of Technology",
+    "Faculty of Applied Sciences",
+    "Faculty of Social Sciences & Humanities",
+    "Faculty of Management Studies",
+    "Faculty of Medicine",
+    "Faculty of Agriculture",
+  ];
 
-    const positions = [
-        "Professor",
-        "Associate Professor",
-        "Senior Lecturer",
-        "Lecturer",
-        "Assistant Lecturer",
-        "Temporary Lecturer",
-    ];
+  const positions = [
+    "Professor",
+    "Associate Professor",
+    "Senior Lecturer",
+    "Lecturer",
+    "Assistant Lecturer",
+    "Temporary Lecturer",
+  ];
 
-    useEffect(() => {
-        fetchLecturers();
-    }, []);
+  useEffect(() => {
+    fetchLecturers();
+  }, []);
 
-    useEffect(() => {
-        filterLecturers();
-    }, [lecturers, searchTerm, selectedFaculty]);
+  useEffect(() => {
+    filterLecturers();
+  }, [lecturers, searchTerm, selectedFaculty]);
 
-    const fetchLecturers = async () => {
-        try {
-            const response = await fetch("/api/admin/lecturers");
-            if (response.ok) {
-                const data = await response.json();
-                setLecturers(data.lecturers);
-                console.log(lecturers);
-            }
-        } catch (error) {
-            console.error("Error fetching lecturers:", error);
-            toast.error("Failed to fetch lecturers");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchLecturers = async () => {
+    try {
+      const response = await fetch("/api/admin/lecturers");
+      if (response.ok) {
+        const data = await response.json();
+        setLecturers(data.lecturers);
+        console.log(lecturers);
+      }
+    } catch (error) {
+      console.error("Error fetching lecturers:", error);
+      toast.error("Failed to fetch lecturers");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    console.log(lecturers);
-    const filterLecturers = () => {
-        let filtered = lecturers.filter((lecturer) => {
-            const matchesSearch =
-                lecturer.full_name
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                lecturer.staff_id
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                lecturer.email
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                (lecturer.specialization &&
-                    lecturer.specialization
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase()));
+  console.log(lecturers);
+  const filterLecturers = () => {
+    let filtered = lecturers;
 
-            const matchesFaculty =
-                selectedFaculty === "all" ||
-                lecturer.faculty === selectedFaculty;
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((lecturer) => {
+        const fullName = lecturer.full_name?.toLowerCase() || "";
+        const staffId = lecturer.staff_id?.toLowerCase() || "";
+        const email = lecturer.email?.toLowerCase() || "";
+        const specialization = lecturer.specialization?.toLowerCase() || "";
+        const position = lecturer.position?.toLowerCase() || "";
 
-            return matchesSearch && matchesFaculty;
-        });
-
-        setFilteredLecturers(filtered);
-    };
-
-    const handleEditLecturer = async (updatedLecturer: Lecturer) => {
-        try {
-            const response = await fetch(
-                `/api/admin/lecturers/${updatedLecturer.id}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(updatedLecturer),
-                }
-            );
-
-            if (response.ok) {
-                toast.success("Lecturer updated successfully");
-                fetchLecturers();
-                setIsEditDialogOpen(false);
-                setEditingLecturer(null);
-            } else {
-                throw new Error("Failed to update lecturer");
-            }
-        } catch (error) {
-            console.error("Error updating lecturer:", error);
-            toast.error("Failed to update lecturer");
-        }
-    };
-
-    const handleDeleteLecturer = async (lecturerId: string) => {
-        if (confirm("Are you sure you want to delete this lecturer?")) {
-            try {
-                const response = await fetch(
-                    `/api/admin/lecturers/${lecturerId}`,
-                    {
-                        method: "DELETE",
-                    }
-                );
-
-                if (response.ok) {
-                    toast.success("Lecturer deleted successfully");
-                    fetchLecturers();
-                } else {
-                    throw new Error("Failed to delete lecturer");
-                }
-            } catch (error) {
-                console.error("Error deleting lecturer:", error);
-                toast.error("Failed to delete lecturer");
-            }
-        }
-    };
-
-    const handleLecturerUpdate = () => {
-        fetchLecturers(); // Refresh lecturer data to show real-time changes
-    };
-
-    if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+          fullName.includes(search) ||
+          staffId.includes(search) ||
+          email.includes(search) ||
+          specialization.includes(search) ||
+          position.includes(search)
         );
+      });
     }
 
+    // Apply faculty filter
+    if (selectedFaculty !== "all") {
+      filtered = filtered.filter(
+        (lecturer) => lecturer.faculty === selectedFaculty
+      );
+    }
+
+    setFilteredLecturers(filtered);
+  };
+
+  const handleEditLecturer = async (updatedLecturer: Lecturer) => {
+    try {
+      const response = await fetch(
+        `/api/admin/lecturers/${updatedLecturer.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedLecturer),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Lecturer updated successfully");
+        fetchLecturers();
+        setIsEditDialogOpen(false);
+        setEditingLecturer(null);
+      } else {
+        throw new Error("Failed to update lecturer");
+      }
+    } catch (error) {
+      console.error("Error updating lecturer:", error);
+      toast.error("Failed to update lecturer");
+    }
+  };
+
+  const handleDeleteLecturer = async (lecturerId: string) => {
+    if (confirm("Are you sure you want to delete this lecturer?")) {
+      try {
+        const response = await fetch(`/api/admin/lecturers/${lecturerId}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          toast.success("Lecturer deleted successfully");
+          fetchLecturers();
+        } else {
+          throw new Error("Failed to delete lecturer");
+        }
+      } catch (error) {
+        console.error("Error deleting lecturer:", error);
+        toast.error("Failed to delete lecturer");
+      }
+    }
+  };
+
+  const handleLecturerUpdate = () => {
+    fetchLecturers(); // Refresh lecturer data to show real-time changes
+  };
+
+  if (loading) {
     return (
-        <div className="container mx-auto py-10 px-4">
-            {/* Breadcrumb Navigation */}
-            <div className="mb-6">
-                <nav className="flex items-center space-x-2 text-sm text-gray-500">
-                    <Link
-                        href="/admin/dashboard"
-                        className="flex items-center hover:text-gray-700"
-                    >
-                        <Home className="h-4 w-4 mr-1" />
-                        Dashboard
-                    </Link>
-                    <span>/</span>
-                    <span className="text-gray-900 font-medium">
-                        Lecturer Management
-                    </span>
-                </nav>
-            </div>
-
-            <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                        <Link href="/admin/dashboard">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Back to Dashboard
-                            </Button>
-                        </Link>
-                        <h1 className="text-3xl font-bold">
-                            Lecturer Management
-                        </h1>
-                    </div>
-                    <Link href="/admin/lecturers/add">
-                        <Button className="flex items-center gap-2">
-                            <Plus className="h-4 w-4" />
-                            Add New Lecturer
-                        </Button>
-                    </Link>
-                </div>
-
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-2">
-                                <Users className="h-5 w-5 text-blue-500" />
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        Total Lecturers
-                                    </p>
-                                    <p className="text-2xl font-bold">
-                                        {lecturers.length}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-2">
-                                <Award className="h-5 w-5 text-green-500" />
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        Professors
-                                    </p>
-                                    <p className="text-2xl font-bold">
-                                        {
-                                            lecturers.filter((l) =>
-                                                l.position.includes("Professor")
-                                            ).length
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-2">
-                                <UserCheck className="h-5 w-5 text-purple-500" />
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        Senior Lecturers
-                                    </p>
-                                    <p className="text-2xl font-bold">
-                                        {
-                                            lecturers.filter((l) =>
-                                                l.position.includes("Senior")
-                                            ).length
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-2">
-                                <GraduationCap className="h-5 w-5 text-orange-500" />
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        Faculties
-                                    </p>
-                                    <p className="text-2xl font-bold">
-                                        {
-                                            new Set(
-                                                lecturers.map((l) => l.faculty)
-                                            ).size
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Filters */}
-                <Card className="mb-6">
-                    <CardContent className="p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <Label htmlFor="search">Search</Label>
-                                <div className="relative">
-                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="search"
-                                        placeholder="Search by name, staff ID, email, or specialization"
-                                        value={searchTerm}
-                                        onChange={(e) =>
-                                            setSearchTerm(e.target.value)
-                                        }
-                                        className="pl-8"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label>Faculty</Label>
-                                <Select
-                                    value={selectedFaculty}
-                                    onValueChange={setSelectedFaculty}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select faculty" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">
-                                            All Faculties
-                                        </SelectItem>
-                                        {faculties.map((faculty) => (
-                                            <SelectItem
-                                                key={faculty}
-                                                value={faculty}
-                                            >
-                                                {faculty}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="flex items-end">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setSearchTerm("");
-                                        setSelectedFaculty("all");
-                                    }}
-                                    className="w-full"
-                                >
-                                    Clear Filters
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Lecturers Table */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>
-                        Lecturers ({filteredLecturers.length})
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Staff ID</TableHead>
-                                    <TableHead>Full Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Faculty</TableHead>
-                                    <TableHead>Position</TableHead>
-                                    <TableHead>Specialization</TableHead>
-                                    <TableHead>Assigned Courses</TableHead>
-                                    <TableHead>Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredLecturers.map((lecturer) => (
-                                    <TableRow key={lecturer.staff_id}>
-                                        <TableCell className="font-medium">
-                                            {lecturer.staff_id}
-                                        </TableCell>
-                                        <TableCell>
-                                            {lecturer.full_name}
-                                        </TableCell>
-                                        <TableCell>{lecturer.email}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">
-                                                {getFacultyName(lecturer.faculty)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary">
-                                                {lecturer.position}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="text-sm text-muted-foreground">
-                                                {lecturer.specialization ||
-                                                    "Not specified"}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm">
-                                                    {lecturer.assigned_courses
-                                                        ?.length || 0}{" "}
-                                                    courses
-                                                </span>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setSelectedLecturerForAssign(
-                                                            lecturer
-                                                        );
-                                                        setIsAssignDialogOpen(
-                                                            true
-                                                        );
-                                                    }}
-                                                >
-                                                    <BookOpen className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setEditingLecturer(
-                                                            lecturer
-                                                        );
-                                                        setIsEditDialogOpen(
-                                                            true
-                                                        );
-                                                    }}
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleDeleteLecturer(
-                                                            lecturer.id
-                                                        )
-                                                    }
-                                                    className="text-red-600 hover:text-red-800"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Edit Lecturer Dialog */}
-            {editingLecturer && (
-                <Dialog
-                    open={isEditDialogOpen}
-                    onOpenChange={setIsEditDialogOpen}
-                >
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>
-                                Edit Lecturer - {editingLecturer.full_name}
-                            </DialogTitle>
-                            <DialogDescription>
-                                Update lecturer information below.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="edit-fullName">Full Name</Label>
-                                <Input
-                                    id="edit-fullName"
-                                    value={editingLecturer.full_name}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            full_name: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="edit-initialName">
-                                    Initial Name
-                                </Label>
-                                <Input
-                                    id="edit-initialName"
-                                    value={editingLecturer.initial_name}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            initial_name: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="edit-staffId">Staff ID</Label>
-                                <Input
-                                    id="edit-staffId"
-                                    value={editingLecturer.staff_id}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            staff_id: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="edit-email">Email</Label>
-                                <Input
-                                    id="edit-email"
-                                    type="email"
-                                    value={editingLecturer.email}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            email: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="edit-nic">NIC Number</Label>
-                                <Input
-                                    id="edit-nic"
-                                    value={editingLecturer.nic_no}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            nic_no: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="edit-phone">Phone</Label>
-                                <Input
-                                    id="edit-phone"
-                                    value={editingLecturer.phone || ""}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            phone: e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <Label>Faculty</Label>
-                                <Select
-                                    value={editingLecturer.faculty}
-                                    onValueChange={(value) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            faculty: value,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {faculties.map((faculty) => (
-                                            <SelectItem
-                                                key={faculty}
-                                                value={faculty}
-                                            >
-                                                {faculty}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <Label>Position</Label>
-                                <Select
-                                    value={editingLecturer.position}
-                                    onValueChange={(value) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            position: value,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {positions.map((position) => (
-                                            <SelectItem
-                                                key={position}
-                                                value={position}
-                                            >
-                                                {position}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <Label htmlFor="edit-specialization">
-                                    Specialization
-                                </Label>
-                                <Input
-                                    id="edit-specialization"
-                                    value={editingLecturer.specialization || ""}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            specialization: e.target.value,
-                                        })
-                                    }
-                                    placeholder="e.g., Machine Learning, Database Systems"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <Label htmlFor="edit-address">Address</Label>
-                                <Textarea
-                                    id="edit-address"
-                                    value={editingLecturer.address || ""}
-                                    onChange={(e) =>
-                                        setEditingLecturer({
-                                            ...editingLecturer,
-                                            address: e.target.value,
-                                        })
-                                    }
-                                    rows={3}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsEditDialogOpen(false)}
-                            >
-                                <X className="h-4 w-4 mr-2" />
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={() =>
-                                    handleEditLecturer(editingLecturer)
-                                }
-                            >
-                                <Save className="h-4 w-4 mr-2" />
-                                Save Changes
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            )}
-
-            {/* Course Assignment Dialog */}
-            <CourseAssignmentDialog
-                lecturer={selectedLecturerForAssign}
-                isOpen={isAssignDialogOpen}
-                onClose={() => {
-                    setIsAssignDialogOpen(false);
-                    setSelectedLecturerForAssign(null);
-                }}
-                onLecturerUpdate={handleLecturerUpdate}
-            />
-        </div>
-        
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
     );
+  }
+
+  return (
+    <div className="container mx-auto py-10 px-4">
+      <div className="mb-8">
+        <PageHeader
+          breadcrumbs={[
+            { label: "Dashboard", href: "/admin/dashboard" },
+            { label: "Lecturer Management" },
+          ]}
+          title={"Lecturer Management"}
+          backHref="/admin/dashboard"
+          right={
+            <Link href="/admin/lecturers/add">
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add New Lecturer
+              </Button>
+            </Link>
+          }
+        />
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-sm font-medium">Total Lecturers</p>
+                  <p className="text-2xl font-bold">{lecturers.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-green-500" />
+                <div>
+                  <p className="text-sm font-medium">Professors</p>
+                  <p className="text-2xl font-bold">
+                    {
+                      lecturers.filter((l) => l.position.includes("Professor"))
+                        .length
+                    }
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium">Senior Lecturers</p>
+                  <p className="text-2xl font-bold">
+                    {
+                      lecturers.filter((l) => l.position.includes("Senior"))
+                        .length
+                    }
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Faculties</p>
+                  <p className="text-2xl font-bold">
+                    {new Set(lecturers.map((l) => l.faculty)).size}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-semibold">Search & Filter</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="search" className="text-sm font-medium">
+                  Search Lecturers
+                </Label>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Search by name, staff ID, email, position, or specialization..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 h-10"
+                  />
+                </div>
+                {searchTerm && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Found {filteredLecturers.length} results
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Filter by Faculty</Label>
+                <Select
+                  value={selectedFaculty}
+                  onValueChange={setSelectedFaculty}
+                >
+                  <SelectTrigger className="mt-1 h-10">
+                    <SelectValue placeholder="Select faculty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Faculties</SelectItem>
+                    {faculties.map((faculty) => (
+                      <SelectItem key={faculty} value={faculty}>
+                        {faculty.replace("Faculty of ", "")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedFaculty("all");
+                  }}
+                  className="w-full h-10"
+                  disabled={!searchTerm && selectedFaculty === "all"}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lecturers Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">Lecturers List</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Showing {filteredLecturers.length} of {lecturers.length}{" "}
+                lecturers
+              </p>
+            </div>
+            {filteredLecturers.length > 0 && (
+              <Badge variant="secondary" className="text-sm px-3 py-1">
+                {filteredLecturers.length} Results
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredLecturers.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No lecturers found</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm || selectedFaculty !== "all"
+                  ? "Try adjusting your search or filter criteria"
+                  : "Get started by adding a new lecturer"}
+              </p>
+              {!searchTerm && selectedFaculty === "all" && (
+                <Link href="/admin/lecturers/add">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add First Lecturer
+                  </Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[150px]">Staff ID</TableHead>
+                    <TableHead>Lecturer Details</TableHead>
+                    <TableHead>Faculty</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Courses</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLecturers.map((lecturer) => (
+                    <TableRow
+                      key={lecturer.staff_id}
+                      className="hover:bg-muted/50"
+                    >
+                      <TableCell className="font-mono font-semibold">
+                        {lecturer.staff_id}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium">{lecturer.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {lecturer.email}
+                          </p>
+                          {lecturer.specialization && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Award className="h-3 w-3" />
+                              {lecturer.specialization}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="whitespace-nowrap">
+                          {getFacultyName(lecturer.faculty)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{lecturer.position}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className="gap-1 px-2 py-1"
+                          >
+                            <BookOpen className="h-3 w-3" />
+                            <span className="font-semibold">
+                              {lecturer.assigned_courses?.length || 0}
+                            </span>
+                            <span className="text-muted-foreground">
+                              courses
+                            </span>
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedLecturerForAssign(lecturer);
+                              setIsAssignDialogOpen(true);
+                            }}
+                            className="gap-1.5"
+                          >
+                            <BookOpen className="h-4 w-4" />
+                            Manage Courses
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingLecturer(lecturer);
+                              setIsEditDialogOpen(true);
+                            }}
+                            title="Edit Lecturer"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteLecturer(lecturer.id)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Delete Lecturer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit Lecturer Dialog */}
+      {editingLecturer && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Edit Lecturer - {editingLecturer.full_name}
+              </DialogTitle>
+              <DialogDescription>
+                Update lecturer information below.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-fullName">Full Name</Label>
+                <Input
+                  id="edit-fullName"
+                  value={editingLecturer.full_name}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      full_name: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-initialName">Initial Name</Label>
+                <Input
+                  id="edit-initialName"
+                  value={editingLecturer.initial_name}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      initial_name: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-staffId">Staff ID</Label>
+                <Input
+                  id="edit-staffId"
+                  value={editingLecturer.staff_id}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      staff_id: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editingLecturer.email}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      email: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-nic">NIC Number</Label>
+                <Input
+                  id="edit-nic"
+                  value={editingLecturer.nic_no}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      nic_no: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={editingLecturer.phone || ""}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      phone: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Faculty</Label>
+                <Select
+                  value={editingLecturer.faculty}
+                  onValueChange={(value) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      faculty: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {faculties.map((faculty) => (
+                      <SelectItem key={faculty} value={faculty}>
+                        {faculty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Position</Label>
+                <Select
+                  value={editingLecturer.position}
+                  onValueChange={(value) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      position: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {positions.map((position) => (
+                      <SelectItem key={position} value={position}>
+                        {position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="edit-specialization">Specialization</Label>
+                <Input
+                  id="edit-specialization"
+                  value={editingLecturer.specialization || ""}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      specialization: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Machine Learning, Database Systems"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="edit-address">Address</Label>
+                <Textarea
+                  id="edit-address"
+                  value={editingLecturer.address || ""}
+                  onChange={(e) =>
+                    setEditingLecturer({
+                      ...editingLecturer,
+                      address: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button onClick={() => handleEditLecturer(editingLecturer)}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Course Assignment Dialog */}
+      <CourseAssignmentDialog
+        lecturer={selectedLecturerForAssign}
+        isOpen={isAssignDialogOpen}
+        onClose={() => {
+          setIsAssignDialogOpen(false);
+          setSelectedLecturerForAssign(null);
+        }}
+        onLecturerUpdate={handleLecturerUpdate}
+      />
+    </div>
+  );
 }

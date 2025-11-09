@@ -17,13 +17,16 @@ import {
     CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import RFIDStudentReader from "@/components/RFIDStudentReader";
+import RFIDBookReader from "@/components/RFIDBookReader";
 import { getFacultyName } from "@/lib/utils";
+import formatCurrency from "@/lib/formatCurrency";
 import type { BookWithAvailability, MemberSummary } from "@/types/library";
 
 interface CheckoutBook extends BookWithAvailability {
@@ -170,7 +173,7 @@ export default function BookCheckout() {
                     const fineResult = await finePaymentResponse.json();
                     if (fineResult.paid_count > 0) {
                         toast.success(
-                            `Automatically paid ${fineResult.paid_count} pending fines (Rs. ${fineResult.total_amount.toFixed(2)})`
+                            `Automatically paid ${fineResult.paid_count} pending fines (${formatCurrency(fineResult.total_amount)})`
                         );
                         // Update student data with cleared fines
                         verifiedStudent.pending_fines = 0;
@@ -370,28 +373,26 @@ export default function BookCheckout() {
 
     return (
         <div className="container mx-auto py-6 px-4 space-y-6">
-            {/* Header */}
-
-            <div className="flex items-center gap-4 mb-8">
-                <Link href="/library/dashboard" className="mr-4">
-                    <Button variant="outline" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <BookOpenCheck className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold">Book Checkout</h1>
-                {selectedStudent && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={resetForm}
-                        className="ml-auto"
-                    >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Reset
-                    </Button>
-                )}
-            </div>
+            <PageHeader
+                title="Book Checkout"
+                breadcrumbs={[
+                    { label: "Library", href: "/library" },
+                    { label: "Self Service", href: "/library/self-service" },
+                    { label: "Book Checkout" },
+                ]}
+                backHref="/library/self-service"
+                centerIcon={
+                    <BookOpenCheck className="h-8 w-8 text-primary mx-auto" />
+                }
+                right={
+                    selectedStudent ? (
+                        <Button variant="outline" size="sm" onClick={resetForm}>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Reset
+                        </Button>
+                    ) : null
+                }
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Student Selection */}
@@ -482,7 +483,9 @@ export default function BookCheckout() {
                                                         {student.full_name}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
-                                                        {getFacultyName(student.faculty)}
+                                                        {getFacultyName(
+                                                            student.faculty
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -490,115 +493,6 @@ export default function BookCheckout() {
                                     )}
                                 </TabsContent>
                             </Tabs>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Selected Student Details */}
-                {selectedStudent && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                Verified Student
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h3 className="font-semibold">
-                                        Student Information
-                                    </h3>
-                                    <Badge
-                                        variant={
-                                            selectedStudent.can_checkout
-                                                ? "default"
-                                                : "destructive"
-                                        }
-                                    >
-                                        {selectedStudent.can_checkout
-                                            ? "Eligible"
-                                            : "Restricted"}
-                                    </Badge>
-                                </div>
-
-                                <div className="space-y-2 text-sm">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <strong>ID:</strong>{" "}
-                                            {selectedStudent.register_number}
-                                        </div>
-                                        <div>
-                                            <strong>Year:</strong>{" "}
-                                            {selectedStudent.year_of_study}
-                                        </div>
-                                        <div className="col-span-2">
-                                            <strong>Name:</strong>{" "}
-                                            {selectedStudent.full_name}
-                                        </div>
-                                        <div className="col-span-2">
-                                            <strong>Faculty:</strong>{" "}
-                                            {selectedStudent.faculty}
-                                        </div>
-                                    </div>
-
-                                    <Separator />
-
-                                    <div className="grid grid-cols-3 gap-2 text-xs">
-                                        <div className="text-center">
-                                            <div className="font-medium">
-                                                {selectedStudent.current_loans}
-                                            </div>
-                                            <div className="text-muted-foreground">
-                                                Current Loans
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="font-medium">
-                                                {selectedStudent.overdue_loans}
-                                            </div>
-                                            <div className="text-muted-foreground">
-                                                Overdue
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="font-medium">
-                                                Rs.{" "}
-                                                {selectedStudent.pending_fines.toFixed(
-                                                    2
-                                                )}
-                                            </div>
-                                            <div className="text-muted-foreground">
-                                                Fines
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {selectedStudent.checkout_restrictions
-                                        .length > 0 && (
-                                        <>
-                                            <Separator />
-                                            <div>
-                                                <div className="text-red-600 font-medium mb-1">
-                                                    Restrictions:
-                                                </div>
-                                                <ul className="text-xs text-red-600 space-y-1">
-                                                    {selectedStudent.checkout_restrictions.map(
-                                                        (
-                                                            restriction: string,
-                                                            index: number
-                                                        ) => (
-                                                            <li key={index}>
-                                                                • {restriction}
-                                                            </li>
-                                                        )
-                                                    )}
-                                                </ul>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
                         </CardContent>
                     </Card>
                 )}

@@ -43,6 +43,19 @@ export default withAuth(
             return NextResponse.redirect(new URL("/canteen", req.url));
         }
 
+        // Library route protection - allow self-service routes without auth
+        if (
+            pathname.startsWith("/library/") &&
+            pathname !== "/library" &&
+            !pathname.startsWith("/library/self-service") &&
+            !pathname.startsWith("/library/book-checkout") &&
+            !pathname.startsWith("/library/book-returns") &&
+            !pathname.startsWith("/library/catalog-search") &&
+            token?.role !== "librarian"
+        ) {
+            return NextResponse.redirect(new URL("/library", req.url));
+        }
+
         // Redirect authenticated users away from login pages to their dashboards
         if (token) {
             if (pathname === "/admin" && token.role === "admin") {
@@ -65,6 +78,11 @@ export default withAuth(
                     new URL("/canteen/dashboard", req.url)
                 );
             }
+            if (pathname === "/library" && token.role === "librarian") {
+                return NextResponse.redirect(
+                    new URL("/library/dashboard", req.url)
+                );
+            }
         }
 
         return NextResponse.next();
@@ -74,13 +92,18 @@ export default withAuth(
             authorized: ({ token, req }) => {
                 const { pathname } = req.nextUrl;
 
-                // Allow public routes like login pages
+                // Allow public routes like login pages and library self-service
                 if (
                     pathname === "/" ||
                     pathname === "/admin" ||
                     pathname === "/lecturer" ||
                     pathname === "/student" ||
                     pathname === "/canteen" ||
+                    pathname === "/library" ||
+                    pathname.startsWith("/library/self-service") ||
+                    pathname.startsWith("/library/book-checkout") ||
+                    pathname.startsWith("/library/book-returns") ||
+                    pathname.startsWith("/library/catalog-search") ||
                     pathname.startsWith("/api/auth") ||
                     pathname.startsWith("/public")
                 ) {
@@ -100,5 +123,6 @@ export const config = {
         "/lecturer/:path*",
         "/student/:path*",
         "/canteen/:path*",
+        "/library/:path*",
     ],
 };

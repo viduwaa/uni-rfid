@@ -33,6 +33,7 @@ export interface StudentDashboardStats {
     currentBalance: number;
     overdueBooks: number;
     pendingFines: number;
+    activeBorrowedBooks: number;
 }
 
 // Get student by user ID
@@ -142,6 +143,14 @@ export async function getStudentDashboardStats(
             [studentId]
         );
 
+        // Get active borrowed books count
+        const activeBooksResult = await pool.query(
+            `SELECT COUNT(*) as active_books
+      FROM book_loans bl
+      WHERE bl.student_id = $1 AND bl.status = 'active'`,
+            [studentId]
+        );
+
         return {
             totalCourses: parseInt(coursesResult.rows[0]?.total || "0"),
             totalAttendancePercentage: Math.round(
@@ -151,6 +160,7 @@ export async function getStudentDashboardStats(
             currentBalance: parseFloat(balanceResult.rows[0]?.balance || "0"),
             overdueBooks: parseInt(overdueResult.rows[0]?.overdue_count || "0"),
             pendingFines: parseFloat(finesResult.rows[0]?.pending_fines || "0"),
+            activeBorrowedBooks: parseInt(activeBooksResult.rows[0]?.active_books || "0"),
         };
     } catch (error) {
         console.error("Error fetching dashboard stats:", error);
@@ -162,6 +172,7 @@ export async function getStudentDashboardStats(
             currentBalance: 0,
             overdueBooks: 0,
             pendingFines: 0,
+            activeBorrowedBooks: 0,
         };
     }
 }
