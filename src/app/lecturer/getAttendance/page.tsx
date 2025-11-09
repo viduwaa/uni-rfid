@@ -224,9 +224,9 @@ export default function GetAttendance() {
     const selectedCourseData = courses.find((c) => c.id === selectedCourse);
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-background p-6">
             <div className="max-w-7xl mx-auto">
-                <PageHeader
+                <PageHeader 
                     title="Get Attendance"
                     breadcrumbs={[
                         { label: "Dashboard", href: "/lecturer/dashboard" },
@@ -238,25 +238,19 @@ export default function GetAttendance() {
                     }}
                 >
                     {isSessionActive && (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge variant="default">
                             <Activity className="h-3 w-3 mr-1" />
                             Session Active
                         </Badge>
                     )}
                     {isNFCProcessing && (
-                        <Badge
-                            variant="outline"
-                            className="bg-blue-50 text-blue-700 border-blue-300"
-                        >
+                        <Badge variant="secondary">
                             <Zap className="h-3 w-3 mr-1" />
                             Processing NFC
                         </Badge>
                     )}
                     {lastNFCSwipe && (
-                        <Badge
-                            variant="outline"
-                            className="bg-green-50 text-green-700 border-green-300"
-                        >
+                        <Badge variant="secondary">
                             <UserCheck className="h-3 w-3 mr-1" />
                             {lastNFCSwipe}
                         </Badge>
@@ -275,19 +269,19 @@ export default function GetAttendance() {
                 {/* Main Content */}
                 <div className="grid lg:grid-cols-2 gap-6">
                     {/* Session Setup Card */}
-                    <Card className="bg-white shadow-sm">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="text-xl font-semibold">
                                 Session Setup
                             </CardTitle>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                                 Configure your attendance session
                             </p>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Course Selection */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">
+                                <label className="text-sm font-medium text-foreground">
                                     Course
                                 </label>
                                 <Select
@@ -311,7 +305,7 @@ export default function GetAttendance() {
                                     </SelectContent>
                                 </Select>
                                 {selectedCourseData && (
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-muted-foreground">
                                         {selectedCourseData.enrolled_students}{" "}
                                         enrolled students
                                     </p>
@@ -320,7 +314,7 @@ export default function GetAttendance() {
 
                             {/* Lecture Hall Selection */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">
+                                <label className="text-sm font-medium text-foreground">
                                     Lecture Hall
                                 </label>
                                 <Select
@@ -356,12 +350,12 @@ export default function GetAttendance() {
 
                             {/* Current Date & Time */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">
+                                <label className="text-sm font-medium text-foreground">
                                     Current Date & Time
                                 </label>
-                                <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg">
-                                    <Clock className="h-4 w-4 text-gray-500" />
-                                    <span className="text-sm text-gray-600">
+                                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">
                                         {currentDateTime}
                                     </span>
                                 </div>
@@ -371,7 +365,7 @@ export default function GetAttendance() {
                             {!isSessionActive ? (
                                 <Button
                                     onClick={startSession}
-                                    className="w-full bg-black hover:bg-gray-800 text-white py-3"
+                                    className="w-full"
                                     disabled={!selectedCourse || !selectedHall}
                                 >
                                     <Play className="h-4 w-4 mr-2" />
@@ -380,30 +374,27 @@ export default function GetAttendance() {
                             ) : (
                                 <div className="space-y-4">
                                     {/* NFC Scanning Status */}
-                                    <div className="p-3 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
+                                    <div className="p-3 bg-muted/50 border rounded-lg">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Wifi
                                                 className={`h-4 w-4 ${
                                                     nfcStatus.status ===
                                                     "connected"
-                                                        ? "text-green-600"
-                                                        : "text-gray-400"
+                                                        ? "text-emerald-600 dark:text-emerald-400"
+                                                        : "text-muted-foreground"
                                                 }`}
                                             />
-                                            <span className="text-sm font-medium text-gray-700">
+                                            <span className="text-sm font-medium text-foreground">
                                                 NFC Attendance Mode
                                             </span>
                                             {nfcStatus.status ===
                                                 "connected" && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="bg-green-100 text-green-700 border-green-300"
-                                                >
+                                                <Badge variant="secondary">
                                                     Ready
                                                 </Badge>
                                             )}
                                         </div>
-                                        <p className="text-xs text-gray-600">
+                                        <p className="text-xs text-muted-foreground">
                                             {nfcStatus.status === "connected"
                                                 ? `Tap NFC cards on ${nfcStatus.reader} to record attendance automatically`
                                                 : "Connect NFC reader to enable automatic card scanning"}
@@ -412,7 +403,7 @@ export default function GetAttendance() {
 
                                     {/* Manual Entry Fallback */}
                                     <div className="space-y-2">
-                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                             Manual Entry (Fallback)
                                         </label>
                                         <form
@@ -457,14 +448,14 @@ export default function GetAttendance() {
                     </Card>
 
                     {/* Live Attendance Card */}
-                    <Card className="bg-white shadow-sm">
+                    <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-xl font-semibold">
                                         Live Attendance
                                     </CardTitle>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-muted-foreground">
                                         {isSessionActive
                                             ? "Session in progress"
                                             : "Start a session to begin recording"}
@@ -473,30 +464,30 @@ export default function GetAttendance() {
                                 {summary && (
                                     <div className="flex gap-4">
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-green-600">
+                                            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                                 {summary.total_present}
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className="text-xs text-muted-foreground">
                                                 Present
                                             </div>
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-gray-700">
+                                            <div className="text-2xl font-bold text-foreground">
                                                 {summary.total_enrolled}
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className="text-xs text-muted-foreground">
                                                 Total
                                             </div>
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-blue-600">
+                                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                                 {Math.round(
                                                     summary.attendance_percentage ||
                                                         0
                                                 )}
                                                 %
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className="text-xs text-muted-foreground">
                                                 Rate
                                             </div>
                                         </div>
@@ -508,20 +499,20 @@ export default function GetAttendance() {
                             {!isSessionActive && !selectedCourse ? (
                                 <div className="flex flex-col items-center justify-center py-16 text-center">
                                     <div className="mb-6">
-                                        <GraduationCap className="h-16 w-16 text-gray-300 mx-auto mb-2" />
+                                        <GraduationCap className="h-16 w-16 text-muted-foreground mx-auto mb-2" />
                                     </div>
-                                    <p className="text-gray-500 text-sm max-w-xs">
+                                    <p className="text-muted-foreground text-sm max-w-xs">
                                         Select a course and lecture hall to
                                         start attendance session
                                     </p>
                                 </div>
                             ) : attendanceRecords.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                                    <Users className="h-12 w-12 text-gray-300 mb-4" />
-                                    <p className="text-gray-500 text-sm mb-2">
+                                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                                    <p className="text-muted-foreground text-sm mb-2">
                                         No attendance recorded yet today
                                     </p>
-                                    <p className="text-xs text-gray-400">
+                                    <p className="text-xs text-muted-foreground">
                                         {nfcStatus.status === "connected"
                                             ? "Tap NFC cards or use manual entry above"
                                             : "Use manual entry above or connect NFC reader"}
@@ -544,8 +535,8 @@ export default function GetAttendance() {
                                                     index === 0 &&
                                                     lastNFCSwipe ===
                                                         record.student_name
-                                                        ? "bg-gradient-to-r from-green-100 to-blue-100 border-green-300 shadow-sm"
-                                                        : "bg-green-50 border-green-200"
+                                                        ? "bg-accent border-accent shadow-sm"
+                                                        : "bg-muted border-border"
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -554,8 +545,8 @@ export default function GetAttendance() {
                                                             index === 0 &&
                                                             lastNFCSwipe ===
                                                                 record.student_name
-                                                                ? "text-blue-600"
-                                                                : "text-green-600"
+                                                                ? "text-blue-600 dark:text-blue-400"
+                                                                : "text-emerald-600 dark:text-emerald-400"
                                                         }`}
                                                     />
                                                     <div>
@@ -567,8 +558,8 @@ export default function GetAttendance() {
                                                                 lastNFCSwipe ===
                                                                     record.student_name && (
                                                                     <Badge
-                                                                        variant="outline"
-                                                                        className="ml-2 bg-blue-100 text-blue-700 border-blue-300 text-xs"
+                                                                        variant="secondary"
+                                                                        className="ml-2 text-xs"
                                                                     >
                                                                         <Zap className="h-2 w-2 mr-1" />
                                                                         Just
@@ -576,7 +567,7 @@ export default function GetAttendance() {
                                                                     </Badge>
                                                                 )}
                                                         </p>
-                                                        <p className="text-xs text-gray-500">
+                                                        <p className="text-xs text-muted-foreground">
                                                             {
                                                                 record.register_number
                                                             }
@@ -589,13 +580,13 @@ export default function GetAttendance() {
                                                             index === 0 &&
                                                             lastNFCSwipe ===
                                                                 record.student_name
-                                                                ? "text-blue-600"
-                                                                : "text-green-600"
+                                                                ? "text-blue-600 dark:text-blue-400"
+                                                                : "text-emerald-600 dark:text-emerald-400"
                                                         }`}
                                                     >
                                                         {record.checked_in}
                                                     </p>
-                                                    <p className="text-xs text-gray-400">
+                                                    <p className="text-xs text-muted-foreground">
                                                         {new Date(
                                                             record.created_at
                                                         ).toLocaleTimeString()}
