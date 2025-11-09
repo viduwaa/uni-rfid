@@ -16,24 +16,9 @@ export async function GET(request: NextRequest) {
         c.credits,
         c.created_at,
         c.updated_at,
-        COUNT(DISTINCT sc.student_id) as enrolled_students,
-        COALESCE(
-          JSON_AGG(
-            CASE WHEN l.id IS NOT NULL THEN
-              JSON_BUILD_OBJECT(
-                'id', l.id,
-                'full_name', l.full_name,
-                'staff_id', l.staff_id,
-                'position', l.position
-              )
-            END
-          ) FILTER (WHERE l.id IS NOT NULL), 
-          '[]'::json
-        ) as assigned_lecturers
+        COUNT(DISTINCT sc.student_id) as enrolled_students
       FROM courses c
       LEFT JOIN student_courses sc ON c.id = sc.course_id
-      LEFT JOIN lecturer_courses lc ON c.id = lc.course_id
-      LEFT JOIN lecturers l ON lc.lecturer_id = l.id
       GROUP BY c.id, c.course_code, c.course_name, c.faculty, 
                c.year, c.credits, c.created_at, c.updated_at
       ORDER BY c.faculty, c.year, c.course_code

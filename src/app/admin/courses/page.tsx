@@ -41,7 +41,6 @@ import {
     X,
     GraduationCap,
     Users,
-    Award,
     ArrowLeft,
     Home,
 } from "lucide-react";
@@ -58,12 +57,6 @@ interface Course {
     created_at: string;
     updated_at: string;
     enrolled_students?: number;
-    assigned_lecturers?: Array<{
-        id: string;
-        full_name: string;
-        staff_id: string;
-        position: string;
-    }>;
 }
 
 export default function CourseManagement() {
@@ -107,7 +100,7 @@ export default function CourseManagement() {
             const response = await fetch("/api/admin/courses");
             if (response.ok) {
                 const data = await response.json();
-                console.log(data)
+                console.log(data);
                 setCourses(data.courses);
             }
         } catch (error) {
@@ -293,7 +286,7 @@ export default function CourseManagement() {
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center gap-2">
@@ -322,33 +315,11 @@ export default function CourseManagement() {
                                         {courses.reduce(
                                             (sum, course) =>
                                                 sum +
-                                                (course.enrolled_students || 0),
+                                                (parseInt(
+                                                    course.enrolled_students as any
+                                                ) || 0),
                                             0
                                         )}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-2">
-                                <Award className="h-5 w-5 text-purple-500" />
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        Avg Credits
-                                    </p>
-                                    <p className="text-2xl font-bold">
-                                        {courses.length > 0
-                                            ? (
-                                                  courses.reduce(
-                                                      (sum, course) =>
-                                                          sum + course.credits,
-                                                      0
-                                                  ) / courses.length
-                                              ).toFixed(1)
-                                            : 0}
                                     </p>
                                 </div>
                             </div>
@@ -487,7 +458,6 @@ export default function CourseManagement() {
                                     <TableHead>Year</TableHead>
                                     <TableHead>Credits</TableHead>
                                     <TableHead>Enrolled Students</TableHead>
-                                    <TableHead>Assigned Lecturers</TableHead>
                                     <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -520,25 +490,6 @@ export default function CourseManagement() {
                                                 {course.enrolled_students || 0}{" "}
                                                 students
                                             </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                                {course.assigned_lecturers?.map(
-                                                    (lecturer) => (
-                                                        <Badge
-                                                            key={lecturer.id}
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                        >
-                                                            {lecturer.full_name}
-                                                        </Badge>
-                                                    )
-                                                ) || (
-                                                    <span className="text-sm text-muted-foreground">
-                                                        None
-                                                    </span>
-                                                )}
-                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">

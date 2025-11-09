@@ -14,6 +14,7 @@ import {
     IdCard,
     UserPlus,
     Users,
+    Wallet,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 
@@ -128,7 +129,7 @@ export default function AdminDashboard() {
                     <h2 className="text-xl font-semibold mb-4">
                         Quick Actions & Card Management
                     </h2>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                         {/* Quick Add Student */}
                         <Link href="/admin/students/add" className="block">
                             <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-cyan-400">
@@ -193,6 +194,29 @@ export default function AdminDashboard() {
                                     <p className="text-sm text-muted-foreground text-center">
                                         Issue new cards and manage card
                                         registrations
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+
+                        {/* Recharge Cards */}
+                        <Link href="/admin/rfid/recharge" className="block">
+                            <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-emerald-400">
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-center">
+                                        <Wallet className="h-12 w-12 text-emerald-600" />
+                                    </div>
+                                    <CardTitle className="mt-4 text-xl">
+                                        Recharge Cards
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Add balance to cards
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Recharge student cards and manage
+                                        balance top-ups
                                     </p>
                                 </CardContent>
                             </Card>

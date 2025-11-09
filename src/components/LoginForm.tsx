@@ -41,7 +41,7 @@ export default function LoginForm({ role }: LoginFormProps) {
             case "canteen":
                 return "Canteen";
             case "library":
-                return "Library"
+                return "Library";
             default:
                 return "";
         }
@@ -75,7 +75,10 @@ export default function LoginForm({ role }: LoginFormProps) {
                 return;
             }
 
-            if (userRole !== role) {
+            // Map library to librarian for role checking
+            const expectedRole = role === "library" ? "librarian" : role;
+
+            if (userRole !== expectedRole) {
                 setError(`You are not authorized to login as ${role}`);
                 return;
             }
@@ -94,7 +97,7 @@ export default function LoginForm({ role }: LoginFormProps) {
                 case "canteen":
                     router.push("/canteen/dashboard");
                     break;
-                case "library":
+                case "librarian":
                     router.push("/library/dashboard");
                     break;
                 default:

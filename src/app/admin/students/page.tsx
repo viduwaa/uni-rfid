@@ -91,25 +91,28 @@ export default function StudentManagement() {
         useState<Student | null>(null);
 
     const faculties = [
-        "Faculty of Technology",
-        "Faculty of Applied Sciences",
-        "Faculty of Social Sciences & Humanities",
-        "Faculty of Management Studies",
-        "Faculty of Medicine",
-        "Faculty of Agriculture",
+        { code: "tec", name: "Faculty of Technology" },
+        { code: "app", name: "Faculty of Applied Sciences" },
+        { code: "ssh", name: "Faculty of Social Sciences & Humanities" },
+        { code: "mgt", name: "Faculty of Management Studies" },
+        { code: "med", name: "Faculty of Medicine and Allied Sciences" },
+        { code: "agr", name: "Faculty of Agriculture" },
     ];
 
     // Helper function to get short faculty name
-    const getShortFacultyName = (faculty: string) => {
+    const getShortFacultyName = (facultyCode: string) => {
         const facultyMap: { [key: string]: string } = {
-            "Faculty of Technology": "FOT",
-            "Faculty of Applied Sciences": "APP",
-            "Faculty of Social Sciences & Humanities": "SSH",
-            "Faculty of Management Studies": "MGT",
-            "Faculty of Medicine": "MED",
-            "Faculty of Agriculture": "AGR",
+            tec: "FOT",
+            app: "APP",
+            ssh: "SSH",
+            mgt: "MGT",
+            med: "MED",
+            agr: "AGR",
         };
-        return facultyMap[faculty] || faculty.substring(0, 3).toUpperCase();
+        return (
+            facultyMap[facultyCode.toLowerCase()] ||
+            facultyCode.substring(0, 3).toUpperCase()
+        );
     };
 
     useEffect(() => {
@@ -406,10 +409,10 @@ export default function StudentManagement() {
                                         </SelectItem>
                                         {faculties.map((faculty) => (
                                             <SelectItem
-                                                key={faculty}
-                                                value={faculty}
+                                                key={faculty.code}
+                                                value={faculty.code}
                                             >
-                                                {faculty.replace(
+                                                {faculty.name.replace(
                                                     "Faculty of ",
                                                     ""
                                                 )}
@@ -805,10 +808,10 @@ export default function StudentManagement() {
                                     <SelectContent>
                                         {faculties.map((faculty) => (
                                             <SelectItem
-                                                key={faculty}
-                                                value={faculty}
+                                                key={faculty.code}
+                                                value={faculty.code}
                                             >
-                                                {faculty}
+                                                {faculty.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

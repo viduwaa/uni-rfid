@@ -6,7 +6,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
     ChartColumn,
     CalendarCheck2,
@@ -15,107 +14,122 @@ import {
     UserCheck,
     GraduationCap,
 } from "lucide-react";
-import { PageHeader } from "@/components/ui/breadcrumb";
+import LogoutButton from "@/components/Logout";
 
 export default function LectureDashboard() {
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Lecturer Dashboard
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Manage attendance, view reports and track participation
-                    </p>
-                </div>
-
+        <div className="min-h-screen">
+            <div className="mb-10 bg-[rgba(255,255,255,0.47)] h-[100px] flex flex-col items-center justify-center w-full">
+                <h1 className="text-3xl font-bold tracking-tight text-center">
+                    Lecturer Dashboard
+                </h1>
+                <p className="mt-2 text-muted-foreground text-center">
+                    Manage attendance, view reports and track participation
+                </p>
+            </div>
+            <div className="container mx-auto py-10 p-6 space-y-8">
+                {/* Main Lecturer Functions */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
+                    {/* Get Attendance */}
                     <Link href="/lecturer/getAttendance/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md">
-                            <CardHeader>
-                                <UserCheck className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-blue-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <UserCheck className="h-12 w-12 text-blue-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
                                     Get Attendance
                                 </CardTitle>
                                 <CardDescription>
-                                    Record students attendance for your classes.
+                                    Record students attendance
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground text-center">
                                     Select course, lecture hall, and start
-                                    recordings attendance using NFC cards.
+                                    recording attendance using NFC cards
                                 </p>
                             </CardContent>
                         </Card>
                     </Link>
 
+                    {/* Generate Reports */}
                     <Link href="/lecturer/genarateReports/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md">
-                            <CardHeader>
-                                <ChartColumn className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-green-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <ChartColumn className="h-12 w-12 text-green-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
                                     Generate Reports
                                 </CardTitle>
                                 <CardDescription>
-                                    View attendance reports and analytics.
+                                    View attendance analytics
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground text-center">
                                     Generate detailed attendance reports by
-                                    course, date range and students.
+                                    course, date range and students
                                 </p>
                             </CardContent>
                         </Card>
                     </Link>
 
+                    {/* My Students */}
                     <Link href="/lecturer/myStudents/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md">
-                            <CardHeader>
-                                <Users className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-purple-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <Users className="h-12 w-12 text-purple-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
                                     My Students
                                 </CardTitle>
                                 <CardDescription>
-                                    View students enrolled in your courses.
+                                    View enrolled students
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Access students information and attendance
-                                    history for your course.
+                                <p className="text-sm text-muted-foreground text-center">
+                                    Access student information and attendance
+                                    history for your courses
                                 </p>
                             </CardContent>
                         </Card>
                     </Link>
 
+                    {/* Class Schedule */}
                     <Link href="/lecturer/classSchedule/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md">
-                            <CardHeader>
-                                <CalendarCheck2 className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-red-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <CalendarCheck2 className="h-12 w-12 text-red-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
                                     Class Schedule
                                 </CardTitle>
                                 <CardDescription>
-                                    View your lecturing schedule.
+                                    View lecturing schedule
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground text-center">
                                     Check your upcoming classes and manage your
-                                    teaching schedule.
+                                    teaching schedule
                                 </p>
                             </CardContent>
                         </Card>
                     </Link>
 
+                    {/* Attendance History */}
                     <Link href="/lecturer/attendanceHistory/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md">
-                            <CardHeader>
-                                <History className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-cyan-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <History className="h-12 w-12 text-cyan-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
                                     Attendance History
                                 </CardTitle>
                                 <CardDescription>
@@ -123,29 +137,32 @@ export default function LectureDashboard() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Review historical attendance date and track
-                                    students participation trends.
+                                <p className="text-sm text-muted-foreground text-center">
+                                    Review historical attendance data and track
+                                    student participation trends
                                 </p>
                             </CardContent>
                         </Card>
                     </Link>
 
+                    {/* Student Results */}
                     <Link href="/lecturer/results/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md">
-                            <CardHeader>
-                                <GraduationCap className="h-8 w-8 text-primary" />
-                                <CardTitle className="mt-2">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-orange-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <GraduationCap className="h-12 w-12 text-orange-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
                                     Student Results
                                 </CardTitle>
                                 <CardDescription>
-                                    Manage exam results and grades
+                                    Manage exam results
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground text-center">
                                     Add, view, and manage exam results for
-                                    students in your courses.
+                                    students in your courses
                                 </p>
                             </CardContent>
                         </Card>
@@ -153,9 +170,7 @@ export default function LectureDashboard() {
                 </div>
 
                 <div className="mt-8 flex justify-end px-5">
-                    <Link href="/">
-                        <Button variant="outline">Logout</Button>
-                    </Link>
+                    <LogoutButton />
                 </div>
             </div>
         </div>

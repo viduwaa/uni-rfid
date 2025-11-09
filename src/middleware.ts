@@ -43,6 +43,15 @@ export default withAuth(
             return NextResponse.redirect(new URL("/canteen", req.url));
         }
 
+        // Library route protection
+        if (
+            pathname.startsWith("/library/") &&
+            pathname !== "/library" &&
+            token?.role !== "librarian"
+        ) {
+            return NextResponse.redirect(new URL("/library", req.url));
+        }
+
         // Redirect authenticated users away from login pages to their dashboards
         if (token) {
             if (pathname === "/admin" && token.role === "admin") {
@@ -65,6 +74,11 @@ export default withAuth(
                     new URL("/canteen/dashboard", req.url)
                 );
             }
+            if (pathname === "/library" && token.role === "librarian") {
+                return NextResponse.redirect(
+                    new URL("/library/dashboard", req.url)
+                );
+            }
         }
 
         return NextResponse.next();
@@ -81,6 +95,7 @@ export default withAuth(
                     pathname === "/lecturer" ||
                     pathname === "/student" ||
                     pathname === "/canteen" ||
+                    pathname === "/library" ||
                     pathname.startsWith("/api/auth") ||
                     pathname.startsWith("/public")
                 ) {
@@ -100,5 +115,6 @@ export const config = {
         "/lecturer/:path*",
         "/student/:path*",
         "/canteen/:path*",
+        "/library/:path*",
     ],
 };

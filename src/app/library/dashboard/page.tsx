@@ -7,6 +7,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import LogoutButton from "@/components/Logout";
 import {
     BookPlus,
     BookOpenCheck,
@@ -17,7 +18,6 @@ import {
     FileSearch,
     BarChart3,
     Settings,
-    LogOut,
     CreditCard,
     ArrowLeftRight,
 } from "lucide-react";
@@ -175,12 +175,7 @@ export default function LibraryDashboard() {
                 </div>
 
                 <div className="mt-8 flex justify-end px-5">
-                    <Link href="/">
-                        <Button variant="outline" className="gap-2">
-                            <LogOut className="h-4 w-4" />
-                            Logout
-                        </Button>
-                    </Link>
+                    <LogoutButton />
                 </div>
             </div>
         </div>

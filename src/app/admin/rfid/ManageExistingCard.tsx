@@ -3,15 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
     Search,
     CreditCard,
     Users,
     RefreshCw,
-    Eye,
-    Edit,
     UserX,
     DollarSign,
     Calendar,
+    Trash2,
+    CheckCircle,
+    XCircle,
+    ArrowUpDown,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -28,25 +38,70 @@ interface IssuedCard {
     last_used?: string;
 }
 
-export default function ManageExistingCard() {
+interface ManageExistingCardProps {
+    onCardUpdated?: () => void;
+}
+
+export default function ManageExistingCard({
+    onCardUpdated,
+}: ManageExistingCardProps) {
     const [cards, setCards] = useState<IssuedCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [refreshing, setRefreshing] = useState(false);
+    const [sortField, setSortField] = useState<keyof IssuedCard>("full_name");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-    // Filtered cards based on search query
+    // Filtered and sorted cards
     const filteredCards = useMemo(() => {
-        if (!searchQuery.trim()) return cards;
+        let filtered = cards;
 
-        const query = searchQuery.toLowerCase().trim();
-        return cards.filter(
-            (card) =>
-                card.full_name?.toLowerCase().includes(query) ||
-                card.register_number?.toLowerCase().includes(query) ||
-                card.card_uid?.toLowerCase().includes(query) ||
-                card.faculty?.toLowerCase().includes(query)
-        );
-    }, [cards, searchQuery]);
+        // Apply search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            filtered = cards.filter(
+                (card) =>
+                    card.full_name?.toLowerCase().includes(query) ||
+                    card.register_number?.toLowerCase().includes(query) ||
+                    card.card_uid?.toLowerCase().includes(query) ||
+                    card.faculty?.toLowerCase().includes(query)
+            );
+        }
+
+        // Apply sorting
+        const sorted = [...filtered].sort((a, b) => {
+            const aValue = a[sortField];
+            const bValue = b[sortField];
+
+            if (aValue === undefined || aValue === null) return 1;
+            if (bValue === undefined || bValue === null) return -1;
+
+            if (typeof aValue === "string" && typeof bValue === "string") {
+                return sortDirection === "asc"
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            }
+
+            if (typeof aValue === "number" && typeof bValue === "number") {
+                return sortDirection === "asc"
+                    ? aValue - bValue
+                    : bValue - aValue;
+            }
+
+            return 0;
+        });
+
+        return sorted;
+    }, [cards, searchQuery, sortField, sortDirection]);
+
+    const handleSort = (field: keyof IssuedCard) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortDirection("asc");
+        }
+    };
 
     const fetchCards = async () => {
         setLoading(true);
@@ -102,8 +157,40 @@ export default function ManageExistingCard() {
 
             toast.success(`Card ${action}d successfully for ${studentName}`);
             refreshData();
+            // Notify parent to refresh stats
+            onCardUpdated?.();
         } catch (error) {
             toast.error(`Failed to ${action} card`, {
+                description: (error as Error).message,
+            });
+        }
+    };
+
+    const handleDeleteCard = async (cardUid: string, studentName: string) => {
+        if (
+            !confirm(
+                `Are you sure you want to delete the card for ${studentName}? This action cannot be undone.`
+            )
+        ) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/rfid/cards/${cardUid}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || "Failed to delete card");
+            }
+
+            toast.success(`Card deleted successfully for ${studentName}`);
+            refreshData();
+            // Notify parent to refresh stats
+            onCardUpdated?.();
+        } catch (error) {
+            toast.error("Failed to delete card", {
                 description: (error as Error).message,
             });
         }
@@ -208,7 +295,7 @@ export default function ManageExistingCard() {
                 </Card>
             )}
 
-            {/* Cards List */}
+            {/* Cards Table */}
             {!loading && (
                 <Card>
                     <CardHeader>
@@ -219,132 +306,201 @@ export default function ManageExistingCard() {
                     </CardHeader>
                     <CardContent>
                         {filteredCards.length > 0 ? (
-                            <div className="space-y-4">
-                                {filteredCards.map((card) => (
-                                    <div
-                                        key={card.card_uid}
-                                        className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                                    >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="font-semibold text-lg">
-                                                        {card.full_name}
-                                                    </h3>
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() =>
+                                                    handleSort("full_name")
+                                                }
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    Student & Card UID
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() =>
+                                                    handleSort(
+                                                        "register_number"
+                                                    )
+                                                }
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    Register No.
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() =>
+                                                    handleSort("faculty")
+                                                }
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    Faculty
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-muted/50 text-right"
+                                                onClick={() =>
+                                                    handleSort("balance")
+                                                }
+                                            >
+                                                <div className="flex items-center justify-end gap-2">
+                                                    Balance
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() =>
+                                                    handleSort("status")
+                                                }
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    Status
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() =>
+                                                    handleSort("issued_at")
+                                                }
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    Issued Date
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead className="text-right">
+                                                Actions
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredCards.map((card) => (
+                                            <TableRow
+                                                key={card.card_uid}
+                                                className="hover:bg-muted/50"
+                                            >
+                                                <TableCell className="font-medium">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <Users className="h-4 w-4 text-muted-foreground" />
+                                                            <span className="font-semibold">
+                                                                {card.full_name}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 ml-6">
+                                                            <CreditCard className="h-3 w-3 text-muted-foreground" />
+                                                            <span className="font-mono text-xs text-muted-foreground">
+                                                                {card.card_uid}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="font-mono text-sm">
+                                                        {card.register_number}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">
+                                                        {card.faculty}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right font-semibold">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <DollarSign className="h-3 w-3" />
+                                                        {card.balance}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
                                                     <Badge
                                                         className={getStatusColor(
                                                             card.status
                                                         )}
                                                         variant="outline"
                                                     >
+                                                        {card.status ===
+                                                        "ACTIVE" ? (
+                                                            <CheckCircle className="mr-1 h-3 w-3" />
+                                                        ) : (
+                                                            <XCircle className="mr-1 h-3 w-3" />
+                                                        )}
                                                         {card.status}
                                                     </Badge>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                                                    <div className="flex items-center gap-1">
-                                                        <Users className="h-3 w-3" />
-                                                        <span>
-                                                            {
-                                                                card.register_number
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <CreditCard className="h-3 w-3" />
-                                                        <span>
-                                                            {card.card_uid}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <DollarSign className="h-3 w-3" />
-                                                        <span>
-                                                            Rs.
-                                                            {card.balance}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                                         <Calendar className="h-3 w-3" />
-                                                        <span>
-                                                            {new Date(
-                                                                card.issued_at
-                                                            ).toLocaleDateString()}
-                                                        </span>
+                                                        {new Date(
+                                                            card.issued_at
+                                                        ).toLocaleDateString()}
                                                     </div>
-                                                </div>
-
-                                                <Badge
-                                                    variant="outline"
-                                                    className="mt-2"
-                                                >
-                                                    {card.faculty}
-                                                </Badge>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-2 pt-2 border-t">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    // Handle view details
-                                                    toast.info(
-                                                        "View details feature coming soon"
-                                                    );
-                                                }}
-                                            >
-                                                <Eye className="mr-1 h-3 w-3" />
-                                                Details
-                                            </Button>
-
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    // Handle edit
-                                                    toast.info(
-                                                        "Edit feature coming soon"
-                                                    );
-                                                }}
-                                            >
-                                                <Edit className="mr-1 h-3 w-3" />
-                                                Edit
-                                            </Button>
-
-                                            {card.status === "ACTIVE" ? (
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleCardAction(
-                                                            "deactivate",
-                                                            card.card_uid,
-                                                            card.full_name
-                                                        )
-                                                    }
-                                                >
-                                                    <UserX className="mr-1 h-3 w-3" />
-                                                    Deactivate
-                                                </Button>
-                                            ) : (
-                                                <Button
-                                                    variant="default"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        handleCardAction(
-                                                            "activate",
-                                                            card.card_uid,
-                                                            card.full_name
-                                                        )
-                                                    }
-                                                >
-                                                    <CreditCard className="mr-1 h-3 w-3" />
-                                                    Activate
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {card.status ===
+                                                        "ACTIVE" ? (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+                                                                onClick={() =>
+                                                                    handleCardAction(
+                                                                        "deactivate",
+                                                                        card.card_uid,
+                                                                        card.full_name
+                                                                    )
+                                                                }
+                                                            >
+                                                                <UserX className="mr-1 h-3 w-3" />
+                                                                Deactivate
+                                                            </Button>
+                                                        ) : (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                                                                onClick={() =>
+                                                                    handleCardAction(
+                                                                        "activate",
+                                                                        card.card_uid,
+                                                                        card.full_name
+                                                                    )
+                                                                }
+                                                            >
+                                                                <CheckCircle className="mr-1 h-3 w-3" />
+                                                                Activate
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                            onClick={() =>
+                                                                handleDeleteCard(
+                                                                    card.card_uid,
+                                                                    card.full_name
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="mr-1 h-3 w-3" />
+                                                            Delete
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         ) : searchQuery ? (
                             <div className="text-center py-8">

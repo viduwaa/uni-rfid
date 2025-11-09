@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     Card,
@@ -27,9 +27,55 @@ import ManageExistingCard from "./ManageExistingCard";
 import { UserCog } from "lucide-react";
 import DeviceStatus from "@/components/DeviceStatus";
 import AddMenu from "./AddMenu";
+import { DollarSign, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+interface RFIDStats {
+    activeCards: number;
+    issuedCards: number;
+    totalBalance: number;
+    unissuedCards: number;
+}
 
 export default function RFIDManagement() {
     const [showIssueNew, setShowIssueNew] = useState(true);
+    const [stats, setStats] = useState<RFIDStats>({
+        activeCards: 0,
+        issuedCards: 0,
+        totalBalance: 0,
+        unissuedCards: 0,
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    // Fetch RFID stats
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        setLoadingStats(true);
+        try {
+            const response = await fetch("/api/rfid/stats");
+            const data = await response.json();
+
+            if (data.success) {
+                setStats(data.data);
+            } else {
+                toast.error("Failed to load statistics");
+            }
+        } catch (error) {
+            console.error("Error fetching stats:", error);
+            toast.error("Error loading statistics");
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    // Refresh stats when switching tabs or after operations
+    const handleRefreshStats = () => {
+        fetchStats();
+    };
+
     return (
         <>
             <div className="container mx-auto">
@@ -85,12 +131,18 @@ export default function RFIDManagement() {
                     </div>
 
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <Card>
                             <CardContent className="flex items-center p-4">
                                 <CreditCard className="h-8 w-8 text-blue-600 mr-3" />
                                 <div>
-                                    <p className="text-2xl font-bold">--</p>
+                                    {loadingStats ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        <p className="text-2xl font-bold">
+                                            {stats.activeCards}
+                                        </p>
+                                    )}
                                     <p className="text-xs text-muted-foreground">
                                         Active Cards
                                     </p>
@@ -100,23 +152,17 @@ export default function RFIDManagement() {
 
                         <Card>
                             <CardContent className="flex items-center p-4">
-                                <UserCog className="h-8 w-8 text-green-600 mr-3" />
+                                <IdCard className="h-8 w-8 text-green-600 mr-3" />
                                 <div>
-                                    <p className="text-2xl font-bold">--</p>
+                                    {loadingStats ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        <p className="text-2xl font-bold">
+                                            {stats.issuedCards}
+                                        </p>
+                                    )}
                                     <p className="text-xs text-muted-foreground">
-                                        Pending Issues
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="flex items-center p-4">
-                                <IdCard className="h-8 w-8 text-orange-600 mr-3" />
-                                <div>
-                                    <p className="text-2xl font-bold">--</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Total Balance
+                                        Total Issued Cards
                                     </p>
                                 </div>
                             </CardContent>
@@ -126,9 +172,33 @@ export default function RFIDManagement() {
                             <CardContent className="flex items-center p-4">
                                 <UserCog className="h-8 w-8 text-purple-600 mr-3" />
                                 <div>
-                                    <p className="text-2xl font-bold">--</p>
+                                    {loadingStats ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        <p className="text-2xl font-bold">
+                                            {stats.unissuedCards}
+                                        </p>
+                                    )}
                                     <p className="text-xs text-muted-foreground">
-                                        Recent Activity
+                                        Unissued Cards
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="flex items-center p-4">
+                                <DollarSign className="h-8 w-8 text-orange-600 mr-3" />
+                                <div>
+                                    {loadingStats ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                    ) : (
+                                        <p className="text-2xl font-bold">
+                                            Rs. {stats.totalBalance.toFixed(2)}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Total Balance
                                     </p>
                                 </div>
                             </CardContent>
@@ -138,9 +208,11 @@ export default function RFIDManagement() {
                 <div className="p-6 space-y-6">
                     <Card>
                         {showIssueNew ? (
-                            <IssueNewCard />
+                            <IssueNewCard onCardIssued={handleRefreshStats} />
                         ) : (
-                            <ManageExistingCard />
+                            <ManageExistingCard
+                                onCardUpdated={handleRefreshStats}
+                            />
                         )}
                     </Card>
                 </div>

@@ -23,15 +23,17 @@ interface AddMenuProps {
     onClose: () => void;
     studentData: BaseStudent;
     onSuccess?: () => void;
+    initialBalance?: number;
 }
 
 export default function AddMenu({
     onClose,
     studentData,
     onSuccess,
+    initialBalance,
 }: AddMenuProps) {
     const [formData, setFormData] = useState({
-        credits: "",
+        credits: initialBalance?.toString() || "",
     });
     const [validationErrors, setValidationErrors] = useState<
         Record<string, string>
@@ -70,7 +72,7 @@ export default function AddMenu({
         }
     };
 
-  // Handle write process - simplified version
+    // Handle write process - simplified version
     const handleWrite = async (event: React.FormEvent) => {
         event.preventDefault();
 
@@ -79,13 +81,22 @@ export default function AddMenu({
             return;
         }
 
+        const creditValue = parseFloat(formData.credits) || 0;
+        console.log(
+            "🔍 Form credits value:",
+            formData.credits,
+            typeof formData.credits
+        );
+        console.log("🔍 Parsed float value:", creditValue);
+        console.log("🔍 Full formData:", formData);
+
         setWriteStatus("preparing");
         setIsWriting(true);
 
         // Just set the writing status and let WriteCard handle the NFC write
         // Database insertion will happen automatically after successful write
         setWriteStatus("writing");
-        
+
         toast.success(
             "Please tap your card to the writer to complete the process"
         );
@@ -104,10 +115,10 @@ export default function AddMenu({
             toast.success("Card issued successfully!", {
                 description: `Card UID: ${cardUID}`,
             });
-            
+
             // Call parent success callback
             onSuccess?.();
-            
+
             // Auto-close after successful write and database save
             setTimeout(() => {
                 onClose();
@@ -354,6 +365,9 @@ export default function AddMenu({
                             <WriteCardComponent
                                 student={studentData}
                                 isWriting={isWriting}
+                                initialBalance={
+                                    parseFloat(formData.credits) || 0
+                                }
                                 onWriteComplete={handleWriteComplete}
                             />
                         </div>

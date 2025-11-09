@@ -21,30 +21,45 @@ export async function POST(request: NextRequest) {
     try {
         const body: WriteCompleteRequest = await request.json();
         console.log("📝 Processing write-complete request:", body);
+        console.log(
+            "🔍 Initial balance from request:",
+            body.initial_balance,
+            typeof body.initial_balance
+        );
 
         // Validate required fields
-        if (!body.student?.user_id || !body.student?.register_number || !body.card?.uid) {
+        if (
+            !body.student?.user_id ||
+            !body.student?.register_number ||
+            !body.card?.uid
+        ) {
             return NextResponse.json(
                 {
                     success: false,
-                    message: "Missing required fields: student.user_id, student.register_number, or card.uid",
+                    message:
+                        "Missing required fields: student.user_id, student.register_number, or card.uid",
                 },
                 { status: 400 }
             );
         }
 
         // Prepare card data for database insertion
-        const cardData:BaseStudent = {
+        const cardData: BaseStudent = {
             user_id: body.student.user_id,
             card_id: body.card.uid,
             credits: body.initial_balance || 0,
         };
 
         console.log("💾 Inserting card data into database:", cardData);
+        console.log(
+            "🔍 Credits value being inserted:",
+            cardData.credits,
+            typeof cardData.credits
+        );
 
         // Insert card details into database
         const result = await insertCardDetails(cardData);
-        
+
         console.log("✅ Card details inserted successfully:", result);
 
         return NextResponse.json({
@@ -55,13 +70,12 @@ export async function POST(request: NextRequest) {
                 student_name: body.student.full_name,
                 register_number: body.student.register_number,
                 inserted_at: new Date().toISOString(),
-                database_id: result?.id || null
-            }
+                database_id: result?.id || null,
+            },
         });
-
     } catch (error) {
         console.error("❌ Database insertion error:", error);
-        
+
         return NextResponse.json(
             {
                 success: false,

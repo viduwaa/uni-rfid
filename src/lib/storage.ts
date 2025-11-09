@@ -1,48 +1,100 @@
-import { BlobServiceClient, BlockBlobClient } from "@azure/storage-blob";
-import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
 
-dotenv.config();
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-//process env variables
-const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING || "";
-const container = process.env.AZURE_STORAGE_CONTAINER_NAME || "";
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("Supabase URL:", supabaseUrl ? "✓ Set" : "✗ Missing");
+    console.error("Service Key:", supabaseServiceKey ? "✓ Set" : "✗ Missing");
+    throw new Error("Missing Supabase environment variables");
+}
 
-//connect to storage
-const bloblServiceClient =
-    BlobServiceClient.fromConnectionString(connectionString);
-const containerClient = bloblServiceClient.getContainerClient(container);
+// Verify we're using service_role key (not anon key)
+if (!supabaseServiceKey.includes('"role":"service_role"')) {
+    console.warn(
+        "⚠️  Warning: You might be using the 'anon' key instead of 'service_role' key!"
+    );
+    console.warn(
+        "This will cause RLS policy errors. Please use the service_role key from Supabase dashboard."
+    );
+}
 
-//upload function, return blob url
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+    },
+});
+
+// Get bucket name from env
+const bucketName = process.env.SUPABASE_STORAGE_BUCKET || "student-photos";
+
+//upload function, return public url
 export const uploadFile = async (
     file: Buffer,
     regNo: string,
     contentType: string,
-    fileExtension:string | undefined,
+    fileExtension: string | undefined
 ): Promise<string> => {
     try {
-        //create container if not created
-        await containerClient.createIfNotExists();
+        console.log(`📤 Attempting to upload file for student: ${regNo}`);
+        console.log(`📦 Bucket: ${bucketName}`);
+        console.log(`📄 Content Type: ${contentType}`);
 
-        //create unique blob name
-        const sanitizedRegNo = regNo.replace(/[^a-zA-Z0-9-]/g, '-');
+        // Create unique file name
+        const sanitizedRegNo = regNo.replace(/[^a-zA-Z0-9-]/g, "-");
         const uniqueName = `${sanitizedRegNo}-${Date.now()}.${fileExtension}`;
-        const blockBlobClient = containerClient.getBlockBlobClient(uniqueName);
+        const filePath = `students/${uniqueName}`;
 
-        //upload the file
-        const uploadBlobResponse = await blockBlobClient.upload(
-            file,
-            file.length,
-            {
-                blobHTTPHeaders: {
-                    blobContentType: contentType,
-                },
+        console.log(`📝 File path: ${filePath}`);
+
+        // Upload file to Supabase Storage
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, file, {
+                contentType: contentType,
+                upsert: false,
+            });
+
+        if (error) {
+            console.error(
+                "❌ Error uploading file to Supabase Storage:",
+                error
+            );
+            console.error("Error details:", {
+                status: error.status,
+                statusCode: error.statusCode,
+                message: error.message,
+            });
+
+            if (error.message.includes("row-level security")) {
+                console.error("\n🔒 RLS Policy Error - Possible solutions:");
+                console.error(
+                    "1. Make sure you're using the SERVICE_ROLE key (not anon key)"
+                );
+                console.error(
+                    "2. Check storage policies in Supabase dashboard"
+                );
+                console.error(
+                    "3. Ensure the bucket exists and has proper policies"
+                );
             }
-        );
 
-        //return url
-        return blockBlobClient.url;
+            throw error;
+        }
+
+        console.log(`✅ File uploaded successfully: ${data.path}`);
+
+        // Get public URL
+        const {
+            data: { publicUrl },
+        } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+
+        console.log(`🔗 Public URL: ${publicUrl}`);
+        return publicUrl;
     } catch (error) {
-        console.error('Error uploading file to Azure Blob Storage:', error)
+        console.error("❌ Error uploading file to Supabase Storage:", error);
         throw error;
     }
 };
