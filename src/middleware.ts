@@ -43,10 +43,13 @@ export default withAuth(
             return NextResponse.redirect(new URL("/canteen", req.url));
         }
 
-        // Library route protection
+        // Library route protection - allow self-service routes without auth
         if (
             pathname.startsWith("/library/") &&
             pathname !== "/library" &&
+            !pathname.startsWith("/library/self-service") &&
+            !pathname.startsWith("/library/book-checkout") &&
+            !pathname.startsWith("/library/book-returns") &&
             token?.role !== "librarian"
         ) {
             return NextResponse.redirect(new URL("/library", req.url));
@@ -88,7 +91,7 @@ export default withAuth(
             authorized: ({ token, req }) => {
                 const { pathname } = req.nextUrl;
 
-                // Allow public routes like login pages
+                // Allow public routes like login pages and library self-service
                 if (
                     pathname === "/" ||
                     pathname === "/admin" ||
@@ -96,6 +99,9 @@ export default withAuth(
                     pathname === "/student" ||
                     pathname === "/canteen" ||
                     pathname === "/library" ||
+                    pathname.startsWith("/library/self-service") ||
+                    pathname.startsWith("/library/book-checkout") ||
+                    pathname.startsWith("/library/book-returns") ||
                     pathname.startsWith("/api/auth") ||
                     pathname.startsWith("/public")
                 ) {

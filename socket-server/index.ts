@@ -79,6 +79,34 @@ io.on("connection", (socket) => {
         io.emit("write-failed", result);
     });
 
+    // Book tag write events
+    socket.on("write-book-tag", (bookData) => {
+        console.log("📚 ===== BOOK TAG WRITE REQUEST =====");
+        console.log(
+            "📥 Received from frontend:",
+            JSON.stringify(bookData, null, 2)
+        );
+        console.log("📤 Broadcasting to ALL clients (including middleware)...");
+        io.emit("write-book-tag", bookData);
+        console.log("✅ Broadcast complete");
+        console.log("====================================");
+    });
+
+    socket.on("book-tag-write-complete", (result) => {
+        console.log("✅ Book tag write complete:", result);
+        io.emit("book-tag-write-complete", result);
+    });
+
+    socket.on("book-tag-write-failed", (result) => {
+        console.log("❌ Book tag write failed:", result);
+        io.emit("book-tag-write-failed", result);
+    });
+
+    socket.on("book-tag-scanned", (data) => {
+        console.log("📖 Book tag scanned:", data);
+        io.emit("book-tag-scanned", data);
+    });
+
     socket.on("disconnect", () => {
         console.log("❌ Device disconnected");
     });

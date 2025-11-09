@@ -3274,6 +3274,77 @@ WHERE ct.id NOT IN (
 -- DROP TYPE IF EXISTS public.transaction_status CASCADE;
 -- DROP FUNCTION IF EXISTS generate_transaction_id() CASCADE;
 
+-- Migration: Add RFID Tag support for Books
+-- Created: 2025-11-09
+-- Description: Creates book_rfid_tags table to store RFID tag information for book copies
+
+-- Create RFID tag status enum if not exists (reusing card_status enum)
+-- This enum already exists for student cards, we'll reuse it for consistency
+
+-- Create book_rfid_tags table
+CREATE TABLE IF NOT EXISTS public.book_rfid_tags (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    rfid_uid character varying(100) NOT NULL UNIQUE,
+    book_copy_id uuid,
+    assigned_date timestamp without time zone,
+    status public.card_status DEFAULT 'ACTIVE'::public.card_status,
+    notes text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Foreign key to book_copies
+    CONSTRAINT fk_book_copy
+        FOREIGN KEY (book_copy_id)
+        REFERENCES public.book_copies(id)
+        ON DELETE SET NULL
+);
+
+-- Add indexes for performance
+CREATE INDEX idx_book_rfid_tags_rfid_uid ON public.book_rfid_tags USING btree (rfid_uid);
+CREATE INDEX idx_book_rfid_tags_book_copy_id ON public.book_rfid_tags USING btree (book_copy_id);
+CREATE INDEX idx_book_rfid_tags_status ON public.book_rfid_tags USING btree (status);
+
+-- Add trigger to automatically update updated_at timestamp
+CREATE TRIGGER update_book_rfid_tags_updated_at 
+    BEFORE UPDATE ON public.book_rfid_tags 
+    FOR EACH ROW 
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Add comments for documentation
+COMMENT ON TABLE public.book_rfid_tags IS 'Stores RFID tag information for book copies';
+COMMENT ON COLUMN public.book_rfid_tags.rfid_uid IS 'Unique RFID tag identifier';
+COMMENT ON COLUMN public.book_rfid_tags.book_copy_id IS 'Reference to the book copy this tag is assigned to';
+COMMENT ON COLUMN public.book_rfid_tags.status IS 'Current status of the RFID tag (ACTIVE, INACTIVE, LOST, DAMAGED, RETURNED)';
+
+-- Grant permissions (adjust based on your setup)
+
+
+-- Optional: Add a column to book_copies to track if it has an RFID tag
+ALTER TABLE public.book_copies 
+ADD COLUMN IF NOT EXISTS has_rfid_tag boolean DEFAULT false;
+
+-- Create a view for book copies with RFID tag information
+CREATE OR REPLACE VIEW public.book_copies_with_rfid AS
+SELECT 
+    bc.*,
+    brt.id as rfid_tag_id,
+    brt.rfid_uid,
+    brt.assigned_date as rfid_assigned_date,
+    brt.status as rfid_status,
+    b.title as book_title,
+    b.author as book_author,
+    b.isbn,
+    b.category
+FROM public.book_copies bc
+LEFT JOIN public.book_rfid_tags brt ON bc.id = brt.book_copy_id
+JOIN public.books b ON bc.book_id = b.id
+ORDER BY b.title, bc.barcode;
+
+
+
+COMMENT ON VIEW public.book_copies_with_rfid IS 'Book copies with their RFID tag information';
+
+
 
 \unrestrict sUPjWIAj5mF1MHJEcwFBddSH8Ea7pavE7b1H3Ivhc5LOdKtOcUaxlOfRK0ZXYwK
 

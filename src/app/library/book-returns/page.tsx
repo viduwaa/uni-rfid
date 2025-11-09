@@ -1,31 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    BookX,
-    ArrowLeft,
-    Loader2,
-    Search,
-    QrCode,
-    CheckCircle,
-    XCircle,
-    Clock,
-    AlertTriangle,
-    CreditCard,
-    User,
-    RefreshCw,
-    BookOpen,
-} from "lucide-react";
+import { BookX, ArrowLeft, Loader2, RefreshCw, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import RFIDStudentReader from "@/components/RFIDStudentReader";
+import RFIDBookReader from "@/components/RFIDBookReader";
 import type { LoanWithDetails } from "@/types/library";
 
 interface ReturnItem extends Omit<LoanWithDetails, "days_overdue"> {
@@ -35,161 +16,44 @@ interface ReturnItem extends Omit<LoanWithDetails, "days_overdue"> {
     days_overdue?: number;
 }
 
-interface VerifiedStudent {
-    user_id: string;
-    register_number: string;
-    full_name: string;
-    email: string;
-    faculty: string;
-    year_of_study: number;
-    card_uid: string;
-    balance: number;
-    card_status: string;
-    current_loans: number;
-    overdue_loans: number;
-    pending_fines: number;
-    membership_status: string;
-    max_books_allowed: number;
-}
-
 export default function BookReturns() {
-    const [studentSearch, setStudentSearch] = useState("");
-    const [bookBarcodeSearch, setBarcodeSearch] = useState("");
-    const [selectedStudent, setSelectedStudent] =
-        useState<VerifiedStudent | null>(null);
-    const [studentLoans, setStudentLoans] = useState<LoanWithDetails[]>([]);
     const [selectedReturns, setSelectedReturns] = useState<ReturnItem[]>([]);
-    const [loading, setLoading] = useState(false);
     const [returnLoading, setReturnLoading] = useState(false);
-    const [returnMethod, setReturnMethod] = useState<"student" | "barcode">(
-        "student"
-    );
 
-    // Fetch student loans when student is selected
-    useEffect(() => {
-        const fetchStudentLoans = async () => {
-            if (!selectedStudent) {
-                setStudentLoans([]);
-                return;
-            }
+    const handleBookScanned = async (bookData: any) => {
+        // Automated return - fetch loan directly from book scan
+        try {
+            const response = await fetch(
+                `/api/library/loans?barcode=${encodeURIComponent(bookData.barcode)}&status=active`
+            );
+            const data = await response.json();
 
-            setLoading(true);
-            try {
-                const response = await fetch(
-                    `/api/library/loans?student_id=${selectedStudent.user_id}&status=active`
-                );
-                if (!response.ok)
-                    throw new Error("Failed to fetch student loans");
+            if (data.success && data.loans && data.loans.length > 0) {
+                const loan = data.loans[0];
 
-                const data = await response.json();
-                setStudentLoans(data.loans || []);
-            } catch (error) {
-                console.error("Error fetching student loans:", error);
-                toast.error("Failed to fetch student loans");
-                setStudentLoans([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStudentLoans();
-    }, [selectedStudent]);
-
-    // Handle barcode scanning for direct book returns
-    useEffect(() => {
-        const handleBarcodeReturn = async () => {
-            if (bookBarcodeSearch.trim().length < 3) return;
-
-            try {
-                // Search for active loan by book barcode
-                const response = await fetch(
-                    `/api/library/loans?barcode=${encodeURIComponent(bookBarcodeSearch.trim())}&status=active`
-                );
-                if (!response.ok)
-                    throw new Error("Book not found or not currently loaned");
-
-                const data = await response.json();
-                if (data.loans && data.loans.length > 0) {
-                    const loan = data.loans[0];
-                    addToReturns(loan);
-                    setBarcodeSearch("");
-                    toast.success(`Book "${loan.book_title}" added to returns`);
-                } else {
-                    toast.error("No active loan found for this book");
+                // Check if already in the returns list
+                if (selectedReturns.find((item) => item.id === loan.id)) {
+                    toast.warning(
+                        `"${bookData.book_title}" is already in the return list`
+                    );
+                    return;
                 }
-            } catch (error) {
-                console.error("Error finding book loan:", error);
-                toast.error("Failed to find book loan");
-            }
-        };
 
-        const timeoutId = setTimeout(handleBarcodeReturn, 500);
-        return () => clearTimeout(timeoutId);
-    }, [bookBarcodeSearch]);
-
-    const handleStudentVerified = async (student: any) => {
-        if (!student) {
-            setSelectedStudent(null);
-            return;
-        }
-
-        const verifiedStudent: VerifiedStudent = {
-            user_id: student.user_id,
-            register_number: student.register_number,
-            full_name: student.full_name,
-            email: student.email,
-            faculty: student.faculty,
-            year_of_study: student.year_of_study,
-            card_uid: student.card_uid,
-            balance: student.balance,
-            card_status: student.card_status,
-            current_loans: student.current_loans,
-            overdue_loans: student.overdue_loans,
-            pending_fines: student.pending_fines,
-            membership_status: student.membership_status,
-            max_books_allowed: student.max_books_allowed,
-        };
-
-        // Auto-pay any pending fines when student is verified for returns
-        if (verifiedStudent.pending_fines > 0) {
-            try {
-                const finePaymentResponse = await fetch(
-                    "/api/library/fines/bulk-pay",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            student_id: verifiedStudent.user_id,
-                            action: "pay",
-                            notes: "Auto-paid during return process",
-                        }),
-                    }
+                addToReturns(loan);
+                toast.success(
+                    `Added for return: ${bookData.book_title}` +
+                        (loan.student_name
+                            ? ` (Borrowed by: ${loan.student_name})`
+                            : "")
                 );
-
-                if (finePaymentResponse.ok) {
-                    const fineResult = await finePaymentResponse.json();
-                    if (fineResult.paid_count > 0) {
-                        toast.success(
-                            `Automatically paid ${fineResult.paid_count} pending fines (Rs. ${fineResult.total_amount.toFixed(2)})`
-                        );
-                        // Update student data with cleared fines
-                        verifiedStudent.pending_fines = 0;
-                    }
-                }
-            } catch (error) {
-                console.error("Error auto-paying fines:", error);
-                toast.warning(
-                    "Could not auto-pay pending fines. Please pay manually."
+            } else {
+                toast.error(
+                    `"${bookData.book_title}" is not currently checked out`
                 );
             }
-        }
-
-        setSelectedStudent(verifiedStudent);
-        setStudentSearch(verifiedStudent.register_number);
-
-        toast.success(`Student verified: ${verifiedStudent.full_name}`);
-        if (verifiedStudent.current_loans === 0) {
-            toast.info("Student has no active loans");
+        } catch (error) {
+            console.error("Error fetching loan:", error);
+            toast.error("Failed to fetch loan information");
         }
     };
 
@@ -272,40 +136,6 @@ export default function BookReturns() {
 
             // Reset form
             setSelectedReturns([]);
-            setBarcodeSearch("");
-
-            // Refresh student data and loans if student is selected
-            if (selectedStudent) {
-                // Refetch complete student data to get accurate counts
-                const studentResponse = await fetch(
-                    `/api/library/student-lookup/${selectedStudent.card_uid}`
-                );
-                if (studentResponse.ok) {
-                    const studentData = await studentResponse.json();
-                    if (studentData.success) {
-                        // Update student with fresh data from backend
-                        const updatedStudent = {
-                            ...selectedStudent,
-                            current_loans: studentData.data.current_loans,
-                            overdue_loans: studentData.data.overdue_loans,
-                            pending_fines: studentData.data.pending_fines,
-                            can_checkout: studentData.data.can_checkout,
-                            checkout_restrictions:
-                                studentData.data.checkout_restrictions,
-                        };
-                        setSelectedStudent(updatedStudent);
-                    }
-                }
-
-                // Refetch loans
-                const loansResponse = await fetch(
-                    `/api/library/loans?student_id=${selectedStudent.user_id}&status=active`
-                );
-                if (loansResponse.ok) {
-                    const loansData = await loansResponse.json();
-                    setStudentLoans(loansData.loans || []);
-                }
-            }
         } catch (error) {
             console.error("Return error:", error);
             toast.error(
@@ -317,11 +147,7 @@ export default function BookReturns() {
     };
 
     const resetForm = () => {
-        setSelectedStudent(null);
-        setStudentLoans([]);
         setSelectedReturns([]);
-        setStudentSearch("");
-        setBarcodeSearch("");
     };
 
     const totalFines = selectedReturns.reduce(
@@ -333,14 +159,14 @@ export default function BookReturns() {
         <div className="container mx-auto py-6 px-4 space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-                <Link href="/library/dashboard" className="mr-4">
+                <Link href="/library/self-service" className="mr-4">
                     <Button variant="outline" size="icon">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
                 <BookX className="h-8 w-8 text-primary" />
                 <h1 className="text-3xl font-bold">Book Returns</h1>
-                {(selectedStudent || selectedReturns.length > 0) && (
+                {selectedReturns.length > 0 && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -354,237 +180,111 @@ export default function BookReturns() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Return Methods */}
+                {/* Scan Books Section */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BookOpen className="h-5 w-5" />
-                            Return Method
+                            Scan Book to Return
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Tabs
-                            value={returnMethod}
-                            onValueChange={(value) =>
-                                setReturnMethod(value as "student" | "barcode")
-                            }
-                        >
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger
-                                    value="student"
-                                    className="flex items-center gap-2"
-                                >
-                                    <CreditCard className="h-4 w-4" />
-                                    Student Card
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="barcode"
-                                    className="flex items-center gap-2"
-                                >
-                                    <QrCode className="h-4 w-4" />
-                                    Book Barcode
-                                </TabsTrigger>
-                            </TabsList>
+                        <div className="text-sm text-muted-foreground mb-3">
+                            Scan any book's RFID tag. The system will
+                            automatically fetch the loan details and borrower
+                            information.
+                        </div>
 
-                            <TabsContent value="student" className="space-y-4">
-                                <div className="text-sm text-muted-foreground mb-3">
-                                    Scan student's RFID card to view all their
-                                    current loans
-                                </div>
-                                <RFIDStudentReader
-                                    onStudentVerified={handleStudentVerified}
-                                />
-                            </TabsContent>
-
-                            <TabsContent value="barcode" className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="barcodeSearch">
-                                        Scan Book Barcode
-                                    </Label>
-                                    <div className="relative">
-                                        <QrCode className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="barcodeSearch"
-                                            placeholder="Scan or enter book barcode"
-                                            className="pl-10"
-                                            value={bookBarcodeSearch}
-                                            onChange={(e) =>
-                                                setBarcodeSearch(e.target.value)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                        Scan book barcode to directly add to
-                                        returns
-                                    </div>
-                                </div>
-                            </TabsContent>
-                        </Tabs>
+                        <RFIDBookReader
+                            onBookScanned={handleBookScanned}
+                            isActive={true}
+                            waitingMessage="Scan book RFID tag to add to returns..."
+                        />
                     </CardContent>
                 </Card>
 
-                {/* Current Loans / Return Processing */}
-
+                {/* Return Queue Section */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BookX className="h-5 w-5" />
-                            {selectedStudent
-                                ? "Current Loans"
-                                : "Ready to Return"}{" "}
-                            ({selectedReturns.length})
+                            Books to Return ({selectedReturns.length})
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {/* Student's Current Loans */}
-                        {selectedStudent && studentLoans.length > 0 && (
-                            <div className="space-y-2 max-h-64 overflow-y-auto">
-                                <h4 className="font-medium text-sm">
-                                    Available for Return:
-                                </h4>
-                                {studentLoans.map((loan) => {
-                                    const dueDate = new Date(loan.due_date);
-                                    const today = new Date();
-                                    const isOverdue = today > dueDate;
-                                    const isSelected = selectedReturns.find(
-                                        (item) => item.id === loan.id
-                                    );
-
-                                    return (
-                                        <div
-                                            key={loan.id}
-                                            className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                                                isSelected
-                                                    ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
-                                                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
-                                            }`}
-                                            onClick={() =>
-                                                isSelected
-                                                    ? removeFromReturns(loan.id)
-                                                    : addToReturns(loan)
-                                            }
-                                        >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <div className="font-medium">
-                                                        {loan.book_title}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {loan.book_author}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                        <span>
-                                                            Due: {loan.due_date}
-                                                        </span>
-                                                        {isOverdue && (
-                                                            <span className="text-red-600 ml-2">
-                                                                (Overdue)
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {isOverdue && (
-                                                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                                                    )}
-                                                    {isSelected ? (
-                                                        <CheckCircle className="h-5 w-5 text-green-600" />
-                                                    ) : (
-                                                        <Badge variant="outline">
-                                                            Select
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
                         {/* Selected Returns Summary */}
-                        {selectedReturns.length > 0 && (
-                            <>
-                                {selectedStudent && <Separator />}
-                                <div className="space-y-2">
-                                    <h4 className="font-medium text-sm">
-                                        Ready to Return:
-                                    </h4>
-                                    {selectedReturns.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="border rounded-lg p-3 bg-green-50 dark:bg-green-950"
-                                        >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <div className="font-medium">
-                                                        {item.book_title}
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {item.book_author}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                        <span>
-                                                            Due: {item.due_date}
-                                                        </span>
-                                                        {item.is_late && (
-                                                            <span className="text-red-600 ml-2">
-                                                                (
-                                                                {
-                                                                    item.days_overdue
-                                                                }{" "}
-                                                                days late -
-                                                                Fine: Rs.{" "}
-                                                                {item.fine_amount?.toFixed(
-                                                                    2
-                                                                )}
-                                                                )
-                                                            </span>
-                                                        )}
-                                                    </div>
+                        {selectedReturns.length > 0 ? (
+                            <div className="space-y-2">
+                                <h4 className="font-medium text-sm">
+                                    Ready to Return:
+                                </h4>
+                                {selectedReturns.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="border rounded-lg p-3 bg-green-50 dark:bg-green-950"
+                                    >
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="flex-1">
+                                                <div className="font-medium">
+                                                    {item.book_title}
                                                 </div>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        removeFromReturns(
-                                                            item.id
-                                                        )
-                                                    }
-                                                    className="text-red-600 hover:text-red-700"
-                                                >
-                                                    Remove
-                                                </Button>
+                                                <div className="text-sm text-muted-foreground">
+                                                    {item.book_author}
+                                                </div>
+                                                {item.student_name && (
+                                                    <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1">
+                                                        👤 Borrowed by:{" "}
+                                                        {item.student_name}
+                                                        {item.register_number &&
+                                                            ` (${item.register_number})`}
+                                                    </div>
+                                                )}
+                                                <div className="text-xs text-muted-foreground mt-1">
+                                                    <span>
+                                                        Due: {item.due_date}
+                                                    </span>
+                                                    {item.is_late && (
+                                                        <span className="text-red-600 ml-2">
+                                                            ({item.days_overdue}{" "}
+                                                            days late - Fine:
+                                                            Rs.{" "}
+                                                            {item.fine_amount?.toFixed(
+                                                                2
+                                                            )}
+                                                            )
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    removeFromReturns(item.id)
+                                                }
+                                                className="text-red-600 hover:text-red-700"
+                                            >
+                                                Remove
+                                            </Button>
                                         </div>
-                                    ))}
+                                    </div>
+                                ))}
 
-                                    {totalFines > 0 && (
-                                        <div className="border rounded-lg p-3 bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
-                                            <div className="font-medium text-yellow-800 dark:text-yellow-200">
-                                                Total Fines: Rs.{" "}
-                                                {totalFines.toFixed(2)}
-                                            </div>
+                                {totalFines > 0 && (
+                                    <div className="border rounded-lg p-3 bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
+                                        <div className="font-medium text-yellow-800 dark:text-yellow-200">
+                                            Total Fines: Rs.{" "}
+                                            {totalFines.toFixed(2)}
                                         </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-
-                        {/* Empty States */}
-                        {selectedStudent && studentLoans.length === 0 && (
-                            <div className="text-center py-8 text-muted-foreground">
-                                <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                <p>No active loans found for this student</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-
-                        {!selectedStudent && selectedReturns.length === 0 && (
+                        ) : (
                             <div className="text-center py-8 text-muted-foreground">
                                 <BookX className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                 <p>
-                                    Scan student card or book barcode to start
-                                    returns
+                                    Scan a book's RFID tag to add it to the
+                                    return queue
                                 </p>
                             </div>
                         )}

@@ -20,6 +20,8 @@ import {
     Settings,
     CreditCard,
     ArrowLeftRight,
+    Tag,
+    Sparkles,
 } from "lucide-react";
 
 export default function LibraryDashboard() {
@@ -36,6 +38,49 @@ export default function LibraryDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
+                    {/* Self Service Portal - Featured */}
+                    <Link
+                        href="./self-service/"
+                        className="block md:col-span-2 lg:col-span-1"
+                    >
+                        <Card className="h-full transition-all hover:shadow-2xl border-2 bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 dark:from-purple-950 dark:via-blue-950 dark:to-pink-950 border-purple-300 dark:border-purple-700 relative overflow-hidden group">
+                            {/* Animated glow effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 via-blue-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
+
+                            <CardHeader className="relative z-10">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="h-8 w-8 text-purple-600 animate-pulse" />
+                                    <span className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full font-semibold shadow-lg">
+                                        ✨ SELF SERVICE
+                                    </span>
+                                </div>
+                                <CardTitle className="mt-2 text-2xl bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent">
+                                    Self Service Portal
+                                </CardTitle>
+                                <CardDescription className="text-base">
+                                    Quick borrow & return with RFID
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="relative z-10">
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Fast, contactless self-service for borrowing
+                                    and returning books using RFID technology
+                                </p>
+                                <div className="flex gap-2 flex-wrap">
+                                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                                        📚 Borrow
+                                    </span>
+                                    <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">
+                                        📖 Return
+                                    </span>
+                                    <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-1 rounded">
+                                        ⚡ Instant
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
                     {/* Book Management */}
                     <Link href="./book-add/" className="block">
                         <Card className="h-full transition-all hover:shadow-md">
@@ -57,54 +102,27 @@ export default function LibraryDashboard() {
                         </Card>
                     </Link>
 
-                    {/* Book Checkout */}
-                    <Link href="./book-checkout/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md border-2 border-blue-200 dark:border-blue-800">
+                    {/* Issue RFID Tags */}
+                    <Link href="./issue-tags/" className="block">
+                        <Card className="h-full transition-all hover:shadow-md border-2 border-purple-200 dark:border-purple-800">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
-                                    <BookOpenCheck className="h-8 w-8 text-blue-600" />
-                                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                                        UNIFIED
+                                    <Tag className="h-8 w-8 text-purple-600" />
+                                    <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded">
+                                        RFID
                                     </span>
                                 </div>
                                 <CardTitle className="mt-2">
-                                    Book Checkout
+                                    Issue Book Tags
                                 </CardTitle>
                                 <CardDescription>
-                                    RFID card & manual book lending
+                                    Write RFID tags to untagged books
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-muted-foreground">
-                                    Choose between RFID card scanning or manual
-                                    student search for book checkout
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* Book Returns */}
-                    <Link href="./book-returns" className="block">
-                        <Card className="h-full transition-all hover:shadow-md border-2 border-green-200 dark:border-green-800">
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <BookMarked className="h-8 w-8 text-green-600" />
-                                    <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                                        UNIFIED
-                                    </span>
-                                </div>
-                                <CardTitle className="mt-2">
-                                    Book Returns
-                                </CardTitle>
-                                <CardDescription>
-                                    RFID card & barcode return process
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Student card scanning or direct book barcode
-                                    scanning for returns with auto fine
-                                    calculation
+                                    Search and issue RFID tags to book copies
+                                    that don't have tags yet
                                 </p>
                             </CardContent>
                         </Card>

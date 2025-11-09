@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import RFIDStudentReader from "@/components/RFIDStudentReader";
+import RFIDBookReader from "@/components/RFIDBookReader";
 import { getFacultyName } from "@/lib/utils";
 import type { BookWithAvailability, MemberSummary } from "@/types/library";
 
@@ -55,6 +56,9 @@ export default function BookCheckout() {
     const [loading, setLoading] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [studentSelectionMethod, setStudentSelectionMethod] = useState<
+        "rfid" | "manual"
+    >("rfid");
+    const [bookSelectionMethod, setBookSelectionMethod] = useState<
         "rfid" | "manual"
     >("rfid");
 
@@ -233,6 +237,45 @@ export default function BookCheckout() {
         setStudents([]);
     };
 
+    const handleBookScanned = async (bookData: any) => {
+        if (!selectedStudent) {
+            toast.error("Please select a student first");
+            return;
+        }
+
+        if (!bookData.is_available) {
+            toast.error(
+                `Book "${bookData.book_title}" is currently checked out`
+            );
+            return;
+        }
+
+        // Create a BookWithAvailability object from scanned book data
+        // Mark it with a special property to indicate it's from RFID
+        const book: BookWithAvailability & { book_copy_id?: string } = {
+            id: bookData.book_copy_id, // This is actually the copy ID for RFID books
+            isbn: bookData.book_isbn || "",
+            title: bookData.book_title,
+            author: bookData.book_author,
+            publisher: "",
+            publication_year: 0,
+            category: "",
+            description: "",
+            location: "",
+            total_copies: 1,
+            available_copies: 1,
+            physical_copies: 1,
+            available_physical_copies: 1,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            created_by: "",
+            book_copy_id: bookData.book_copy_id, // Store the actual copy ID
+        };
+
+        addBook(book);
+        toast.success(`Added: ${bookData.book_title}`);
+    };
+
     const addBook = (book: BookWithAvailability) => {
         if (!selectedStudent) {
             toast.error("Please select a student first");
@@ -301,24 +344,32 @@ export default function BookCheckout() {
             const checkoutResults = [];
 
             for (const book of selectedBooks) {
-                // First, get an available book copy for this book
-                const copyResponse = await fetch(
-                    `/api/library/books/${book.id}/copies?available_only=true`
-                );
-                if (!copyResponse.ok) {
-                    throw new Error(
-                        `Failed to get available copy for "${book.title}"`
-                    );
-                }
+                let bookCopyId;
 
-                const copyData = await copyResponse.json();
-                if (!copyData.copies || copyData.copies.length === 0) {
-                    throw new Error(
-                        `No available copies found for "${book.title}"`
+                // Check if this book was scanned via RFID (has book_copy_id property)
+                if ("book_copy_id" in book && (book as any).book_copy_id) {
+                    // Use the specific copy that was scanned
+                    bookCopyId = (book as any).book_copy_id;
+                } else {
+                    // Manual selection - need to find an available copy
+                    const copyResponse = await fetch(
+                        `/api/library/books/${book.id}/copies?available_only=true`
                     );
-                }
+                    if (!copyResponse.ok) {
+                        throw new Error(
+                            `Failed to get available copy for "${book.title}"`
+                        );
+                    }
 
-                const availableCopy = copyData.copies[0]; // Get the first available copy
+                    const copyData = await copyResponse.json();
+                    if (!copyData.copies || copyData.copies.length === 0) {
+                        throw new Error(
+                            `No available copies found for "${book.title}"`
+                        );
+                    }
+
+                    bookCopyId = copyData.copies[0].id; // Get the first available copy
+                }
 
                 // Now create the loan
                 const loanResponse = await fetch("/api/library/loans", {
@@ -326,7 +377,7 @@ export default function BookCheckout() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         student_id: selectedStudent.student_id,
-                        book_copy_id: availableCopy.id,
+                        book_copy_id: bookCopyId,
                         due_date: book.due_date,
                         notes: `Checked out via library system`,
                     }),
@@ -373,7 +424,7 @@ export default function BookCheckout() {
             {/* Header */}
 
             <div className="flex items-center gap-4 mb-8">
-                <Link href="/library/dashboard" className="mr-4">
+                <Link href="/library/self-service" className="mr-4">
                     <Button variant="outline" size="icon">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
@@ -482,7 +533,9 @@ export default function BookCheckout() {
                                                         {student.full_name}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
-                                                        {getFacultyName(student.faculty)}
+                                                        {getFacultyName(
+                                                            student.faculty
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -643,22 +696,91 @@ export default function BookCheckout() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="bookSearch">Search Books</Label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="bookSearch"
-                                    placeholder="Enter book title, author, or ISBN"
-                                    className="pl-10"
-                                    value={bookSearch}
-                                    onChange={(e) =>
-                                        setBookSearch(e.target.value)
-                                    }
-                                    disabled={!selectedStudent}
-                                />
+                        {/* Book Selection Method Tabs */}
+                        {selectedStudent && (
+                            <Tabs
+                                value={bookSelectionMethod}
+                                onValueChange={(value) =>
+                                    setBookSelectionMethod(
+                                        value as "rfid" | "manual"
+                                    )
+                                }
+                            >
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger
+                                        value="rfid"
+                                        className="flex items-center gap-2"
+                                    >
+                                        <CreditCard className="h-4 w-4" />
+                                        RFID Scan
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="manual"
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Search className="h-4 w-4" />
+                                        Manual Search
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="rfid" className="space-y-4">
+                                    <RFIDBookReader
+                                        onBookScanned={handleBookScanned}
+                                        isActive={
+                                            bookSelectionMethod === "rfid"
+                                        }
+                                        waitingMessage="Scan book RFID tag to add to checkout..."
+                                    />
+                                </TabsContent>
+
+                                <TabsContent
+                                    value="manual"
+                                    className="space-y-4"
+                                >
+                                    <div className="space-y-2">
+                                        <Label htmlFor="bookSearch">
+                                            Search Books
+                                        </Label>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="bookSearch"
+                                                placeholder="Enter book title, author, or ISBN"
+                                                className="pl-10"
+                                                value={bookSearch}
+                                                onChange={(e) =>
+                                                    setBookSearch(
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
+                        )}
+
+                        {!selectedStudent && (
+                            <div className="space-y-2">
+                                <Label htmlFor="bookSearch">Search Books</Label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="bookSearch"
+                                        placeholder="Enter book title, author, or ISBN"
+                                        className="pl-10"
+                                        value={bookSearch}
+                                        onChange={(e) =>
+                                            setBookSearch(e.target.value)
+                                        }
+                                        disabled={true}
+                                    />
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Please select a student first
+                                </p>
                             </div>
-                        </div>
+                        )}
 
                         {/* Checkout Restrictions Warning */}
                         {selectedStudent &&
@@ -680,35 +802,39 @@ export default function BookCheckout() {
                                 </div>
                             )}
 
-                        {/* Book Search Results */}
-                        {books.length > 0 && selectedStudent && (
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {books.map((book) => (
-                                    <div
-                                        key={book.id}
-                                        className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
-                                        onClick={() => addBook(book)}
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <div className="font-medium">
-                                                    {book.title}
+                        {/* Book Search Results - Only show in manual mode */}
+                        {bookSelectionMethod === "manual" &&
+                            books.length > 0 &&
+                            selectedStudent && (
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                    {books.map((book) => (
+                                        <div
+                                            key={book.id}
+                                            className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
+                                            onClick={() => addBook(book)}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="font-medium">
+                                                        {book.title}
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {book.author}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Available:{" "}
+                                                        {book.available_copies}/
+                                                        {book.total_copies}
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    {book.author}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    Available:{" "}
-                                                    {book.available_copies}/
-                                                    {book.total_copies}
-                                                </div>
+                                                <Badge variant="outline">
+                                                    Add
+                                                </Badge>
                                             </div>
-                                            <Badge variant="outline">Add</Badge>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
 
                         {/* Selected Books */}
                         {selectedBooks.length > 0 && (
