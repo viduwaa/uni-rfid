@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,13 +13,26 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowLeft,
-  Download,
-  Calendar,
-  Search,
-  TrendingUp,
-  DollarSign,
-  ShoppingCart,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    ArrowLeft,
+    Download,
+    Calendar,
+    Search,
+    TrendingUp,
+    DollarSign,
+    ShoppingCart,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import formatCurrency from "@/lib/formatCurrency";
@@ -52,18 +65,24 @@ interface DailySummary {
   average_transaction_value: number;
 }
 
+type SortField = "date" | "student" | "amount" | "items" | "status";
+type SortDirection = "asc" | "desc";
+
 export default function TransactionHistory() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [dailySummaries, setDailySummaries] = useState<
-    Record<string, DailySummary>
-  >({});
-  const [error, setError] = useState<string | null>(null);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [dailySummaries, setDailySummaries] = useState<
+        Record<string, DailySummary>
+    >({});
+    const [error, setError] = useState<string | null>(null);
+    const [sortField, setSortField] = useState<SortField>("date");
+    const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+    const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // Load transactions from API
   useEffect(() => {
@@ -186,8 +205,61 @@ export default function TransactionHistory() {
     const matchesEndDate =
       !endDate || transactionDate <= new Date(endDate + "T23:59:59");
 
-    return matchesSearch && matchesStartDate && matchesEndDate;
-  });
+        return matchesSearch && matchesStartDate && matchesEndDate;
+    });
+
+    // Sorting function
+    const sortedTransactions = useMemo(() => {
+        const sorted = [...filteredTransactions];
+        
+        sorted.sort((a, b) => {
+            let compareValue = 0;
+            
+            switch (sortField) {
+                case "date":
+                    compareValue = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                    break;
+                case "student":
+                    compareValue = a.full_name.localeCompare(b.full_name);
+                    break;
+                case "amount":
+                    compareValue = a.amount - b.amount;
+                    break;
+                case "items":
+                    const aItemCount = a.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+                    const bItemCount = b.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+                    compareValue = aItemCount - bItemCount;
+                    break;
+                case "status":
+                    compareValue = a.status.localeCompare(b.status);
+                    break;
+            }
+            
+            return sortDirection === "asc" ? compareValue : -compareValue;
+        });
+        
+        return sorted;
+    }, [filteredTransactions, sortField, sortDirection]);
+
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortField(field);
+            setSortDirection("desc");
+        }
+    };
+
+    const SortIcon = ({ field }: { field: SortField }) => {
+        if (sortField !== field) {
+            return <ArrowUpDown className="h-4 w-4 ml-2 opacity-50" />;
+        }
+        return sortDirection === "asc" ? (
+            <ArrowUp className="h-4 w-4 ml-2" />
+        ) : (
+            <ArrowDown className="h-4 w-4 ml-2" />
+        );
+    };
 
   // Filter daily summaries based on date range
   const filteredSummaries = Object.values(dailySummaries)
@@ -255,12 +327,14 @@ export default function TransactionHistory() {
     document.body.removeChild(link);
   };
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setStartDate("");
-    setEndDate("");
-    setCurrentPage(1);
-  };
+    const clearFilters = () => {
+        setSearchQuery("");
+        setStartDate("");
+        setEndDate("");
+        setCurrentPage(1);
+        setSortField("date");
+        setSortDirection("desc");
+    };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -361,81 +435,85 @@ export default function TransactionHistory() {
         }
       />
 
-      {/* Daily Summaries Section */}
-      {filteredSummaries.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Daily Summaries
-            </CardTitle>
-            <CardDescription>
-              Transaction summaries for each day
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              {filteredSummaries.map((summary) => (
-                <div
-                  key={summary.date}
-                  className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        {new Date(summary.date).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <DollarSign className="h-5 w-5 mx-auto mb-1 text-blue-600" />
-                      <p className="text-2xl font-bold text-blue-600">
-                        {formatCurrency(summary.total_revenue)}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Revenue
-                      </p>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <Calendar className="h-5 w-5 mx-auto mb-1 text-green-600" />
-                      <p className="text-2xl font-bold text-green-600">
-                        {summary.total_transactions}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Transactions
-                      </p>
-                    </div>
-                    <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                      <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-orange-600" />
-                      <p className="text-2xl font-bold text-orange-600">
-                        {summary.total_items_sold}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Items Sold
-                      </p>
-                    </div>
-                    <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <TrendingUp className="h-5 w-5 mx-auto mb-1 text-purple-600" />
-                      <p className="text-2xl font-bold text-purple-600">
-                        {formatCurrency(summary.average_transaction_value)}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Avg. Transaction
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            {/* Daily Summaries Section */}
+            {filteredSummaries.length > 0 && (
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5" />
+                            Daily Summaries
+                        </CardTitle>
+                        <CardDescription>
+                            Transaction summaries for each day
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4">
+                            {filteredSummaries.map((summary) => (
+                                <div
+                                    key={summary.date}
+                                    className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h3 className="font-semibold text-lg">
+                                                {new Date(
+                                                    summary.date
+                                                ).toLocaleDateString("en-US", {
+                                                    weekday: "long",
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
+                                                })}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                            <DollarSign className="h-5 w-5 mx-auto mb-1 text-blue-600" />
+                                            <p className="text-2xl font-bold text-blue-600">
+                                                $
+                                                {summary.total_revenue}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Revenue
+                                            </p>
+                                        </div>
+                                        <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                            <Calendar className="h-5 w-5 mx-auto mb-1 text-green-600" />
+                                            <p className="text-2xl font-bold text-green-600">
+                                                {summary.total_transactions}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Transactions
+                                            </p>
+                                        </div>
+                                        <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                            <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-orange-600" />
+                                            <p className="text-2xl font-bold text-orange-600">
+                                                {summary.total_items_sold}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Items Sold
+                                            </p>
+                                        </div>
+                                        <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                            <TrendingUp className="h-5 w-5 mx-auto mb-1 text-purple-600" />
+                                            <p className="text-2xl font-bold text-purple-600">
+                                                $
+                                                {summary.average_transaction_value}
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Avg. Transaction
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
       {/* Filters */}
       <Card className="mb-6">
@@ -531,101 +609,220 @@ export default function TransactionHistory() {
         </CardContent>
       </Card>
 
-      {/* Transactions List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>
-            Complete transaction history with filtering options
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {filteredTransactions.length === 0 ? (
-            <div className="text-center py-12 text-gray-600 dark:text-gray-400">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium mb-2">No transactions found</p>
-              <p>Try adjusting your search or date filters</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="font-semibold text-lg">
-                          {transaction.transaction_id}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Student ID: {transaction.register_number}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {transaction.full_name}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatDate(transaction.created_at)}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatTime(transaction.created_at)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">
-                          {formatCurrency(transaction.amount)}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(transaction.status)}`}
-                      >
-                        {transaction.status.charAt(0).toUpperCase() +
-                          transaction.status.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-3">
-                    <p className="text-sm font-medium mb-2">Items:</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {transaction.items?.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 rounded px-3 py-2"
-                        >
-                          <div>
-                            <span className="font-medium">
-                              {item.item_name || "Unknown Item"}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-sm">
-                              {item.quantity}x {formatCurrency(item.unit_price)}
-                            </span>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
-                              {formatCurrency(item.total_price)}
-                            </div>
-                          </div>
+            {/* Transactions List */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Transactions</CardTitle>
+                    <CardDescription>
+                        Complete transaction history with sorting and filtering options
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {sortedTransactions.length === 0 ? (
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+                            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p className="text-lg font-medium mb-2">
+                                No transactions found
+                            </p>
+                            <p>Try adjusting your search or date filters</p>
                         </div>
-                      )) || (
-                        <div className="text-gray-500 italic">
-                          No item details available
+                    ) : (
+                        <div className="rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]"></TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => handleSort("date")}
+                                                className="font-semibold hover:bg-transparent p-0"
+                                            >
+                                                Date & Time
+                                                <SortIcon field="date" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => handleSort("student")}
+                                                className="font-semibold hover:bg-transparent p-0"
+                                            >
+                                                Student
+                                                <SortIcon field="student" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => handleSort("items")}
+                                                className="font-semibold hover:bg-transparent p-0"
+                                            >
+                                                Items
+                                                <SortIcon field="items" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => handleSort("amount")}
+                                                className="font-semibold hover:bg-transparent p-0"
+                                            >
+                                                Amount
+                                                <SortIcon field="amount" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => handleSort("status")}
+                                                className="font-semibold hover:bg-transparent p-0"
+                                            >
+                                                Status
+                                                <SortIcon field="status" />
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead className="w-[100px]">Transaction ID</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedTransactions.map((transaction) => {
+                                        const isExpanded = expandedRow === transaction.id;
+                                        const itemCount = transaction.items?.reduce(
+                                            (sum, item) => sum + item.quantity,
+                                            0
+                                        ) || 0;
+
+                                        return (
+                                            <>
+                                                <TableRow
+                                                    key={transaction.id}
+                                                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                    onClick={() =>
+                                                        setExpandedRow(
+                                                            isExpanded ? null : transaction.id
+                                                        )
+                                                    }
+                                                >
+                                                    <TableCell>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0"
+                                                        >
+                                                            {isExpanded ? (
+                                                                <ChevronUp className="h-4 w-4" />
+                                                            ) : (
+                                                                <ChevronDown className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {formatDate(transaction.created_at)}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {formatTime(transaction.created_at)}
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {transaction.full_name}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {transaction.register_number}
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <ShoppingCart className="h-4 w-4 text-gray-400" />
+                                                            <span className="font-medium">
+                                                                {itemCount} {itemCount === 1 ? "item" : "items"}
+                                                            </span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="font-bold text-lg">
+                                                            ${transaction.amount}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge
+                                                            className={getStatusColor(
+                                                                transaction.status
+                                                            )}
+                                                        >
+                                                            {transaction.status
+                                                                .charAt(0)
+                                                                .toUpperCase() +
+                                                                transaction.status.slice(1)}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <code className="text-xs text-gray-500">
+                                                            {transaction.transaction_id.slice(0, 8)}...
+                                                        </code>
+                                                    </TableCell>
+                                                </TableRow>
+                                                {isExpanded && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={7} className="bg-gray-50 dark:bg-gray-900">
+                                                            <div className="p-4">
+                                                                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                                                    <ShoppingCart className="h-4 w-4" />
+                                                                    Order Details
+                                                                </h4>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                    {transaction.items?.map((item, index) => (
+                                                                        <div
+                                                                            key={index}
+                                                                            className="flex justify-between items-center bg-white dark:bg-gray-800 rounded-lg px-4 py-3 border"
+                                                                        >
+                                                                            <div className="flex-1">
+                                                                                <div className="font-medium">
+                                                                                    {item.item_name || "Unknown Item"}
+                                                                                </div>
+                                                                                <div className="text-sm text-gray-500">
+                                                                                    ${item.unit_price || "0.00"} × {item.quantity}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-right">
+                                                                                <div className="font-bold text-green-600">
+                                                                                    ${item.total_price || "0.00"}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    )) || (
+                                                                        <div className="text-gray-500 italic col-span-3">
+                                                                            No item details available
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                                                                    <div className="text-sm text-gray-500">
+                                                                        Transaction ID: <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{transaction.transaction_id}</code>
+                                                                    </div>
+                                                                    <div className="text-xl font-bold">
+                                                                        Total: <span className="text-green-600">${transaction.amount}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
 }

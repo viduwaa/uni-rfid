@@ -201,324 +201,439 @@ export default function StudentDisplay() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-6 py-8 flex items-center justify-center">
-        <div className="w-full max-w-4xl">
-          {/* Status Card */}
-          <Card className="text-center overflow-hidden shadow-2xl">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-8 text-white">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <Wifi className="h-8 w-8" />
-                <h2 className="text-3xl font-bold">Order Status</h2>
-              </div>
-              <Badge
-                className={`text-lg px-6 py-2 ${getStatusColor(orderState.status)}`}
-              >
-                {orderState.status.replace("_", " ").toUpperCase()}
-              </Badge>
-            </div>
-
-            <CardContent className="p-12">
-              <div className="space-y-8">
-                {/* Status Icon */}
-                <div className="flex justify-center">{getStatusIcon()}</div>
-
-                {/* Status Message */}
-                <div>
-                  <h3 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-4">
-                    {orderState.message}
-                  </h3>
-
-                  {/* Current Order Price Display */}
-                  {orderState.cart.length > 0 && (
-                    <div className="mb-6">
-                      <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-full border-2 border-blue-200 dark:border-blue-700">
-                        <span className="text-2xl font-bold text-blue-800 dark:text-blue-200">
-                          Order Total: {formatCurrency(orderState.total)}
-                        </span>
-                        <span className="text-sm text-blue-600 dark:text-blue-400">
-                          ({orderState.cart.length}{" "}
-                          {orderState.cart.length === 1 ? "item" : "items"})
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {orderState.status === "waiting_for_order" && (
-                    <p className="text-xl text-slate-600 dark:text-slate-400">
-                      Please wait for staff to prepare your order
-                    </p>
-                  )}
-
-                  {orderState.status === "order_ready" && (
-                    <p className="text-xl text-slate-600 dark:text-slate-400">
-                      Your order is ready! Please proceed to payment
-                    </p>
-                  )}
-
-                  {orderState.status === "tap_card" && (
-                    <p className="text-xl text-amber-600 dark:text-amber-400 animate-pulse">
-                      Please tap your NFC card on the reader
-                    </p>
-                  )}
-
-                  {orderState.status === "processing" && (
-                    <p className="text-xl text-purple-600 dark:text-purple-400">
-                      Processing your payment...
-                    </p>
-                  )}
-                </div>
-
-                {/* Order Details */}
-                {orderState.cart.length > 0 && (
-                  <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">
-                    <h4 className="text-2xl font-semibold mb-4 text-slate-700 dark:text-slate-300">
-                      Your Order
-                    </h4>
-                    <div className="space-y-3">
-                      {orderState.cart.map((item) => (
-                        <div
-                          key={item.menu_item_id}
-                          className="flex justify-between items-center"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="font-medium text-lg">
-                              {item.name}
-                            </span>
-                            <Badge variant="secondary">x{item.quantity}</Badge>
-                          </div>
-                          <span className="font-semibold text-lg">
-                            {formatCurrency(item.price * item.quantity)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <Separator className="my-4" />
-                    <div className="flex justify-between items-center text-2xl font-bold">
-                      <span>Total</span>
-                      <span className="text-green-600">
-                        {formatCurrency(orderState.total)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Insufficient Funds Warning */}
-                {orderState.student &&
-                  orderState.cart.length > 0 &&
-                  orderState.student.balance < orderState.total && (
-                    <div className="bg-red-50 dark:bg-red-950 rounded-lg p-6 border-2 border-red-200 dark:border-red-800">
-                      <div className="flex items-center justify-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-2xl">⚠️</span>
-                        </div>
-                        <h4 className="text-2xl font-bold text-red-700 dark:text-red-300">
-                          Insufficient Funds
-                        </h4>
-                      </div>
-                      <div className="text-center space-y-2">
-                        <p className="text-lg text-red-600 dark:text-red-400">
-                          Your current balance is insufficient for this order
-                        </p>
-                        <div className="bg-white dark:bg-red-900 rounded-lg p-4 inline-block">
-                          <div className="flex justify-between items-center gap-8 text-lg">
-                            <span className="text-red-700 dark:text-red-300">
-                              Order Total:
-                            </span>
-                            <span className="font-bold text-red-800 dark:text-red-200">
-                              {formatCurrency(orderState.total)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center gap-8 text-lg">
-                            <span className="text-red-700 dark:text-red-300">
-                              Your Balance:
-                            </span>
-                            <span className="font-bold text-red-800 dark:text-red-200">
-                              {formatCurrency(orderState.student.balance)}
-                            </span>
-                          </div>
-                          <div className="border-t border-red-300 dark:border-red-600 mt-2 pt-2">
-                            <div className="flex justify-between items-center gap-8 text-lg font-bold">
-                              <span className="text-red-700 dark:text-red-300">
-                                Additional Needed:
-                              </span>
-                              <span className="text-red-800 dark:text-red-200">
-                                {formatCurrency(
-                                  orderState.total - orderState.student.balance
-                                )}
-                              </span>
+            {/* Main Content */}
+            <main className="flex-1 container mx-auto px-6 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    {/* Left Column - Order Status */}
+                    <div className="flex flex-col">
+                        <Card className="text-center overflow-hidden shadow-2xl flex-1 flex flex-col">
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
+                                <div className="flex items-center justify-center gap-4 mb-3">
+                                    <Wifi className="h-6 w-6" />
+                                    <h2 className="text-2xl font-bold">
+                                        Order Status
+                                    </h2>
+                                </div>
+                                <Badge
+                                    className={`text-base px-4 py-1.5 ${getStatusColor(orderState.status)}`}
+                                >
+                                    {orderState.status
+                                        .replace("_", " ")
+                                        .toUpperCase()}
+                                </Badge>
                             </div>
-                          </div>
-                        </div>
-                        <p className="text-sm text-red-600 dark:text-red-400 mt-4">
-                          Please top up your card or contact staff for
-                          assistance
-                        </p>
-                      </div>
+
+                            <CardContent className="p-6 flex-1 flex flex-col justify-center overflow-y-auto">
+                                <div className="space-y-6">
+                                    {/* Status Icon */}
+                                    <div className="flex justify-center">
+                                        {getStatusIcon()}
+                                    </div>
+
+                                    {/* Status Message */}
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-3">
+                                            {orderState.message}
+                                        </h3>
+
+                                        {/* Current Order Price Display */}
+                                        {orderState.cart.length > 0 && (
+                                            <div className="mb-4">
+                                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-full border-2 border-blue-200 dark:border-blue-700">
+                                                    <span className="text-xl font-bold text-blue-800 dark:text-blue-200">
+                                                        Order Total: Rs.{" "}
+                                                        {orderState.total}
+                                                    </span>
+                                                    <span className="text-xs text-blue-600 dark:text-blue-400">
+                                                        (
+                                                        {orderState.cart.length}{" "}
+                                                        {orderState.cart
+                                                            .length === 1
+                                                            ? "item"
+                                                            : "items"}
+                                                        )
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {orderState.status ===
+                                            "waiting_for_order" && (
+                                            <p className="text-lg text-slate-600 dark:text-slate-400">
+                                                Please wait for staff to prepare
+                                                your order
+                                            </p>
+                                        )}
+
+                                        {orderState.status ===
+                                            "order_ready" && (
+                                            <p className="text-lg text-slate-600 dark:text-slate-400">
+                                                Your order is ready! Please
+                                                proceed to payment
+                                            </p>
+                                        )}
+
+                                        {orderState.status === "tap_card" && (
+                                            <p className="text-lg text-amber-600 dark:text-amber-400 animate-pulse">
+                                                Please tap your NFC card on the
+                                                reader
+                                            </p>
+                                        )}
+
+                                        {orderState.status === "processing" && (
+                                            <p className="text-lg text-purple-600 dark:text-purple-400">
+                                                Processing your payment...
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Order Details */}
+                                    {orderState.cart.length > 0 && (
+                                        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                                            <h4 className="text-lg font-semibold mb-3 text-slate-700 dark:text-slate-300">
+                                                Your Order
+                                            </h4>
+                                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                                {orderState.cart.map((item) => (
+                                                    <div
+                                                        key={item.menu_item_id}
+                                                        className="flex justify-between items-center text-sm"
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium">
+                                                                {item.name}
+                                                            </span>
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="text-xs"
+                                                            >
+                                                                x{item.quantity}
+                                                            </Badge>
+                                                        </div>
+                                                        <span className="font-semibold">
+                                                            Rs.{" "}
+                                                            {item.price *
+                                                                item.quantity}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <Separator className="my-3" />
+                                            <div className="flex justify-between items-center text-xl font-bold">
+                                                <span>Total</span>
+                                                <span className="text-green-600">
+                                                    Rs. {orderState.total}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Insufficient Funds Warning */}
+                                    {orderState.student &&
+                                        orderState.cart.length > 0 &&
+                                        orderState.student.balance <
+                                            orderState.total && (
+                                            <div className="bg-red-50 dark:bg-red-950 rounded-lg p-4 border-2 border-red-200 dark:border-red-800">
+                                                <div className="flex items-center justify-center gap-2 mb-3">
+                                                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                                        <span className="text-white text-lg">
+                                                            ⚠️
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="text-lg font-bold text-red-700 dark:text-red-300">
+                                                        Insufficient Funds
+                                                    </h4>
+                                                </div>
+                                                <div className="text-center space-y-2">
+                                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                                        Balance insufficient for
+                                                        this order
+                                                    </p>
+                                                    <div className="bg-white dark:bg-red-900 rounded-lg p-3 text-sm">
+                                                        <div className="flex justify-between gap-4">
+                                                            <span className="text-red-700 dark:text-red-300">
+                                                                Order Total:
+                                                            </span>
+                                                            <span className="font-bold text-red-800 dark:text-red-200">
+                                                                Rs.{" "}
+                                                                {
+                                                                    orderState.total
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between gap-4">
+                                                            <span className="text-red-700 dark:text-red-300">
+                                                                Your Balance:
+                                                            </span>
+                                                            <span className="font-bold text-red-800 dark:text-red-200">
+                                                                Rs.{" "}
+                                                                {
+                                                                    orderState
+                                                                        .student
+                                                                        .balance
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        <div className="border-t border-red-300 dark:border-red-600 mt-2 pt-2">
+                                                            <div className="flex justify-between gap-4 font-bold">
+                                                                <span className="text-red-700 dark:text-red-300">
+                                                                    Need:
+                                                                </span>
+                                                                <span className="text-red-800 dark:text-red-200">
+                                                                    Rs.{" "}
+                                                                    {(
+                                                                        orderState.total -
+                                                                        orderState
+                                                                            .student
+                                                                            .balance
+                                                                    ).toFixed(
+                                                                        2
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                    {/* Student Info */}
+                                    {orderState.student && (
+                                        <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                                            <h4 className="text-base font-semibold mb-2 text-blue-700 dark:text-blue-300">
+                                                Student Information
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3 text-left text-sm">
+                                                <div>
+                                                    <p className="font-medium text-slate-600 dark:text-slate-400 text-xs">
+                                                        Name
+                                                    </p>
+                                                    <p className="font-semibold">
+                                                        {
+                                                            orderState.student
+                                                                .full_name
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-slate-600 dark:text-slate-400 text-xs">
+                                                        Student ID
+                                                    </p>
+                                                    <p className="font-mono">
+                                                        {
+                                                            orderState.student
+                                                                .register_number
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-slate-600 dark:text-slate-400 text-xs">
+                                                        Faculty
+                                                    </p>
+                                                    <p>
+                                                        {getFacultyName(
+                                                            orderState.student
+                                                                .faculty
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-slate-600 dark:text-slate-400 text-xs">
+                                                        Balance
+                                                    </p>
+                                                    <p
+                                                        className={`font-bold ${
+                                                            orderState.cart
+                                                                .length > 0 &&
+                                                            orderState.student
+                                                                .balance <
+                                                                orderState.total
+                                                                ? "text-red-600 dark:text-red-400"
+                                                                : "text-green-600 dark:text-green-400"
+                                                        }`}
+                                                    >
+                                                        Rs.{" "}
+                                                        {
+                                                            orderState.student
+                                                                .balance
+                                                        }
+                                                        {orderState.cart
+                                                            .length > 0 && (
+                                                            <span className="text-xs ml-1 opacity-75">
+                                                                {orderState
+                                                                    .student
+                                                                    .balance >=
+                                                                orderState.total
+                                                                    ? "✅"
+                                                                    : "❌"}
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Transaction Result */}
+                                    {orderState.status === "completed" && (
+                                        <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4">
+                                            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                                            <h4 className="text-xl font-bold text-green-700 dark:text-green-300 mb-2">
+                                                Transaction Successful!
+                                            </h4>
+                                            <p className="text-sm text-green-600 dark:text-green-400">
+                                                Payment processed successfully
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {orderState.status === "failed" && (
+                                        <div className="bg-red-50 dark:bg-red-950 rounded-lg p-4">
+                                            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+                                            <h4 className="text-xl font-bold text-red-700 dark:text-red-300 mb-2">
+                                                Transaction Failed
+                                            </h4>
+                                            <p className="text-sm text-red-600 dark:text-red-400">
+                                                {orderState.message}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                  )}
 
-                {/* Student Info */}
-                {orderState.student && (
-                  <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-6">
-                    <h4 className="text-xl font-semibold mb-3 text-blue-700 dark:text-blue-300">
-                      Student Information
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4 text-left">
-                      <div>
-                        <p className="font-medium text-slate-600 dark:text-slate-400">
-                          Name
-                        </p>
-                        <p className="text-lg font-semibold">
-                          {orderState.student.full_name}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-600 dark:text-slate-400">
-                          Student ID
-                        </p>
-                        <p className="text-lg font-mono">
-                          {orderState.student.register_number}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-600 dark:text-slate-400">
-                          Faculty
-                        </p>
-                        <p className="text-lg">
-                          {getFacultyName(orderState.student.faculty)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-600 dark:text-slate-400">
-                          Balance
-                        </p>
-                        <p
-                          className={`text-lg font-bold ${
-                            orderState.cart.length > 0 &&
-                            orderState.student.balance < orderState.total
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-green-600 dark:text-green-400"
-                          }`}
-                        >
-                          {formatCurrency(orderState.student.balance)}
-                          {orderState.cart.length > 0 && (
-                            <span className="text-sm ml-2 opacity-75">
-                              {orderState.student.balance >= orderState.total
-                                ? "✅ Sufficient"
-                                : "❌ Insufficient"}
-                            </span>
-                          )}
-                        </p>
-                      </div>
+                    {/* Right Column - Today's Menu */}
+                    <div className="flex flex-col">
+                        <Card className="overflow-hidden shadow-2xl flex-1 flex flex-col">
+                            <div className="bg-gradient-to-r from-green-500 to-blue-600 p-6 text-white">
+                                <div className="flex items-center justify-center gap-4">
+                                    <UtensilsCrossed className="h-6 w-6" />
+                                    <h2 className="text-2xl font-bold">
+                                        Today's Menu
+                                    </h2>
+                                </div>
+                            </div>
+                            <CardContent className="p-6 flex-1 overflow-y-auto">
+                                {menuItems.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {menuItems.map((item) => (
+                                            <div
+                                                key={item.menu_item_id}
+                                                className={`flex flex-col rounded-lg border transition-all hover:scale-105 ${
+                                                    item.is_available
+                                                        ? "bg-white dark:bg-slate-800 border-green-200 dark:border-green-800 shadow-md hover:shadow-lg"
+                                                        : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-60"
+                                                }`}
+                                            >
+                                                {/* Header with Badge */}
+                                                <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <h4
+                                                            className={`font-bold text-base line-clamp-1 ${
+                                                                item.is_available
+                                                                    ? "text-slate-800 dark:text-slate-200"
+                                                                    : "text-gray-500 dark:text-gray-400"
+                                                            }`}
+                                                            title={
+                                                                item.item_name
+                                                            }
+                                                        >
+                                                            {item.item_name}
+                                                        </h4>
+                                                    </div>
+                                                    <Badge
+                                                        variant={
+                                                            item.is_available
+                                                                ? "default"
+                                                                : "secondary"
+                                                        }
+                                                        className={`text-xs ${
+                                                            item.is_available
+                                                                ? "bg-green-500"
+                                                                : ""
+                                                        }`}
+                                                    >
+                                                        {item.is_available
+                                                            ? "Available"
+                                                            : "Sold Out"}
+                                                    </Badge>
+                                                </div>
+
+                                                {/* Body with Description */}
+                                                <div className="p-3 flex-1">
+                                                    <p
+                                                        className={`text-xs mb-3 line-clamp-2 min-h-[2.5rem] ${
+                                                            item.is_available
+                                                                ? "text-slate-600 dark:text-slate-400"
+                                                                : "text-gray-400 dark:text-gray-500"
+                                                        }`}
+                                                        title={item.description}
+                                                    >
+                                                        {item.description}
+                                                    </p>
+
+                                                    {/* Category Badge */}
+                                                    <div className="flex justify-center mb-2">
+                                                        <span
+                                                            className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                                item.category ===
+                                                                "Main"
+                                                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                                    : item.category ===
+                                                                        "Drink"
+                                                                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                                                      : item.category ===
+                                                                          "Snack"
+                                                                        ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                                                                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                                                            }`}
+                                                        >
+                                                            {item.category}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Footer with Price */}
+                                                <div
+                                                    className={`p-3 border-t ${
+                                                        item.is_available
+                                                            ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 dark:border-green-800"
+                                                            : "bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-center">
+                                                        <span
+                                                            className={`text-xl font-bold ${
+                                                                item.is_available
+                                                                    ? "text-green-600 dark:text-green-400"
+                                                                    : "text-gray-400 dark:text-gray-500"
+                                                            }`}
+                                                        >
+                                                            Rs. {item.price}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                        <UtensilsCrossed className="h-16 w-16 text-gray-400 mb-4" />
+                                        <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                                            No Menu Items Available
+                                        </h3>
+                                        <p className="text-gray-500 dark:text-gray-500">
+                                            Menu will be displayed here when
+                                            available
+                                        </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
-                  </div>
-                )}
-
-                {/* Transaction Result */}
-                {orderState.status === "completed" && (
-                  <div className="bg-green-50 dark:bg-green-950 rounded-lg p-6">
-                    <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                    <h4 className="text-2xl font-bold text-green-700 dark:text-green-300 mb-2">
-                      Transaction Successful!
-                    </h4>
-                    <p className="text-lg text-green-600 dark:text-green-400">
-                      Your payment has been processed successfully
-                    </p>
-                  </div>
-                )}
-
-                {orderState.status === "failed" && (
-                  <div className="bg-red-50 dark:bg-red-950 rounded-lg p-6">
-                    <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                    <h4 className="text-2xl font-bold text-red-700 dark:text-red-300 mb-2">
-                      Transaction Failed
-                    </h4>
-                    <p className="text-lg text-red-600 dark:text-red-400">
-                      {orderState.message}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Menu Availability */}
-          {menuItems.length > 0 && (
-            <Card className="mt-6 overflow-hidden shadow-xl">
-              <div className="bg-gradient-to-r from-green-500 to-blue-600 p-6 text-white">
-                <div className="flex items-center justify-center gap-4">
-                  <UtensilsCrossed className="h-8 w-8" />
-                  <h2 className="text-2xl font-bold">Today's Menu</h2>
                 </div>
-              </div>
-              <CardContent className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {menuItems.map((item) => (
-                    <div
-                      key={item.menu_item_id}
-                      className={`p-4 rounded-lg border transition-all ${
-                        item.is_available
-                          ? "bg-white border-green-200 shadow-sm"
-                          : "bg-gray-100 border-gray-300"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4
-                          className={`font-semibold text-lg ${
-                            item.is_available
-                              ? "text-slate-800"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {item.item_name}
-                        </h4>
-                        <Badge
-                          variant={item.is_available ? "default" : "secondary"}
-                          className={item.is_available ? "bg-green-500" : ""}
-                        >
-                          {item.is_available ? "Available" : "Sold Out"}
-                        </Badge>
-                      </div>
-                      <p
-                        className={`text-sm mb-2 ${
-                          item.is_available ? "text-slate-600" : "text-gray-400"
-                        }`}
-                      >
-                        {item.description}
-                      </p>
-                      <div className="flex justify-between items-center">
-                        <span
-                          className={`text-xl font-bold ${
-                            item.is_available
-                              ? "text-green-600"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          {formatCurrency(item.price)}
-                        </span>
-                        <span
-                          className={`text-sm px-2 py-1 rounded ${
-                            item.category === "Main"
-                              ? "bg-blue-100 text-blue-800"
-                              : item.category === "Drink"
-                                ? "bg-purple-100 text-purple-800"
-                                : item.category === "Snack"
-                                  ? "bg-orange-100 text-orange-800"
-                                  : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {item.category}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            </main>
         </div>
-      </main>
-    </div>
-  );
+    );
 }
