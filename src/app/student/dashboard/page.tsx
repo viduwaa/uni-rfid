@@ -27,6 +27,7 @@ import {
     User,
     GraduationCap,
     TrendingUp,
+    Info,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";

@@ -6,205 +6,198 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
-    UserPlus,
-    IdCard,
-    Users,
-    BookOpen,
-    BarChart3,
-    Settings,
     GraduationCap,
     UserCheck,
-    Library,
+    BookOpen,
+    BarChart3,
+    IdCard,
+    UserPlus,
+    Users,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 
 export default function AdminDashboard() {
     return (
         <div className="min-h-screen">
-            <div className="container mx-auto py-10 p-6 space-y-6">
-                <div className="mb-10">
-                    <h1 className="text-3xl font-bold tracking-tight text-center">
-                        Admin Dashboard
-                    </h1>
-                    <p className="mt-2 text-muted-foreground text-center">
-                        Manage all aspects of the university NFC card system
-                    </p>
+            <div className="mb-10 bg-[rgba(255,255,255,0.47)] h-[100px] flex flex-col items-center justify-center w-full">
+                <h1 className="text-3xl font-bold tracking-tight text-center">
+                    Admin Dashboard
+                </h1>
+                <p className="mt-2 text-muted-foreground text-center">
+                    Manage all aspects of the university NFC card system
+                </p>
+            </div>
+            <div className="container mx-auto py-10 p-6 space-y-8">
+                {/* Main Management Sections */}
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 px-5">
+                    {/* Students Section */}
+                    <Link href="/admin/students" className="block">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-blue-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <GraduationCap className="h-12 w-12 text-blue-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
+                                    Students
+                                </CardTitle>
+                                <CardDescription>
+                                    Student management system
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">
+                                    Add, edit, delete students and manage course
+                                    enrollments
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    {/* Lecturers Section */}
+                    <Link href="/admin/lecturers" className="block">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-green-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <UserCheck className="h-12 w-12 text-green-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
+                                    Lecturers
+                                </CardTitle>
+                                <CardDescription>
+                                    Lecturer management system
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">
+                                    Add, edit, delete lecturers and assign
+                                    courses
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    {/* Courses Section */}
+                    <Link href="/admin/courses" className="block">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-purple-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <BookOpen className="h-12 w-12 text-purple-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
+                                    Courses
+                                </CardTitle>
+                                <CardDescription>
+                                    Course management system
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">
+                                    Add, edit, delete courses and view
+                                    enrollment stats
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    {/* Reports Section */}
+                    <Link href="/admin/reports" className="block">
+                        <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-red-400">
+                            <CardHeader className="text-center">
+                                <div className="flex justify-center">
+                                    <BarChart3 className="h-12 w-12 text-red-600" />
+                                </div>
+                                <CardTitle className="mt-4 text-xl">
+                                    Reports
+                                </CardTitle>
+                                <CardDescription>
+                                    Analytics & statistics
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">
+                                    View attendance reports and system analytics
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </Link>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
-                    {/* Student Management */}
-                    <Link href="/admin/students" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <GraduationCap className="h-8 w-8 text-blue-600" />
-                                <CardTitle className="mt-2">
-                                    Manage Students
-                                </CardTitle>
-                                <CardDescription>
-                                    Complete student management & course
-                                    enrollment
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Add, edit, delete students and manage their
-                                    course enrollments with full CRUD
-                                    operations.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
+                {/* Quick Actions & RFID Management */}
+                <div className="px-5">
+                    <h2 className="text-xl font-semibold mb-4">
+                        Quick Actions & Card Management
+                    </h2>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {/* Quick Add Student */}
+                        <Link href="/admin/students/add" className="block">
+                            <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-cyan-400">
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-center">
+                                        <UserPlus className="h-12 w-12 text-cyan-600" />
+                                    </div>
+                                    <CardTitle className="mt-4 text-xl">
+                                        Quick Add Student
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Fast student registration
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Quickly register a new student with
+                                        basic details
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
 
-                    {/* Lecturer Management */}
-                    <Link href="/admin/lecturers" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <UserCheck className="h-8 w-8 text-green-600" />
-                                <CardTitle className="mt-2">
-                                    Manage Lecturers
-                                </CardTitle>
-                                <CardDescription>
-                                    Complete lecturer management & course
-                                    assignments
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Add, edit, delete lecturers and assign them
-                                    to courses they teach.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
+                        {/* Quick Add Lecturer */}
+                        <Link href="/admin/lecturers/add" className="block">
+                            <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-indigo-400">
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-center">
+                                        <Users className="h-12 w-12 text-indigo-600" />
+                                    </div>
+                                    <CardTitle className="mt-4 text-xl">
+                                        Quick Add Lecturer
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Fast lecturer registration
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Quickly register a new lecturer with
+                                        basic details
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
 
-                    {/* Course Management */}
-                    <Link href="/admin/courses" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <Library className="h-8 w-8 text-purple-600" />
-                                <CardTitle className="mt-2">
-                                    Manage Courses
-                                </CardTitle>
-                                <CardDescription>
-                                    Complete course/subject management system
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Add, edit, delete courses and view
-                                    enrollment statistics and lecturer
-                                    assignments.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* RFID Card Management */}
-                    <Link href="/admin/rfid" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <IdCard className="h-8 w-8 text-orange-600" />
-                                <CardTitle className="mt-2">
-                                    RFID Cards
-                                </CardTitle>
-                                <CardDescription>
-                                    Issue and manage NFC/RFID cards
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Issue new cards, manage existing cards, and
-                                    handle card registrations.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* Quick Add Student */}
-                    <Link href="/admin/students/add" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <UserPlus className="h-8 w-8 text-cyan-600" />
-                                <CardTitle className="mt-2">
-                                    Quick Add Student
-                                </CardTitle>
-                                <CardDescription>
-                                    Fast student registration
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Quickly register a new student with basic
-                                    details.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* Quick Add Lecturer */}
-                    <Link href="/admin/lecturers/add" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <BookOpen className="h-8 w-8 text-indigo-600" />
-                                <CardTitle className="mt-2">
-                                    Quick Add Lecturer
-                                </CardTitle>
-                                <CardDescription>
-                                    Fast lecturer registration
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Quickly register a new lecturer with basic
-                                    details.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* Reports & Analytics */}
-                    <Link href="/admin/reports" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <BarChart3 className="h-8 w-8 text-red-600" />
-                                <CardTitle className="mt-2">
-                                    Reports & Analytics
-                                </CardTitle>
-                                <CardDescription>
-                                    System usage and statistics
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    View attendance reports, enrollment
-                                    statistics, and system analytics.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    {/* System Settings */}
-                    <Link href="/admin/settings" className="block">
-                        <Card className="h-full transition-all hover:shadow-md hover:scale-105">
-                            <CardHeader>
-                                <Settings className="h-8 w-8 text-gray-600" />
-                                <CardTitle className="mt-2">
-                                    System Settings
-                                </CardTitle>
-                                <CardDescription>
-                                    Configure system preferences
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Manage system settings, user permissions,
-                                    and configurations.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
+                        {/* RFID Card Management */}
+                        <Link href="/admin/rfid" className="block">
+                            <Card className="h-full transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-orange-400">
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-center">
+                                        <IdCard className="h-12 w-12 text-orange-600" />
+                                    </div>
+                                    <CardTitle className="mt-4 text-xl">
+                                        RFID Cards
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Issue & manage cards
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        Issue new cards and manage card
+                                        registrations
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="mt-8 flex justify-end px-5">
