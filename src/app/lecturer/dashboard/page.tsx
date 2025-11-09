@@ -18,17 +18,17 @@ import LogoutButton from "@/components/Logout";
 
 export default function LectureDashboard() {
     return (
-        <div className="min-h-screen">
-            <div className="mb-10 bg-[rgba(255,255,255,0.47)] h-[100px] flex flex-col items-center justify-center w-full">
-                <h1 className="text-3xl font-bold tracking-tight text-center">
-                    Lecturer Dashboard
-                </h1>
-                <p className="mt-2 text-muted-foreground text-center">
-                    Manage attendance, view reports and track participation
-                </p>
-            </div>
-            <div className="container mx-auto py-10 p-6 space-y-8">
-                {/* Main Lecturer Functions */}
+        <div className="min-h-screen p-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                        Lecturer Dashboard
+                    </h1>
+                    <p className="text-muted-foreground">
+                        Manage attendance, view reports and track participation
+                    </p>
+                </div>
+
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 px-5">
                     {/* Get Attendance */}
                     <Link href="/lecturer/getAttendance/" className="block">
