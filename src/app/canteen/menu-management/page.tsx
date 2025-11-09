@@ -124,16 +124,29 @@ export default function MenuManagement() {
         }
 
         try {
-            // For now, just remove from local state since delete API might not be implemented
-            setMenuItems((prevItems) =>
-                prevItems.filter((item) => item.menu_item_id !== menu_item_id)
+            const response = await fetch(
+                `/api/canteen/menu-items?id=${menu_item_id}`,
+                {
+                    method: "DELETE",
+                }
             );
 
-            // TODO: Implement actual DELETE API call when ready
-            // const response = await fetch(`/api/canteen/menu-items/${menu_item_id}`, { method: 'DELETE' })
+            const data = await response.json();
+
+            if (data.success) {
+                // Remove from local state
+                setMenuItems((prevItems) =>
+                    prevItems.filter(
+                        (item) => item.menu_item_id !== menu_item_id
+                    )
+                );
+                alert("Item deleted successfully!");
+            } else {
+                alert("Failed to delete item: " + data.message);
+            }
         } catch (error) {
             console.error("Error deleting item:", error);
-            alert("Failed to delete item");
+            alert("Failed to delete item: " + (error as Error).message);
         }
     };
 

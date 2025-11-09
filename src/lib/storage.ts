@@ -63,9 +63,8 @@ export const uploadFile = async (
                 error
             );
             console.error("Error details:", {
-                status: error.status,
-                statusCode: error.statusCode,
                 message: error.message,
+                name: error.name,
             });
 
             if (error.message.includes("row-level security")) {

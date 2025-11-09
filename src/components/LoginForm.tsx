@@ -113,12 +113,17 @@ export default function LoginForm({ role }: LoginFormProps) {
 
     return (
         <div className="flex flex-col min-h-screen items-center justify-center px-4">
-            <div className="flex flex-col flex-2 items-center justify-center">
-                <h1 className="text-4xl font-bold">
-                    University Management System
-                </h1>
-                <h3 className="text-md mt-2">{roleName} - Portal</h3>
-            </div>
+            {role !== "library" ? (
+                <div className="flex flex-col flex-2 items-center justify-center">
+                    <h1 className="text-4xl font-bold">
+                        University Management System
+                    </h1>
+                    <h3 className="text-md mt-2">{roleName} - Portal</h3>
+                </div>
+            ) : (
+                <></>
+            )}
+            
             <div className="flex-3 w-full max-w-md">
                 <Card>
                     <CardHeader className="space-y-1">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
     getAllMenuItems,
     updateMenuItemAvailability,
+    deleteMenuItem,
 } from "@/lib/canteenQueries";
 
 export async function GET(request: NextRequest) {
@@ -60,6 +61,37 @@ export async function PATCH(request: NextRequest) {
     } catch (error) {
         return NextResponse.json(
             { success: false, message: "Failed to update item" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get("id");
+
+        if (!id) {
+            return NextResponse.json(
+                { success: false, message: "Menu item ID is required" },
+                { status: 400 }
+            );
+        }
+
+        const deletedItem = await deleteMenuItem(id);
+
+        return NextResponse.json({
+            success: true,
+            data: deletedItem,
+            message: "Menu item deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting menu item:", error);
+        return NextResponse.json(
+            {
+                success: false,
+                message: (error as Error).message || "Failed to delete item",
+            },
             { status: 500 }
         );
     }
