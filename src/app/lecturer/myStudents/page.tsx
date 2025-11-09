@@ -162,7 +162,7 @@ export default function MyStudents() {
 
                 {/* Summary Cards */}
                 {summary && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <Card>
                             <CardContent className="p-4">
                                 <div className="flex items-center gap-3">
@@ -208,22 +208,7 @@ export default function MyStudents() {
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <Filter className="h-8 w-8 text-orange-600" />
-                                    <div>
-                                        <p className="text-2xl font-bold">
-                                            {Math.round(summary.avg_year * 10) /
-                                                10}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Avg Year
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        
                     </div>
                 )}
 

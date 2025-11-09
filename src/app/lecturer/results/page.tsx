@@ -47,9 +47,12 @@ import {
     TrophyIcon,
     FileTextIcon,
     UsersIcon,
+    DownloadIcon,
 } from "lucide-react";
 import BulkExamResults from "@/components/BulkExamResults";
 import { PageHeader } from "@/components/ui/breadcrumb";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface Student {
     user_id: string;
@@ -121,6 +124,81 @@ export default function StudentResultsPage() {
         remarks: "",
     });
 
+    const exportToPDF = () => {
+        const doc = new jsPDF();
+
+        // Get course name for the title
+        const courseInfo =
+            selectedCourse && selectedCourse !== "All"
+                ? courses.find((c) => c.id === selectedCourse)
+                : null;
+
+        // Add header
+        doc.setFontSize(18);
+        doc.text("Exam Results Report", 14, 20);
+
+        doc.setFontSize(11);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+
+        if (courseInfo) {
+            doc.text(
+                `Course: ${courseInfo.course_code} - ${courseInfo.course_name}`,
+                14,
+                35
+            );
+        } else {
+            doc.text("Course: All Courses", 14, 35);
+        }
+
+        doc.text(`Total Results: ${results.length}`, 14, 42);
+
+        // Prepare table data
+        const tableData = results.map((result) => [
+            result.register_number,
+            result.student_name,
+            result.course_code,
+            new Date(result.exam_date).toLocaleDateString(),
+            result.grade,
+            result.remarks || "-",
+        ]);
+
+        // Add table
+        autoTable(doc, {
+            startY: 50,
+            head: [
+                [
+                    "Register No.",
+                    "Student Name",
+                    "Course",
+                    "Exam Date",
+                    "Grade",
+                    "Remarks",
+                ],
+            ],
+            body: tableData,
+            theme: "grid",
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+            alternateRowStyles: { fillColor: [245, 247, 250] },
+            columnStyles: {
+                0: { cellWidth: 25 },
+                1: { cellWidth: 40 },
+                2: { cellWidth: 25 },
+                3: { cellWidth: 25 },
+                4: { cellWidth: 20 },
+                5: { cellWidth: 45 },
+            },
+        });
+
+        // Save the PDF
+        const fileName = courseInfo
+            ? `results_${courseInfo.course_code}_${new Date().toISOString().split("T")[0]}.pdf`
+            : `results_all_${new Date().toISOString().split("T")[0]}.pdf`;
+
+        doc.save(fileName);
+        toast.success("PDF exported successfully!");
+    };
+
     // Fetch initial data
     useEffect(() => {
         fetchCourses();
@@ -185,44 +263,6 @@ export default function StudentResultsPage() {
             toast.error("Failed to fetch results");
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        try {
-            const response = await fetch("/api/lecturer/results", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(formData),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                toast.success(data.message);
-                setFormData({
-                    studentId: "",
-                    courseId: "",
-                    examDate: "",
-                    grade: "",
-                    remarks: "",
-                });
-                setIsEditDialogOpen(false);
-                fetchResults();
-                fetchStudents();
-            } else {
-                toast.error(data.message);
-            }
-        } catch (error) {
-            console.error("Error adding result:", error);
-            toast.error("Failed to add result");
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -337,13 +377,6 @@ export default function StudentResultsPage() {
                             Bulk Entry
                         </TabsTrigger>
                         <TabsTrigger
-                            value="individual"
-                            className="flex items-center gap-2"
-                        >
-                            <PlusIcon className="h-4 w-4" />
-                            Individual Entry
-                        </TabsTrigger>
-                        <TabsTrigger
                             value="results"
                             className="flex items-center gap-2"
                         >
@@ -354,166 +387,6 @@ export default function StudentResultsPage() {
 
                     <TabsContent value="bulk" className="space-y-4">
                         <BulkExamResults onResultsAdded={fetchResults} />
-                    </TabsContent>
-
-                    <TabsContent value="individual" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <PlusIcon className="h-5 w-5" />
-                                    Add Individual Result
-                                </CardTitle>
-                                <CardDescription>
-                                    Add a single exam result for a specific
-                                    student
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form
-                                    onSubmit={handleSubmit}
-                                    className="space-y-4 max-w-md"
-                                >
-                                    <div className="space-y-2">
-                                        <Label htmlFor="courseId">Course</Label>
-                                        <Select
-                                            value={formData.courseId}
-                                            onValueChange={(value) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    courseId: value,
-                                                }))
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select course" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {courses.map((course) => (
-                                                    <SelectItem
-                                                        key={course.id}
-                                                        value={course.id}
-                                                    >
-                                                        {course.course_code} -{" "}
-                                                        {course.course_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="studentId">
-                                            Student
-                                        </Label>
-                                        <Select
-                                            value={formData.studentId}
-                                            onValueChange={(value) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    studentId: value,
-                                                }))
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select student" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {students.map((student) => (
-                                                    <SelectItem
-                                                        key={student.user_id}
-                                                        value={student.user_id}
-                                                    >
-                                                        {
-                                                            student.register_number
-                                                        }{" "}
-                                                        - {student.full_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="examDate">
-                                            Exam Date
-                                        </Label>
-                                        <Input
-                                            type="date"
-                                            id="examDate"
-                                            value={formData.examDate}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    examDate: e.target.value,
-                                                }))
-                                            }
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="grade">Grade</Label>
-                                        <Select
-                                            value={formData.grade}
-                                            onValueChange={(value) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    grade: value,
-                                                }))
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select grade" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {validGrades.map((grade) => (
-                                                    <SelectItem
-                                                        key={grade}
-                                                        value={grade}
-                                                    >
-                                                        {grade}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="remarks">
-                                            Remarks (Optional)
-                                        </Label>
-                                        <Textarea
-                                            id="remarks"
-                                            placeholder="Enter any additional remarks..."
-                                            value={formData.remarks}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    remarks: e.target.value,
-                                                }))
-                                            }
-                                            rows={3}
-                                        />
-                                    </div>
-
-                                    <Button
-                                        type="submit"
-                                        disabled={
-                                            isSubmitting ||
-                                            !formData.studentId ||
-                                            !formData.courseId ||
-                                            !formData.examDate ||
-                                            !formData.grade
-                                        }
-                                        className="w-full"
-                                    >
-                                        {isSubmitting
-                                            ? "Adding..."
-                                            : "Add Result"}
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
                     </TabsContent>
 
                     <TabsContent value="results" className="space-y-4">
@@ -561,27 +434,42 @@ export default function StudentResultsPage() {
                                     >
                                         Clear Filter
                                     </Button>
+                                    {results.length > 0 && (
+                                        <Button
+                                            onClick={exportToPDF}
+                                            className="ml-auto bg-green-600 hover:bg-green-700"
+                                        >
+                                            <DownloadIcon className="h-4 w-4 mr-2" />
+                                            Export to PDF
+                                        </Button>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Exam Results</CardTitle>
-                                <CardDescription>
-                                    {results.length} result(s) found
-                                    {selectedCourse && (
-                                        <span className="ml-2">
-                                            for{" "}
-                                            {
-                                                courses.find(
-                                                    (c) =>
-                                                        c.id === selectedCourse
-                                                )?.course_name
-                                            }
-                                        </span>
-                                    )}
-                                </CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Exam Results</CardTitle>
+                                        <CardDescription>
+                                            {results.length} result(s) found
+                                            {selectedCourse &&
+                                                selectedCourse !== "All" && (
+                                                    <span className="ml-2">
+                                                        for{" "}
+                                                        {
+                                                            courses.find(
+                                                                (c) =>
+                                                                    c.id ===
+                                                                    selectedCourse
+                                                            )?.course_name
+                                                        }
+                                                    </span>
+                                                )}
+                                        </CardDescription>
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 {loading ? (

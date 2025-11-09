@@ -1,8 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Calendar, momentLocalizer, View, SlotInfo } from "react-big-calendar";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -10,30 +22,32 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
     ArrowLeft,
-    MapPin,
+    Calendar as CalendarIcon,
     Clock,
+    MapPin,
     Plus,
-    Calendar,
-    Users,
-    BookOpen,
+    Edit2,
     Trash2,
-    ChevronLeft,
-    ChevronRight,
+    BookOpen,
+    Users,
+    Save,
+    X,
 } from "lucide-react";
 import Link from "next/link";
-import { PageHeader } from "@/components/ui/breadcrumb";
+
+const localizer = momentLocalizer(moment);
 
 interface Course {
     id: string;
@@ -44,64 +58,103 @@ interface Course {
     enrolled_students: number;
 }
 
-interface ScheduleItem {
+interface ScheduleEvent {
     id: string;
     course_id: string;
-    day_of_week: number;
+    event_type: "recurring" | "one-time";
+    day_of_week: number | null;
+    specific_date: string | null;
     start_time: string;
     end_time: string;
     room: string;
-    created_at: string;
+    color: string;
+    notes: string;
+    lecturer_id: string;
     course_code: string;
     course_name: string;
     course_faculty: string;
     course_year: number;
-    enrolled_students: string;
+    enrolled_students: number;
 }
 
-interface WeekDate {
-    date: string;
-    dayName: string;
-    dayShort: string;
-    isToday: boolean;
+interface CalendarEvent {
+    id: string;
+    title: string;
+    start: Date;
+    end: Date;
+    resource: ScheduleEvent;
+    color?: string;
 }
 
-interface ScheduleSummary {
-    totalClasses: number;
-    uniqueCourses: number;
-    totalStudents: number;
-    averageClassesPerDay: number;
+interface EventFormData {
+    id?: string;
+    courseId: string;
+    eventType: "recurring" | "one-time";
+    dayOfWeek: number;
+    specificDate: string;
+    startTime: string;
+    endTime: string;
+    room: string;
+    color: string;
+    notes: string;
 }
 
-interface WeekInfo {
-    startDate: string;
-    endDate: string;
-    weekOffset: number;
-}
+const COLORS = [
+    { value: "#3b82f6", label: "Blue" },
+    { value: "#10b981", label: "Green" },
+    { value: "#f59e0b", label: "Orange" },
+    { value: "#ef4444", label: "Red" },
+    { value: "#8b5cf6", label: "Purple" },
+    { value: "#ec4899", label: "Pink" },
+    { value: "#06b6d4", label: "Cyan" },
+    { value: "#14b8a6", label: "Teal" },
+];
 
-export default function ClassSchedule() {
+const DAY_NAMES = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+];
+
+export default function CalendarSchedule() {
     const [courses, setCourses] = useState<Course[]>([]);
-    const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-    const [weekDates, setWeekDates] = useState<WeekDate[]>([]);
-    const [summary, setSummary] = useState<ScheduleSummary | null>(null);
-    const [weekInfo, setWeekInfo] = useState<WeekInfo | null>(null);
-    const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+    const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+    const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+    const [view, setView] = useState<View>("week");
+    const [date, setDate] = useState(new Date());
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+        null
+    );
     const [isLoading, setIsLoading] = useState(true);
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const [newSchedule, setNewSchedule] = useState({
+    const [formData, setFormData] = useState<EventFormData>({
         courseId: "",
+        eventType: "recurring",
         dayOfWeek: 0,
-        startTime: "",
-        endTime: "",
+        specificDate: "",
+        startTime: "09:00",
+        endTime: "10:00",
         room: "",
+        color: "#3b82f6",
+        notes: "",
     });
 
     useEffect(() => {
         fetchCourses();
-        fetchSchedule();
-    }, [currentWeekOffset]);
+        fetchSchedules();
+    }, []);
+
+    useEffect(() => {
+        // Convert schedule events to calendar events
+        convertToCalendarEvents();
+    }, [scheduleEvents, date]);
 
     const fetchCourses = async () => {
         try {
@@ -119,84 +172,210 @@ export default function ClassSchedule() {
         }
     };
 
-    const fetchSchedule = async () => {
+    const fetchSchedules = async () => {
         setIsLoading(true);
         try {
-            const params = new URLSearchParams();
-            if (currentWeekOffset !== 0) {
-                params.append("weekOffset", currentWeekOffset.toString());
-            }
-
-            const response = await fetch(
-                `/api/lecturer/schedule?${params.toString()}`
-            );
+            const response = await fetch("/api/lecturer/calendar");
             const data = await response.json();
 
             if (data.success) {
-                setSchedule(data.schedule);
-                setWeekDates(data.weekDates);
-                setSummary(data.summary);
-                setWeekInfo(data.weekInfo);
+                setScheduleEvents(data.events);
             } else {
-                toast.error(data.message || "Failed to fetch schedule");
+                toast.error(data.message || "Failed to fetch schedules");
             }
         } catch (error) {
-            toast.error("Error fetching schedule");
-            console.error("Error fetching schedule:", error);
+            toast.error("Error fetching schedules");
+            console.error("Error fetching schedules:", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleAddSchedule = async () => {
+    const convertToCalendarEvents = () => {
+        const events: CalendarEvent[] = [];
+        const startOfView = moment(date)
+            .startOf(view as any)
+            .toDate();
+        const endOfView = moment(date)
+            .endOf(view as any)
+            .toDate();
+
+        scheduleEvents.forEach((scheduleEvent) => {
+            if (
+                scheduleEvent.event_type === "one-time" &&
+                scheduleEvent.specific_date
+            ) {
+                // One-time event
+                const eventDate = new Date(scheduleEvent.specific_date);
+                if (eventDate >= startOfView && eventDate <= endOfView) {
+                    const [startHour, startMin] =
+                        scheduleEvent.start_time.split(":");
+                    const [endHour, endMin] = scheduleEvent.end_time.split(":");
+
+                    const start = new Date(eventDate);
+                    start.setHours(parseInt(startHour), parseInt(startMin), 0);
+
+                    const end = new Date(eventDate);
+                    end.setHours(parseInt(endHour), parseInt(endMin), 0);
+
+                    events.push({
+                        id: scheduleEvent.id,
+                        title: `${scheduleEvent.course_code} - ${scheduleEvent.room}`,
+                        start,
+                        end,
+                        resource: scheduleEvent,
+                        color: scheduleEvent.color,
+                    });
+                }
+            } else if (
+                scheduleEvent.event_type === "recurring" &&
+                scheduleEvent.day_of_week !== null
+            ) {
+                // Recurring event - generate occurrences for the view period
+                const current = new Date(startOfView);
+                while (current <= endOfView) {
+                    // Monday is 0, Sunday is 6 in our system
+                    const dayOfWeek = current.getDay();
+                    const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to our system
+
+                    if (adjustedDay === scheduleEvent.day_of_week) {
+                        const [startHour, startMin] =
+                            scheduleEvent.start_time.split(":");
+                        const [endHour, endMin] =
+                            scheduleEvent.end_time.split(":");
+
+                        const start = new Date(current);
+                        start.setHours(
+                            parseInt(startHour),
+                            parseInt(startMin),
+                            0
+                        );
+
+                        const end = new Date(current);
+                        end.setHours(parseInt(endHour), parseInt(endMin), 0);
+
+                        events.push({
+                            id: `${scheduleEvent.id}-${current.toISOString().split("T")[0]}`,
+                            title: `${scheduleEvent.course_code} - ${scheduleEvent.room}`,
+                            start,
+                            end,
+                            resource: scheduleEvent,
+                            color: scheduleEvent.color,
+                        });
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+            }
+        });
+
+        setCalendarEvents(events);
+    };
+
+    const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
+        const startTime = moment(slotInfo.start).format("HH:mm");
+        const endTime = moment(slotInfo.end).format("HH:mm");
+        const specificDate = moment(slotInfo.start).format("YYYY-MM-DD");
+        const dayOfWeek = slotInfo.start.getDay();
+        const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+        setFormData({
+            courseId: "",
+            eventType: "one-time",
+            dayOfWeek: adjustedDay,
+            specificDate,
+            startTime,
+            endTime,
+            room: "",
+            color: "#3b82f6",
+            notes: "",
+        });
+        setSelectedEvent(null);
+        setIsDialogOpen(true);
+    }, []);
+
+    const handleSelectEvent = useCallback((event: CalendarEvent) => {
+        setSelectedEvent(event);
+        const resource = event.resource;
+        setFormData({
+            id: resource.id,
+            courseId: resource.course_id,
+            eventType: resource.event_type,
+            dayOfWeek: resource.day_of_week ?? 0,
+            specificDate: resource.specific_date ?? "",
+            startTime: resource.start_time,
+            endTime: resource.end_time,
+            room: resource.room,
+            color: resource.color,
+            notes: resource.notes || "",
+        });
+        setIsDialogOpen(true);
+    }, []);
+
+    const handleSaveEvent = async () => {
+        // Validation
         if (
-            !newSchedule.courseId ||
-            !newSchedule.startTime ||
-            !newSchedule.endTime ||
-            !newSchedule.room
+            !formData.courseId ||
+            !formData.startTime ||
+            !formData.endTime ||
+            !formData.room
         ) {
             toast.error("Please fill in all required fields");
             return;
         }
 
-        setIsSubmitting(true);
+        if (
+            formData.eventType === "recurring" &&
+            formData.dayOfWeek === undefined
+        ) {
+            toast.error("Please select a day of week for recurring events");
+            return;
+        }
+
+        if (formData.eventType === "one-time" && !formData.specificDate) {
+            toast.error("Please select a specific date for one-time events");
+            return;
+        }
+
+        setIsSaving(true);
         try {
-            const response = await fetch("/api/lecturer/schedule", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(newSchedule),
+            const method = formData.id ? "PUT" : "POST";
+            const endpoint = "/api/lecturer/calendar";
+
+            const response = await fetch(endpoint, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                toast.success("Schedule added successfully");
-                setIsAddDialogOpen(false);
-                setNewSchedule({
-                    courseId: "",
-                    dayOfWeek: 0,
-                    startTime: "",
-                    endTime: "",
-                    room: "",
-                });
-                fetchSchedule(); // Refresh schedule
+                toast.success(
+                    formData.id
+                        ? "Event updated successfully"
+                        : "Event created successfully"
+                );
+                setIsDialogOpen(false);
+                await fetchSchedules();
+                resetForm();
             } else {
-                toast.error(data.message || "Failed to add schedule");
+                toast.error(data.message || "Failed to save event");
             }
         } catch (error) {
-            toast.error("Error adding schedule");
-            console.error("Error adding schedule:", error);
+            toast.error("Error saving event");
+            console.error("Error saving event:", error);
         } finally {
-            setIsSubmitting(false);
+            setIsSaving(false);
         }
     };
 
-    const handleDeleteSchedule = async (scheduleId: string) => {
+    const handleDeleteEvent = async () => {
+        if (!formData.id) return;
+
+        setIsSaving(true);
         try {
             const response = await fetch(
-                `/api/lecturer/schedule?scheduleId=${scheduleId}`,
+                `/api/lecturer/calendar?id=${formData.id}`,
                 {
                     method: "DELETE",
                 }
@@ -205,124 +384,175 @@ export default function ClassSchedule() {
             const data = await response.json();
 
             if (data.success) {
-                toast.success("Schedule deleted successfully");
-                fetchSchedule(); // Refresh schedule
+                toast.success("Event deleted successfully");
+                setIsDeleteDialogOpen(false);
+                setIsDialogOpen(false);
+                await fetchSchedules();
+                resetForm();
             } else {
-                toast.error(data.message || "Failed to delete schedule");
+                toast.error(data.message || "Failed to delete event");
             }
         } catch (error) {
-            toast.error("Error deleting schedule");
-            console.error("Error deleting schedule:", error);
+            toast.error("Error deleting event");
+            console.error("Error deleting event:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    const navigateWeek = (direction: "prev" | "next") => {
-        if (direction === "prev") {
-            setCurrentWeekOffset(currentWeekOffset - 1);
-        } else {
-            setCurrentWeekOffset(currentWeekOffset + 1);
-        }
-    };
-
-    const resetToCurrentWeek = () => {
-        setCurrentWeekOffset(0);
-    };
-
-    // Generate time slots for the schedule grid
-    const timeSlots = [];
-    for (let hour = 6; hour <= 18; hour++) {
-        const time24 = `${hour.toString().padStart(2, "0")}:00`;
-        let displayHour = hour;
-        let period = "AM";
-
-        if (hour === 12) {
-            period = "PM";
-        } else if (hour > 12) {
-            displayHour = hour - 12;
-            period = "PM";
-        }
-
-        const displayTime =
-            hour === 12 && hour === 12 ? "Noon" : `${displayHour} ${period}`;
-
-        timeSlots.push({
-            time24,
-            display: displayTime,
+    const resetForm = () => {
+        setFormData({
+            courseId: "",
+            eventType: "recurring",
+            dayOfWeek: 0,
+            specificDate: "",
+            startTime: "09:00",
+            endTime: "10:00",
+            room: "",
+            color: "#3b82f6",
+            notes: "",
         });
-    }
-
-    // Helper function to get schedule items for a specific day and time
-    const getScheduleForDayTime = (dayOfWeek: number, timeSlot: string) => {
-        return schedule.filter((item) => {
-            const itemStartTime = item.start_time.substring(0, 5); // Get HH:mm format
-            const itemEndTime = item.end_time.substring(0, 5);
-            const slotTime = timeSlot.substring(0, 5);
-
-            return (
-                item.day_of_week === dayOfWeek &&
-                itemStartTime <= slotTime &&
-                itemEndTime > slotTime
-            );
-        });
+        setSelectedEvent(null);
     };
 
-    // Helper function to format time for display
-    const formatTime = (time: string) => {
-        const [hours, minutes] = time.split(":");
-        const hour = parseInt(hours);
-        const period = hour >= 12 ? "PM" : "AM";
-        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-        return `${displayHour}:${minutes} ${period}`;
+    const eventStyleGetter = (event: CalendarEvent) => {
+        return {
+            style: {
+                backgroundColor: event.color || "#3b82f6",
+                borderRadius: "5px",
+                opacity: 0.8,
+                color: "white",
+                border: "0px",
+                display: "block",
+            },
+        };
     };
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
-                <PageHeader
-                    title="Class Schedule"
-                    breadcrumbs={[
-                        { label: "Dashboard", href: "/lecturer/dashboard" },
-                        { label: "Class Schedule", current: true },
-                    ]}
-                    backButton={{
-                        href: "/lecturer/dashboard",
-                        label: "Back to Dashboard",
-                    }}
-                />
-
-                {/* Add Schedule Dialog */}
-                <Dialog
-                    open={isAddDialogOpen}
-                    onOpenChange={setIsAddDialogOpen}
-                >
-                    <div className="flex justify-end mb-6">
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Schedule
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <Link href="/lecturer/dashboard">
+                            <Button variant="outline" size="icon">
+                                <ArrowLeft className="h-4 w-4" />
                             </Button>
-                        </DialogTrigger>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-bold flex items-center gap-2">
+                                <CalendarIcon className="h-8 w-8 text-blue-600" />
+                                Class Schedule Calendar
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Manage your teaching schedule with an
+                                interactive calendar
+                            </p>
+                        </div>
                     </div>
-                    <DialogContent className="max-w-md">
+                    <Button
+                        onClick={() => {
+                            resetForm();
+                            setIsDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Class
+                    </Button>
+                </div>
+
+                {/* Legend */}
+                <div className="flex gap-2 mb-4 flex-wrap">
+                    <Badge
+                        variant="outline"
+                        className="bg-blue-100 text-blue-800"
+                    >
+                        Recurring Classes
+                    </Badge>
+                    <Badge
+                        variant="outline"
+                        className="bg-green-100 text-green-800"
+                    >
+                        One-time Events
+                    </Badge>
+                </div>
+
+                {/* Calendar */}
+                <Card>
+                    <CardContent className="p-6">
+                        {isLoading ? (
+                            <div className="text-center py-20 text-gray-500">
+                                Loading calendar...
+                            </div>
+                        ) : (
+                            <div style={{ height: "700px" }}>
+                                <Calendar
+                                    localizer={localizer}
+                                    events={calendarEvents}
+                                    startAccessor="start"
+                                    endAccessor="end"
+                                    style={{ height: "100%" }}
+                                    onSelectSlot={handleSelectSlot}
+                                    onSelectEvent={handleSelectEvent}
+                                    selectable
+                                    view={view}
+                                    onView={setView}
+                                    date={date}
+                                    onNavigate={setDate}
+                                    eventPropGetter={eventStyleGetter}
+                                    step={30}
+                                    timeslots={2}
+                                    min={new Date(2000, 0, 1, 7, 0, 0)}
+                                    max={new Date(2000, 0, 1, 20, 0, 0)}
+                                    formats={{
+                                        timeGutterFormat: "HH:mm",
+                                        eventTimeRangeFormat: ({
+                                            start,
+                                            end,
+                                        }) =>
+                                            `${moment(start).format("HH:mm")} - ${moment(end).format("HH:mm")}`,
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Event Dialog */}
+                <Dialog
+                    open={isDialogOpen}
+                    onOpenChange={(open) => {
+                        if (!open) resetForm();
+                        setIsDialogOpen(open);
+                    }}
+                >
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Add New Schedule</DialogTitle>
+                            <DialogTitle>
+                                {formData.id
+                                    ? "Edit Class Schedule"
+                                    : "Add New Class Schedule"}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Create or edit class schedules for your courses
+                            </DialogDescription>
                         </DialogHeader>
+
                         <div className="space-y-4">
+                            {/* Course Selection */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700">
-                                    Course
-                                </label>
+                                <Label htmlFor="course">Course *</Label>
                                 <Select
-                                    value={newSchedule.courseId}
+                                    value={formData.courseId}
                                     onValueChange={(value) =>
-                                        setNewSchedule({
-                                            ...newSchedule,
+                                        setFormData({
+                                            ...formData,
                                             courseId: value,
                                         })
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Course" />
+                                        <SelectValue placeholder="Select a course" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {courses.map((course) => (
@@ -330,77 +560,131 @@ export default function ClassSchedule() {
                                                 key={course.id}
                                                 value={course.id}
                                             >
-                                                {course.course_code} -{" "}
-                                                {course.course_name}
+                                                <div className="flex items-center gap-2">
+                                                    <BookOpen className="h-4 w-4" />
+                                                    {course.course_code} -{" "}
+                                                    {course.course_name}
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="ml-2"
+                                                    >
+                                                        <Users className="h-3 w-3 mr-1" />
+                                                        {
+                                                            course.enrolled_students
+                                                        }
+                                                    </Badge>
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
+                            {/* Event Type */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700">
-                                    Day of Week
-                                </label>
+                                <Label htmlFor="eventType">Event Type *</Label>
                                 <Select
-                                    value={newSchedule.dayOfWeek.toString()}
-                                    onValueChange={(value) =>
-                                        setNewSchedule({
-                                            ...newSchedule,
-                                            dayOfWeek: parseInt(value),
+                                    value={formData.eventType}
+                                    onValueChange={(
+                                        value: "recurring" | "one-time"
+                                    ) =>
+                                        setFormData({
+                                            ...formData,
+                                            eventType: value,
                                         })
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Day" />
+                                        <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {[
-                                            "Monday",
-                                            "Tuesday",
-                                            "Wednesday",
-                                            "Thursday",
-                                            "Friday",
-                                            "Saturday",
-                                            "Sunday",
-                                        ].map((day, index) => (
-                                            <SelectItem
-                                                key={index}
-                                                value={index.toString()}
-                                            >
-                                                {day}
-                                            </SelectItem>
-                                        ))}
+                                        <SelectItem value="recurring">
+                                            Recurring (Weekly)
+                                        </SelectItem>
+                                        <SelectItem value="one-time">
+                                            One-time Event
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
+                            {/* Day of Week (for recurring) */}
+                            {formData.eventType === "recurring" && (
+                                <div>
+                                    <Label htmlFor="dayOfWeek">
+                                        Day of Week *
+                                    </Label>
+                                    <Select
+                                        value={formData.dayOfWeek.toString()}
+                                        onValueChange={(value) =>
+                                            setFormData({
+                                                ...formData,
+                                                dayOfWeek: parseInt(value),
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {DAY_NAMES.map((day, index) => (
+                                                <SelectItem
+                                                    key={index}
+                                                    value={index.toString()}
+                                                >
+                                                    {day}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
+                            {/* Specific Date (for one-time) */}
+                            {formData.eventType === "one-time" && (
+                                <div>
+                                    <Label htmlFor="specificDate">Date *</Label>
+                                    <Input
+                                        id="specificDate"
+                                        type="date"
+                                        value={formData.specificDate}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                specificDate: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+                            )}
+
+                            {/* Time */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">
-                                        Start Time
-                                    </label>
+                                    <Label htmlFor="startTime">
+                                        Start Time *
+                                    </Label>
                                     <Input
+                                        id="startTime"
                                         type="time"
-                                        value={newSchedule.startTime}
+                                        value={formData.startTime}
                                         onChange={(e) =>
-                                            setNewSchedule({
-                                                ...newSchedule,
+                                            setFormData({
+                                                ...formData,
                                                 startTime: e.target.value,
                                             })
                                         }
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">
-                                        End Time
-                                    </label>
+                                    <Label htmlFor="endTime">End Time *</Label>
                                     <Input
+                                        id="endTime"
                                         type="time"
-                                        value={newSchedule.endTime}
+                                        value={formData.endTime}
                                         onChange={(e) =>
-                                            setNewSchedule({
-                                                ...newSchedule,
+                                            setFormData({
+                                                ...formData,
                                                 endTime: e.target.value,
                                             })
                                         }
@@ -408,243 +692,141 @@ export default function ClassSchedule() {
                                 </div>
                             </div>
 
+                            {/* Room */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700">
-                                    Room
-                                </label>
+                                <Label htmlFor="room">Room / Location *</Label>
                                 <Input
-                                    value={newSchedule.room}
+                                    id="room"
+                                    placeholder="e.g., Room 101, Lab A, Hall B"
+                                    value={formData.room}
                                     onChange={(e) =>
-                                        setNewSchedule({
-                                            ...newSchedule,
+                                        setFormData({
+                                            ...formData,
                                             room: e.target.value,
                                         })
                                     }
-                                    placeholder="e.g., Room 101, Lab A, etc."
                                 />
                             </div>
 
-                            <Button
-                                onClick={handleAddSchedule}
-                                disabled={isSubmitting}
-                                className="w-full"
-                            >
-                                {isSubmitting ? "Adding..." : "Add Schedule"}
-                            </Button>
+                            {/* Color */}
+                            <div>
+                                <Label htmlFor="color">Color</Label>
+                                <Select
+                                    value={formData.color}
+                                    onValueChange={(value) =>
+                                        setFormData({
+                                            ...formData,
+                                            color: value,
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {COLORS.map((color) => (
+                                            <SelectItem
+                                                key={color.value}
+                                                value={color.value}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className="w-4 h-4 rounded"
+                                                        style={{
+                                                            backgroundColor:
+                                                                color.value,
+                                                        }}
+                                                    />
+                                                    {color.label}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <Label htmlFor="notes">Notes (Optional)</Label>
+                                <Textarea
+                                    id="notes"
+                                    placeholder="Add any additional information..."
+                                    value={formData.notes}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            notes: e.target.value,
+                                        })
+                                    }
+                                    rows={3}
+                                />
+                            </div>
                         </div>
+
+                        <DialogFooter className="gap-2">
+                            {formData.id && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setIsDeleteDialogOpen(true)}
+                                    disabled={isSaving}
+                                >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                </Button>
+                            )}
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    resetForm();
+                                    setIsDialogOpen(false);
+                                }}
+                                disabled={isSaving}
+                            >
+                                <X className="h-4 w-4 mr-2" />
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleSaveEvent}
+                                disabled={isSaving}
+                            >
+                                <Save className="h-4 w-4 mr-2" />
+                                {isSaving ? "Saving..." : "Save"}
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
 
-                {/* Week Navigation */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateWeek("prev")}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <div className="text-sm font-medium">
-                            {weekInfo && (
-                                <>
-                                    Week: {weekInfo.startDate} to{" "}
-                                    {weekInfo.endDate}
-                                </>
-                            )}
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateWeek("next")}
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    {currentWeekOffset !== 0 && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={resetToCurrentWeek}
-                        >
-                            Current Week
-                        </Button>
-                    )}
-                </div>
-
-                {/* Summary Cards */}
-                {summary && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <Calendar className="h-8 w-8 text-blue-600" />
-                                    <div>
-                                        <p className="text-2xl font-bold">
-                                            {summary.totalClasses}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Total Classes
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <BookOpen className="h-8 w-8 text-green-600" />
-                                    <div>
-                                        <p className="text-2xl font-bold">
-                                            {summary.uniqueCourses}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Unique Courses
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <Users className="h-8 w-8 text-purple-600" />
-                                    <div>
-                                        <p className="text-2xl font-bold">
-                                            {summary.totalStudents}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Total Students
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <Clock className="h-8 w-8 text-orange-600" />
-                                    <div>
-                                        <p className="text-2xl font-bold">
-                                            {summary.averageClassesPerDay}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Avg Classes/Day
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Schedule Grid */}
-                <Card className="bg-white shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-xl font-semibold">
-                            Weekly Schedule
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="text-center py-8 text-gray-500">
-                                Loading schedule...
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                {/* Days Header */}
-                                <div className="grid grid-cols-8 gap-2 mb-4">
-                                    <div className="text-sm font-medium text-gray-500 p-2">
-                                        Time
-                                    </div>
-                                    {weekDates.map((day, index) => (
-                                        <div
-                                            key={index}
-                                            className={`text-center p-2 rounded-lg ${day.isToday ? "bg-blue-100 text-blue-800" : "bg-gray-50"}`}
-                                        >
-                                            <div className="text-sm font-medium">
-                                                {day.dayShort}
-                                            </div>
-                                            <div className="text-xs text-gray-600">
-                                                {new Date(day.date).getDate()}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Time Slots */}
-                                <div className="space-y-1">
-                                    {timeSlots.map((timeSlot, timeIndex) => (
-                                        <div
-                                            key={timeIndex}
-                                            className="grid grid-cols-8 gap-2"
-                                        >
-                                            <div className="text-xs text-gray-500 p-2 border-r">
-                                                {timeSlot.display}
-                                            </div>
-                                            {weekDates.map((day, dayIndex) => {
-                                                const daySchedule =
-                                                    getScheduleForDayTime(
-                                                        dayIndex,
-                                                        timeSlot.time24
-                                                    );
-                                                return (
-                                                    <div
-                                                        key={dayIndex}
-                                                        className="min-h-[60px] border border-gray-200 rounded p-1"
-                                                    >
-                                                        {daySchedule.map(
-                                                            (item) => (
-                                                                <div
-                                                                    key={
-                                                                        item.id
-                                                                    }
-                                                                    className="bg-blue-100 text-blue-800 p-2 rounded text-xs mb-1 relative group"
-                                                                >
-                                                                    <div className="font-medium">
-                                                                        {
-                                                                            item.course_code
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-xs opacity-80">
-                                                                        {
-                                                                            item.room
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-xs opacity-80">
-                                                                        {formatTime(
-                                                                            item.start_time
-                                                                        )}{" "}
-                                                                        -{" "}
-                                                                        {formatTime(
-                                                                            item.end_time
-                                                                        )}
-                                                                    </div>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        className="absolute top-0 right-0 h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
-                                                                        onClick={() =>
-                                                                            handleDeleteSchedule(
-                                                                                item.id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <Trash2 className="h-3 w-3" />
-                                                                    </Button>
-                                                                </div>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                {/* Delete Confirmation Dialog */}
+                <Dialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Class Schedule</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete this class
+                                schedule? This action cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsDeleteDialogOpen(false)}
+                                disabled={isSaving}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDeleteEvent}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? "Deleting..." : "Delete"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );
