@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 import {
     Card,
@@ -25,6 +26,7 @@ export default function LoginForm({ role }: LoginFormProps) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
     const handleLogin = async (e: FormEvent) => {
@@ -46,8 +48,6 @@ export default function LoginForm({ role }: LoginFormProps) {
         const session = await res.json();
         const userRole = session?.user?.role;
 
-        console.log(userRole);
-
         if (!userRole) {
             setError("Unable to fetch session.");
             return;
@@ -58,7 +58,6 @@ export default function LoginForm({ role }: LoginFormProps) {
             return;
         }
 
-        // Redirect based on role
         switch (userRole) {
             case "admin":
                 router.push("/admin/dashboard");
@@ -111,13 +110,32 @@ export default function LoginForm({ role }: LoginFormProps) {
                                     Forgot password?
                                 </Link>
                             </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+                                    aria-label={
+                                        showPassword
+                                            ? "Hide password"
+                                            : "Show password"
+                                    }
+                                >
+                                    {showPassword ? (
+                                        <Eye className="h-4 w-4" />
+                                    ) : (
+                                        <EyeOff className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                         {error && (
                             <p className="text-sm text-red-500 font-medium">
