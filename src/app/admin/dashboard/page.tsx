@@ -21,7 +21,7 @@ import LogoutButton from "@/components/Logout";
 export default function AdminDashboard() {
     return (
         <div className="min-h-screen">
-            <div className="mb-10 bg-[rgba(255,255,255,0.47)] h-[100px] flex flex-col items-center justify-center w-full">
+            <div className="mb-10  h-[100px] flex flex-col items-center justify-center w-full">
                 <h1 className="text-3xl font-bold tracking-tight text-center">
                     Admin Dashboard
                 </h1>
