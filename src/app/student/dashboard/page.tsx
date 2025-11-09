@@ -32,6 +32,7 @@ import {
   Key,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
+import formatCurrency from "@/lib/formatCurrency";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";
 import { getFacultyName } from "@/lib/utils";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
@@ -207,7 +208,7 @@ export default function StudentDashboard() {
                     Card Balance:
                   </span>
                   <span className="font-semibold">
-                    Rs. {data?.stats?.currentBalance?.toFixed(2) || "0.00"}
+                    {formatCurrency(data?.stats?.currentBalance)}
                   </span>
                 </div>
               </div>
@@ -242,7 +243,9 @@ export default function StudentDashboard() {
               <div className="text-2xl font-bold text-blue-700">
                 {data?.stats?.totalCourses || 0}
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-300 ">Active this semester</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 ">
+                Active this semester
+              </p>
             </CardContent>
           </Card>
 
@@ -255,7 +258,9 @@ export default function StudentDashboard() {
               <div className="text-2xl font-bold text-purple-700">
                 {data?.stats?.currentGPA?.toFixed(2) || "0.00"}
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-300">Cumulative GPA</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Cumulative GPA
+              </p>
             </CardContent>
           </Card>
 
@@ -268,9 +273,11 @@ export default function StudentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-700">
-                Rs. {data?.stats?.currentBalance?.toFixed(2) || "0.00"}
+                {formatCurrency(data?.stats?.currentBalance)}
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-300">Available balance</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Available balance
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -294,8 +301,8 @@ export default function StudentDashboard() {
               )}
               {(data?.stats?.pendingFines ?? 0) > 0 && (
                 <p className="text-sm text-red-700">
-                  Outstanding library fines: Rs.{" "}
-                  {(data?.stats?.pendingFines ?? 0).toFixed(2)}
+                  Outstanding library fines:{" "}
+                  {formatCurrency(data?.stats?.pendingFines)}
                 </p>
               )}
             </CardContent>
@@ -416,7 +423,7 @@ export default function StudentDashboard() {
                 {totalSpent !== null ? (
                   <div className="mt-3 p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
                     <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                      Total Spent: Rs. {totalSpent.toFixed(2)}
+                      Total Spent: {formatCurrency(totalSpent)}
                     </p>
                   </div>
                 ) : transactionsCount !== null && transactionsCount > 0 ? (
@@ -429,8 +436,7 @@ export default function StudentDashboard() {
                   (data?.stats?.currentBalance ?? 0) > 0 && (
                     <div className="mt-3 p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
                       <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                        Balance: Rs.{" "}
-                        {(data?.stats?.currentBalance ?? 0).toFixed(2)}
+                        Balance: {formatCurrency(data?.stats?.currentBalance)}
                       </p>
                     </div>
                   )
@@ -522,7 +528,7 @@ export default function StudentDashboard() {
                         (data?.stats?.pendingFines ?? 0) > 0 &&
                         ", "}
                       {(data?.stats?.pendingFines ?? 0) > 0 &&
-                        `Rs. ${(data?.stats?.pendingFines ?? 0).toFixed(2)} fines`}
+                        `${formatCurrency(data?.stats?.pendingFines)} fines`}
                     </p>
                   </div>
                 )}

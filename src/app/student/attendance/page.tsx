@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useStudentAttendance } from "@/hooks/useStudentAttendance";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 const getAttendanceStatus = (percentage: number) => {
   if (percentage >= 85)
@@ -100,43 +101,15 @@ export default function AttendanceTracking() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Breadcrumb (highest) */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-250">
-          <Link
-            href="/student/dashboard"
-            className="flex items-center hover:text-gray-700"
-          >
-            <Home className="h-4 w-4 mr-1" />
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900 dark:text-gray-300 font-medium">
-            Attendance Tracking
-          </span>
-        </nav>
-
-        {/* Back row with centered title (same horizontal line on md+) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-6">
-          <div className="flex items-center">
-            <Link href="/student/dashboard">
-              <Button variant="outline" size="sm" className="flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
-
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Attendance Tracking
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Monitor your class attendance across all courses
-            </p>
-          </div>
-
-          <div className="hidden md:block" />
-        </div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Dashboard", href: "/student/dashboard" },
+            { label: "Attendance Tracking" },
+          ]}
+          title={"Attendance Tracking"}
+          subtitle={"Monitor your class attendance across all courses"}
+          backHref="/student/dashboard"
+        />
 
         {/* Filters */}
         <Card className=" backdrop-blur-sm">

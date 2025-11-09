@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -15,77 +15,78 @@ import RFIDOrderProcessor, {
     RFIDOrderProcessorRef,
 } from "@/components/RFIDOrderProcessor";
 import ManualPaymentDialog from "@/components/ManualPaymentDialog";
+import formatCurrency from "@/lib/formatCurrency";
 import {
-    ShoppingCart,
-    Plus,
-    Minus,
-    Trash2,
-    UtensilsCrossed,
-    CreditCard,
-    CheckCircle,
-    RefreshCw,
-    Settings,
-    Monitor,
-    User,
-    Clock,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  UtensilsCrossed,
+  CreditCard,
+  CheckCircle,
+  RefreshCw,
+  Settings,
+  Monitor,
+  User,
+  Clock,
 } from "lucide-react";
 import LogoutButton from "@/components/Logout";
 
 interface MenuItem {
-    menu_item_id: string;
-    item_name: string;
-    description: string;
-    price: number;
-    category: string;
-    is_available: boolean;
+  menu_item_id: string;
+  item_name: string;
+  description: string;
+  price: number;
+  category: string;
+  is_available: boolean;
 }
 
 interface CartItem {
-    menu_item_id: string;
-    name: string;
-    price: number;
-    quantity: number;
+  menu_item_id: string;
+  name: string;
+  price: number;
+  quantity: number;
 }
 
 interface StudentData {
-    user_id: string;
-    register_number: string;
-    full_name: string;
-    email: string;
-    faculty: string;
-    card_uid: string;
-    balance: number;
-    card_status: string;
+  user_id: string;
+  register_number: string;
+  full_name: string;
+  email: string;
+  faculty: string;
+  card_uid: string;
+  balance: number;
+  card_status: string;
 }
 
 interface OrderState {
-    status:
-        | "waiting_for_order"
-        | "order_ready"
-        | "tap_card"
-        | "processing"
-        | "completed"
-        | "failed";
-    cart: CartItem[];
-    total: number;
-    student: StudentData | null;
-    message: string;
+  status:
+    | "waiting_for_order"
+    | "order_ready"
+    | "tap_card"
+    | "processing"
+    | "completed"
+    | "failed";
+  cart: CartItem[];
+  total: number;
+  student: StudentData | null;
+  message: string;
 }
 
 export default function CanteenPage() {
-    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-    const [cart, setCart] = useState<CartItem[]>([]);
-    const [currentStudent, setCurrentStudent] = useState<StudentData | null>(
-        null
-    );
-    const [userRole, setUserRole] = useState<string>("admin");
-    const [orderState, setOrderState] = useState<OrderState>({
-        status: "waiting_for_order",
-        cart: [],
-        total: 0,
-        student: null,
-        message: "Waiting for order...",
-    });
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [currentStudent, setCurrentStudent] = useState<StudentData | null>(
+    null
+  );
+  const [userRole, setUserRole] = useState<string>("admin");
+  const [orderState, setOrderState] = useState<OrderState>({
+    status: "waiting_for_order",
+    cart: [],
+    total: 0,
+    student: null,
+    message: "Waiting for order...",
+  });
 
     // Keyboard shortcuts state
     const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(
@@ -97,13 +98,12 @@ export default function CanteenPage() {
     const [categoryFilter, setCategoryFilter] = useState<string>("All");
     const [quickSearch, setQuickSearch] = useState("");
 
-    // Manual payment dialog state
-    const [showManualPaymentDialog, setShowManualPaymentDialog] =
-        useState(false);
-    const [insufficientBalanceData, setInsufficientBalanceData] = useState<{
-        totalAmount: number;
-        balance: number;
-    } | null>(null);
+  // Manual payment dialog state
+  const [showManualPaymentDialog, setShowManualPaymentDialog] = useState(false);
+  const [insufficientBalanceData, setInsufficientBalanceData] = useState<{
+    totalAmount: number;
+    balance: number;
+  } | null>(null);
 
     // Ref for ReadCard component
     const readCardRef = useRef<ReadCardRef>(null);
@@ -155,25 +155,22 @@ export default function CanteenPage() {
         setSelectedItemIndex(null);
     }, [categoryFilter, quickSearch]);
 
-    // Order state management for dual-display system
-    const updateOrderState = (newState: Partial<OrderState>) => {
-        const updatedState = { ...orderState, ...newState };
-        setOrderState(updatedState);
-        localStorage.setItem(
-            "canteen_order_state",
-            JSON.stringify(updatedState)
-        );
-    };
+  // Order state management for dual-display system
+  const updateOrderState = (newState: Partial<OrderState>) => {
+    const updatedState = { ...orderState, ...newState };
+    setOrderState(updatedState);
+    localStorage.setItem("canteen_order_state", JSON.stringify(updatedState));
+  };
 
-    const confirmOrder = () => {
-        if (cart.length === 0) return;
+  const confirmOrder = () => {
+    if (cart.length === 0) return;
 
-        const cartItems: CartItem[] = cart.map((item) => ({
-            menu_item_id: item.menu_item_id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-        }));
+    const cartItems: CartItem[] = cart.map((item) => ({
+      menu_item_id: item.menu_item_id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
 
         // Update order state to indicate order is ready for payment
         updateOrderState({
@@ -184,34 +181,34 @@ export default function CanteenPage() {
         });
     };
 
-    useEffect(() => {
-        fetchMenuItems();
-        // Check user role from session/auth
-        const role = localStorage.getItem("userRole") || "admin";
-        setUserRole(role);
+  useEffect(() => {
+    fetchMenuItems();
+    // Check user role from session/auth
+    const role = localStorage.getItem("userRole") || "admin";
+    setUserRole(role);
 
-        // Initialize order state
-        updateOrderState({
-            status: "waiting_for_order",
-            cart: [],
-            total: 0,
-            student: null,
-            message: "Waiting for order...",
-        });
-    }, []);
+    // Initialize order state
+    updateOrderState({
+      status: "waiting_for_order",
+      cart: [],
+      total: 0,
+      student: null,
+      message: "Waiting for order...",
+    });
+  }, []);
 
-    // Keyboard shortcuts handler
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            // Don't interfere if user is typing in an input field
-            if (
-                event.target instanceof HTMLInputElement ||
-                event.target instanceof HTMLTextAreaElement
-            ) {
-                return;
-            }
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't interfere if user is typing in an input field
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
 
-            const key = event.key;
+      const key = event.key;
 
             // Number keys (1-9, 0 for item 10) to select menu items
             if ((key >= "1" && key <= "9") || key === "0") {
@@ -282,11 +279,11 @@ export default function CanteenPage() {
                 event.preventDefault();
             }
 
-            // Enter to start payment process
-            else if (key === "Enter" && cart.length > 0 && !isPaymentMode) {
-                startPaymentProcess();
-                event.preventDefault();
-            }
+      // Enter to start payment process
+      else if (key === "Enter" && cart.length > 0 && !isPaymentMode) {
+        startPaymentProcess();
+        event.preventDefault();
+      }
 
             // Escape to cancel selection
             else if (key === "Escape") {
@@ -318,12 +315,12 @@ export default function CanteenPage() {
         categories,
     ]);
 
-    // Start payment process automatically
-    const startPaymentProcess = () => {
-        if (cart.length === 0) return;
+  // Start payment process automatically
+  const startPaymentProcess = () => {
+    if (cart.length === 0) return;
 
-        setIsPaymentMode(true);
-        confirmOrder();
+    setIsPaymentMode(true);
+    confirmOrder();
 
         // Update order state to indicate waiting for card
         updateOrderState({
@@ -339,185 +336,176 @@ export default function CanteenPage() {
         }
     };
 
-    const fetchMenuItems = async () => {
-        try {
-            const response = await fetch("/api/canteen/menu-items");
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setMenuItems(result.data);
-                } else {
-                    console.error("Failed to fetch menu items:", result.error);
-                    // Fallback to sample data
-                    setMenuItems(getSampleMenuItems());
-                }
-            } else {
-                console.error("HTTP error:", response.status);
-                // Fallback to sample data
-                setMenuItems(getSampleMenuItems());
-            }
-        } catch (error) {
-            console.error("Error fetching menu items:", error);
-            // Fallback to sample data
-            setMenuItems(getSampleMenuItems());
-        }
-    };
-
-    const getSampleMenuItems = () => [
-        {
-            menu_item_id: "550e8400-e29b-41d4-a716-446655440001",
-            item_name: "Rice & Curry",
-            description: "Traditional Sri Lankan rice with mixed vegetables",
-            price: 150.0,
-            category: "Main",
-            is_available: true,
-        },
-        {
-            menu_item_id: "550e8400-e29b-41d4-a716-446655440002",
-            item_name: "Chicken Fried Rice",
-            description: "Delicious fried rice with chicken pieces",
-            price: 200.0,
-            category: "Main",
-            is_available: true,
-        },
-        {
-            menu_item_id: "550e8400-e29b-41d4-a716-446655440003",
-            item_name: "Tea",
-            description: "Ceylon black tea",
-            price: 20.0,
-            category: "Drink",
-            is_available: true,
-        },
-        {
-            menu_item_id: "550e8400-e29b-41d4-a716-446655440004",
-            item_name: "Coffee",
-            description: "Freshly brewed coffee",
-            price: 30.0,
-            category: "Drink",
-            is_available: true,
-        },
-    ];
-
-    const addToCart = (item: MenuItem) => {
-        setCart((prev) => {
-            let newCart;
-            const existingItem = prev.find(
-                (cartItem) => cartItem.menu_item_id === item.menu_item_id
-            );
-            if (existingItem) {
-                newCart = prev.map((cartItem) =>
-                    cartItem.menu_item_id === item.menu_item_id
-                        ? { ...cartItem, quantity: cartItem.quantity + 1 }
-                        : cartItem
-                );
-            } else {
-                newCart = [
-                    ...prev,
-                    {
-                        menu_item_id: item.menu_item_id,
-                        name: item.item_name,
-                        price: item.price,
-                        quantity: 1,
-                    },
-                ];
-            }
-
-            // Update order state for real-time sync
-            const newTotal = newCart.reduce(
-                (total, cartItem) => total + cartItem.price * cartItem.quantity,
-                0
-            );
-            updateOrderState({
-                cart: newCart,
-                total: newTotal,
-                status:
-                    newCart.length > 0 ? "order_ready" : "waiting_for_order",
-                message:
-                    newCart.length > 0
-                        ? `${newCart.length} item(s) in cart`
-                        : "Waiting for order...",
-            });
-
-            return newCart;
-        });
-    };
-
-    const updateQuantity = (itemId: string, newQuantity: number) => {
-        if (newQuantity <= 0) {
-            removeFromCart(itemId);
+  const fetchMenuItems = async () => {
+    try {
+      const response = await fetch("/api/canteen/menu-items");
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setMenuItems(result.data);
         } else {
-            setCart((prev) => {
-                const newCart = prev.map((item) =>
-                    item.menu_item_id === itemId
-                        ? { ...item, quantity: newQuantity }
-                        : item
-                );
-
-                // Update order state for real-time sync
-                const newTotal = newCart.reduce(
-                    (total, cartItem) =>
-                        total + cartItem.price * cartItem.quantity,
-                    0
-                );
-                updateOrderState({
-                    cart: newCart,
-                    total: newTotal,
-                    status:
-                        newCart.length > 0
-                            ? "order_ready"
-                            : "waiting_for_order",
-                    message:
-                        newCart.length > 0
-                            ? `${newCart.length} item(s) in cart`
-                            : "Waiting for order...",
-                });
-
-                return newCart;
-            });
+          console.error("Failed to fetch menu items:", result.error);
+          // Fallback to sample data
+          setMenuItems(getSampleMenuItems());
         }
-    };
+      } else {
+        console.error("HTTP error:", response.status);
+        // Fallback to sample data
+        setMenuItems(getSampleMenuItems());
+      }
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+      // Fallback to sample data
+      setMenuItems(getSampleMenuItems());
+    }
+  };
 
-    const removeFromCart = (itemId: string) => {
-        setCart((prev) => {
-            const newCart = prev.filter((item) => item.menu_item_id !== itemId);
+  const getSampleMenuItems = () => [
+    {
+      menu_item_id: "550e8400-e29b-41d4-a716-446655440001",
+      item_name: "Rice & Curry",
+      description: "Traditional Sri Lankan rice with mixed vegetables",
+      price: 150.0,
+      category: "Main",
+      is_available: true,
+    },
+    {
+      menu_item_id: "550e8400-e29b-41d4-a716-446655440002",
+      item_name: "Chicken Fried Rice",
+      description: "Delicious fried rice with chicken pieces",
+      price: 200.0,
+      category: "Main",
+      is_available: true,
+    },
+    {
+      menu_item_id: "550e8400-e29b-41d4-a716-446655440003",
+      item_name: "Tea",
+      description: "Ceylon black tea",
+      price: 20.0,
+      category: "Drink",
+      is_available: true,
+    },
+    {
+      menu_item_id: "550e8400-e29b-41d4-a716-446655440004",
+      item_name: "Coffee",
+      description: "Freshly brewed coffee",
+      price: 30.0,
+      category: "Drink",
+      is_available: true,
+    },
+  ];
 
-            // Update order state for real-time sync
-            const newTotal = newCart.reduce(
-                (total, cartItem) => total + cartItem.price * cartItem.quantity,
-                0
-            );
-            updateOrderState({
-                cart: newCart,
-                total: newTotal,
-                status:
-                    newCart.length > 0 ? "order_ready" : "waiting_for_order",
-                message:
-                    newCart.length > 0
-                        ? `${newCart.length} item(s) in cart`
-                        : "Waiting for order...",
-            });
-
-            return newCart;
-        });
-    };
-
-    const clearCart = () => {
-        setCart([]);
-        updateOrderState({
-            status: "waiting_for_order",
-            cart: [],
-            total: 0,
-            student: null,
-            message: "Waiting for order...",
-        });
-    };
-
-    const calculateTotal = () => {
-        return cart.reduce(
-            (total, item) => total + item.price * item.quantity,
-            0
+  const addToCart = (item: MenuItem) => {
+    setCart((prev) => {
+      let newCart;
+      const existingItem = prev.find(
+        (cartItem) => cartItem.menu_item_id === item.menu_item_id
+      );
+      if (existingItem) {
+        newCart = prev.map((cartItem) =>
+          cartItem.menu_item_id === item.menu_item_id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
         );
-    };
+      } else {
+        newCart = [
+          ...prev,
+          {
+            menu_item_id: item.menu_item_id,
+            name: item.item_name,
+            price: item.price,
+            quantity: 1,
+          },
+        ];
+      }
+
+      // Update order state for real-time sync
+      const newTotal = newCart.reduce(
+        (total, cartItem) => total + cartItem.price * cartItem.quantity,
+        0
+      );
+      updateOrderState({
+        cart: newCart,
+        total: newTotal,
+        status: newCart.length > 0 ? "order_ready" : "waiting_for_order",
+        message:
+          newCart.length > 0
+            ? `${newCart.length} item(s) in cart`
+            : "Waiting for order...",
+      });
+
+      return newCart;
+    });
+  };
+
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+    } else {
+      setCart((prev) => {
+        const newCart = prev.map((item) =>
+          item.menu_item_id === itemId
+            ? { ...item, quantity: newQuantity }
+            : item
+        );
+
+        // Update order state for real-time sync
+        const newTotal = newCart.reduce(
+          (total, cartItem) => total + cartItem.price * cartItem.quantity,
+          0
+        );
+        updateOrderState({
+          cart: newCart,
+          total: newTotal,
+          status: newCart.length > 0 ? "order_ready" : "waiting_for_order",
+          message:
+            newCart.length > 0
+              ? `${newCart.length} item(s) in cart`
+              : "Waiting for order...",
+        });
+
+        return newCart;
+      });
+    }
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart((prev) => {
+      const newCart = prev.filter((item) => item.menu_item_id !== itemId);
+
+      // Update order state for real-time sync
+      const newTotal = newCart.reduce(
+        (total, cartItem) => total + cartItem.price * cartItem.quantity,
+        0
+      );
+      updateOrderState({
+        cart: newCart,
+        total: newTotal,
+        status: newCart.length > 0 ? "order_ready" : "waiting_for_order",
+        message:
+          newCart.length > 0
+            ? `${newCart.length} item(s) in cart`
+            : "Waiting for order...",
+      });
+
+      return newCart;
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    updateOrderState({
+      status: "waiting_for_order",
+      cart: [],
+      total: 0,
+      student: null,
+      message: "Waiting for order...",
+    });
+  };
+
+  const calculateTotal = () => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
 
     const handleTransactionComplete = (
         success: boolean,
@@ -546,25 +534,22 @@ export default function CanteenPage() {
         }
     };
 
-    const handleStudentDataReceived = (studentData: StudentData | null) => {
-        if (studentData) {
-            setCurrentStudent(studentData);
-            updateOrderState({
-                status: "tap_card",
-                student: studentData,
-                message: "Card detected! Processing payment...",
-            });
-        }
-    };
+  const handleStudentDataReceived = (studentData: StudentData | null) => {
+    if (studentData) {
+      setCurrentStudent(studentData);
+      updateOrderState({
+        status: "tap_card",
+        student: studentData,
+        message: "Card detected! Processing payment...",
+      });
+    }
+  };
 
-    // Handle insufficient balance callback
-    const handleInsufficientBalance = (
-        totalAmount: number,
-        balance: number
-    ) => {
-        setInsufficientBalanceData({ totalAmount, balance });
-        setShowManualPaymentDialog(true);
-    };
+  // Handle insufficient balance callback
+  const handleInsufficientBalance = (totalAmount: number, balance: number) => {
+    setInsufficientBalanceData({ totalAmount, balance });
+    setShowManualPaymentDialog(true);
+  };
 
     // Handle manual payment confirmation
     const handleManualPaymentConfirm = async (amount: number) => {
@@ -691,127 +676,113 @@ export default function CanteenPage() {
                                                         </p>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded p-1">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    updateQuantity(
-                                                                        item.menu_item_id,
-                                                                        item.quantity -
-                                                                            1
-                                                                    )
-                                                                }
-                                                                className="h-6 w-6 p-0"
-                                                            >
-                                                                <Minus className="h-3 w-3" />
-                                                            </Button>
-                                                            <span className="font-semibold px-2 text-sm">
-                                                                {item.quantity}
-                                                            </span>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    updateQuantity(
-                                                                        item.menu_item_id,
-                                                                        item.quantity +
-                                                                            1
-                                                                    )
-                                                                }
-                                                                className="h-6 w-6 p-0"
-                                                            >
-                                                                <Plus className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded p-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.menu_item_id,
+                                    item.quantity - 1
+                                  )
+                                }
+                                className="h-6 w-6 p-0"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="font-semibold px-2 text-sm">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.menu_item_id,
+                                    item.quantity + 1
+                                  )
+                                }
+                                className="h-6 w-6 p-0"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
 
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                removeFromCart(
-                                                                    item.menu_item_id
-                                                                )
-                                                            }
-                                                            className="h-6 w-6 p-0 text-red-500"
-                                                        >
-                                                            <Trash2 className="h-3 w-3" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 rounded-lg">
-                                                <span className="font-bold">
-                                                    Total
-                                                </span>
-                                                <span className="text-xl font-bold text-green-600">
-                                                    Rs. {calculateTotal()}
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Button
-                                                    onClick={
-                                                        startPaymentProcess
-                                                    }
-                                                    className={`${
-                                                        isPaymentMode
-                                                            ? "bg-blue-600 hover:bg-blue-700"
-                                                            : "bg-green-600 hover:bg-green-700"
-                                                    }`}
-                                                    disabled={cart.length === 0}
-                                                >
-                                                    {isPaymentMode ? (
-                                                        <>
-                                                            <CreditCard className="h-4 w-4 mr-2" />
-                                                            Waiting for Card...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <CheckCircle className="h-4 w-4 mr-2" />
-                                                            Pay Now (Enter)
-                                                        </>
-                                                    )}
-                                                </Button>
-                                                <Button
-                                                    onClick={() => {
-                                                        clearCart();
-                                                        setIsPaymentMode(false);
-                                                        setSelectedItemIndex(
-                                                            null
-                                                        );
-                                                    }}
-                                                    variant="outline"
-                                                    disabled={cart.length === 0}
-                                                >
-                                                    <Trash2 className="h-4 w-4 mr-2" />
-                                                    Clear
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <div className="bg-gray-100 dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <ShoppingCart className="h-8 w-8 text-gray-400" />
-                                        </div>
-                                        <h4 className="font-semibold mb-2">
-                                            No items in cart
-                                        </h4>
-                                        <p className="text-gray-500 text-sm">
-                                            Add items from the menu
-                                        </p>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromCart(item.menu_item_id)}
+                              className="h-6 w-6 p-0 text-red-500"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 rounded-lg">
+                        <span className="font-bold">Total</span>
+                        <span className="text-xl font-bold text-green-600">
+                          {formatCurrency(calculateTotal())}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={startPaymentProcess}
+                          className={`${
+                            isPaymentMode
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "bg-green-600 hover:bg-green-700"
+                          }`}
+                          disabled={cart.length === 0}
+                        >
+                          {isPaymentMode ? (
+                            <>
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Waiting for Card...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Pay Now (Enter)
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            clearCart();
+                            setIsPaymentMode(false);
+                            setSelectedItemIndex(null);
+                          }}
+                          variant="outline"
+                          disabled={cart.length === 0}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="bg-gray-100 dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ShoppingCart className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h4 className="font-semibold mb-2">No items in cart</h4>
+                    <p className="text-gray-500 text-sm">
+                      Add items from the menu
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
                     {/* Menu Section - Right Columns */}
                     <div className="lg:col-span-2 space-y-6">
@@ -1186,22 +1157,20 @@ export default function CanteenPage() {
                 </Card>
             </main>
 
-            {/* Manual Payment Dialog */}
-            {showManualPaymentDialog &&
-                insufficientBalanceData &&
-                currentStudent && (
-                    <ManualPaymentDialog
-                        isOpen={showManualPaymentDialog}
-                        onClose={() => {
-                            setShowManualPaymentDialog(false);
-                            setInsufficientBalanceData(null);
-                        }}
-                        onConfirm={handleManualPaymentConfirm}
-                        totalAmount={insufficientBalanceData.totalAmount}
-                        currentBalance={insufficientBalanceData.balance}
-                        studentName={currentStudent.full_name}
-                    />
-                )}
-        </div>
-    );
+      {/* Manual Payment Dialog */}
+      {showManualPaymentDialog && insufficientBalanceData && currentStudent && (
+        <ManualPaymentDialog
+          isOpen={showManualPaymentDialog}
+          onClose={() => {
+            setShowManualPaymentDialog(false);
+            setInsufficientBalanceData(null);
+          }}
+          onConfirm={handleManualPaymentConfirm}
+          totalAmount={insufficientBalanceData.totalAmount}
+          currentBalance={insufficientBalanceData.balance}
+          studentName={currentStudent.full_name}
+        />
+      )}
+    </div>
+  );
 }

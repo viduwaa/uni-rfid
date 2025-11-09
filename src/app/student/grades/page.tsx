@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useStudentGrades } from "@/hooks/useStudentGrades";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 const getGradeColor = (grade: string) => {
   const gradeValue = grade.replace("+", "").replace("-", "");
@@ -102,41 +103,15 @@ export default function StudentGrades() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Breadcrumb (highest) */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-250">
-          <Link
-            href="/student/dashboard"
-            className="flex items-center hover:text-gray-700"
-          >
-            <Home className="h-4 w-4 mr-1" />
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900 dark:text-gray-300 font-medium">Academic Results</span>
-        </nav>
-
-        {/* Back row with centered title (same horizontal line on md+) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-6">
-          <div className="flex items-center">
-            <Link href="/student/dashboard">
-              <Button variant="outline" size="sm" className="flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
-
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Academic Results
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              View your grades and academic performance
-            </p>
-          </div>
-
-          <div className="hidden md:block" />
-        </div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Dashboard", href: "/student/dashboard" },
+            { label: "Academic Results" },
+          ]}
+          title={"Academic Results"}
+          subtitle={"View your grades and academic performance"}
+          backHref="/student/dashboard"
+        />
 
         {/* GPA Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -166,7 +141,9 @@ export default function StudentGrades() {
               <div className="text-3xl font-bold text-purple-700">
                 {grades.length}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Total courses</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Total courses
+              </p>
             </CardContent>
           </Card>
 
@@ -181,7 +158,9 @@ export default function StudentGrades() {
               <div className="text-3xl font-bold text-green-700">
                 {grades.reduce((sum, grade) => sum + (grade.credits || 0), 0)}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Credits earned</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Credits earned
+              </p>
             </CardContent>
           </Card>
         </div>

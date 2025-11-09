@@ -4,203 +4,202 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-    CheckCircle,
-    AlertTriangle,
-    CreditCard,
-    User,
-    Clock,
-    Wifi,
-    ShoppingCart,
-    DollarSign,
-    XCircle,
-    Loader2,
-    UtensilsCrossed,
+  CheckCircle,
+  AlertTriangle,
+  CreditCard,
+  User,
+  Clock,
+  Wifi,
+  ShoppingCart,
+  DollarSign,
+  XCircle,
+  Loader2,
+  UtensilsCrossed,
 } from "lucide-react";
 import { getFacultyName } from "@/lib/utils";
+import formatCurrency from "@/lib/formatCurrency";
 
 interface MenuItem {
-    menu_item_id: string;
-    item_name: string;
-    description: string;
-    price: number;
-    category: string;
-    is_available: boolean;
+  menu_item_id: string;
+  item_name: string;
+  description: string;
+  price: number;
+  category: string;
+  is_available: boolean;
 }
 
 interface CartItem {
-    menu_item_id: string;
-    quantity: number;
-    name: string;
-    price: number;
+  menu_item_id: string;
+  quantity: number;
+  name: string;
+  price: number;
 }
 
 interface StudentData {
-    user_id: string;
-    register_number: string;
-    full_name: string;
-    email: string;
-    faculty: string;
-    card_uid: string;
-    balance: number;
-    card_status: string;
+  user_id: string;
+  register_number: string;
+  full_name: string;
+  email: string;
+  faculty: string;
+  card_uid: string;
+  balance: number;
+  card_status: string;
 }
 
 interface OrderState {
-    status:
-        | "waiting_for_order"
-        | "order_ready"
-        | "tap_card"
-        | "processing"
-        | "completed"
-        | "failed";
-    cart: CartItem[];
-    total: number;
-    student: StudentData | null;
-    message: string;
+  status:
+    | "waiting_for_order"
+    | "order_ready"
+    | "tap_card"
+    | "processing"
+    | "completed"
+    | "failed";
+  cart: CartItem[];
+  total: number;
+  student: StudentData | null;
+  message: string;
 }
 
 export default function StudentDisplay() {
-    const [orderState, setOrderState] = useState<OrderState>({
-        status: "waiting_for_order",
-        cart: [],
-        total: 0,
-        student: null,
-        message: "Waiting for order...",
-    });
+  const [orderState, setOrderState] = useState<OrderState>({
+    status: "waiting_for_order",
+    cart: [],
+    total: 0,
+    student: null,
+    message: "Waiting for order...",
+  });
 
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-    // Fetch menu items
-    const fetchMenuItems = async () => {
+  // Fetch menu items
+  const fetchMenuItems = async () => {
+    try {
+      const response = await fetch("/api/canteen/menu-items");
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setMenuItems(result.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+    }
+  };
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fetch menu items on mount
+  useEffect(() => {
+    fetchMenuItems();
+    // Refresh menu items every 30 seconds
+    const menuRefreshInterval = setInterval(fetchMenuItems, 30000);
+    return () => clearInterval(menuRefreshInterval);
+  }, []);
+
+  // Real-time order status updates (WebSocket or polling)
+  useEffect(() => {
+    // TODO: Implement WebSocket connection for real-time updates
+    // For now, we'll simulate with localStorage polling
+    const pollOrderStatus = () => {
+      const savedOrderState = localStorage.getItem("canteen_order_state");
+      if (savedOrderState) {
         try {
-            const response = await fetch("/api/canteen/menu-items");
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success && result.data) {
-                    setMenuItems(result.data);
-                }
-            }
+          const parsed = JSON.parse(savedOrderState);
+          setOrderState(parsed);
         } catch (error) {
-            console.error("Error fetching menu items:", error);
+          console.error("Error parsing order state:", error);
         }
+      }
     };
 
-    // Update time every second
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
+    // Poll every 500ms for real-time updates
+    const interval = setInterval(pollOrderStatus, 500);
+    pollOrderStatus(); // Initial load
 
-    // Fetch menu items on mount
-    useEffect(() => {
-        fetchMenuItems();
-        // Refresh menu items every 30 seconds
-        const menuRefreshInterval = setInterval(fetchMenuItems, 30000);
-        return () => clearInterval(menuRefreshInterval);
-    }, []);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Real-time order status updates (WebSocket or polling)
-    useEffect(() => {
-        // TODO: Implement WebSocket connection for real-time updates
-        // For now, we'll simulate with localStorage polling
-        const pollOrderStatus = () => {
-            const savedOrderState = localStorage.getItem("canteen_order_state");
-            if (savedOrderState) {
-                try {
-                    const parsed = JSON.parse(savedOrderState);
-                    setOrderState(parsed);
-                } catch (error) {
-                    console.error("Error parsing order state:", error);
-                }
-            }
-        };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "waiting_for_order":
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+      case "order_ready":
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
+      case "tap_card":
+        return "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300";
+      case "processing":
+        return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
+      case "completed":
+        return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
+      case "failed":
+        return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
+      default:
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
 
-        // Poll every 500ms for real-time updates
-        const interval = setInterval(pollOrderStatus, 500);
-        pollOrderStatus(); // Initial load
+  const getStatusIcon = () => {
+    switch (orderState.status) {
+      case "waiting_for_order":
+        return <ShoppingCart className="h-16 w-16 text-gray-400" />;
+      case "order_ready":
+        return <CheckCircle className="h-16 w-16 text-blue-500" />;
+      case "tap_card":
+        return (
+          <CreditCard className="h-16 w-16 text-amber-500 animate-pulse" />
+        );
+      case "processing":
+        return <Loader2 className="h-16 w-16 text-purple-500 animate-spin" />;
+      case "completed":
+        return <CheckCircle className="h-16 w-16 text-green-500" />;
+      case "failed":
+        return <XCircle className="h-16 w-16 text-red-500" />;
+      default:
+        return <ShoppingCart className="h-16 w-16 text-gray-400" />;
+    }
+  };
 
-        return () => clearInterval(interval);
-    }, []);
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 flex flex-col">
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-sm dark:bg-slate-900/95 border-b shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-600 p-3 rounded-full text-white">
+                <User className="h-8 w-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                  Student Display
+                </h1>
+                <p className="text-slate-600 dark:text-slate-400">
+                  University Canteen
+                </p>
+              </div>
+            </div>
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "waiting_for_order":
-                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-            case "order_ready":
-                return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-            case "tap_card":
-                return "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300";
-            case "processing":
-                return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
-            case "completed":
-                return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-            case "failed":
-                return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
-            default:
-                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-        }
-    };
-
-    const getStatusIcon = () => {
-        switch (orderState.status) {
-            case "waiting_for_order":
-                return <ShoppingCart className="h-16 w-16 text-gray-400" />;
-            case "order_ready":
-                return <CheckCircle className="h-16 w-16 text-blue-500" />;
-            case "tap_card":
-                return (
-                    <CreditCard className="h-16 w-16 text-amber-500 animate-pulse" />
-                );
-            case "processing":
-                return (
-                    <Loader2 className="h-16 w-16 text-purple-500 animate-spin" />
-                );
-            case "completed":
-                return <CheckCircle className="h-16 w-16 text-green-500" />;
-            case "failed":
-                return <XCircle className="h-16 w-16 text-red-500" />;
-            default:
-                return <ShoppingCart className="h-16 w-16 text-gray-400" />;
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-            {/* Header */}
-            <header className="bg-white/95 backdrop-blur-sm dark:bg-slate-900/95 border-b shadow-sm">
-                <div className="container mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-blue-600 p-3 rounded-full text-white">
-                                <User className="h-8 w-8" />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                                    Student Display
-                                </h1>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    University Canteen
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="text-right">
-                            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">
-                                {currentTime.toLocaleTimeString()}
-                            </div>
-                            <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {currentTime.toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+                {currentTime.toLocaleTimeString()}
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                {currentTime.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
 
             {/* Main Content */}
             <main className="flex-1 container mx-auto px-6 py-8">

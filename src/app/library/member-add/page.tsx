@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { UserPlus, ArrowLeft, Save, X } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { useRouter } from 'next/navigation';
 
 interface NewMemberForm {
@@ -130,17 +131,16 @@ export default function AddNewMember() {
   return (
     <div className="container mx-auto py-6 px-4">
       {/* Header */}
-      <div className="flex items-center mb-8">
-        <Link href="/library/member-management" className="mr-4">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex items-center gap-4">
-          <UserPlus className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Add New Member</h1>
-        </div>
-      </div>
+      <PageHeader
+        title="Add New Member"
+        breadcrumbs={[
+          { label: "Library", href: "/library/dashboard" },
+          { label: "Member Management", href: "/library/member-management" },
+          { label: "Add New Member" },
+        ]}
+        backHref="/library/member-management"
+        centerIcon={<UserPlus className="h-8 w-8 text-primary mx-auto" />}
+      />
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
