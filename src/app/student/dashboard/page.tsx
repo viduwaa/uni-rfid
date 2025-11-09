@@ -63,7 +63,7 @@ export default function StudentDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen bg-[url('/student-dashboard-bg.jpg')] bg-cover bg-center bg-no-repeat bg-fixed">
             <div className="container mx-auto py-10 p-6 space-y-8">
                 {/* Header Section */}
                 <div className="text-center space-y-4">
