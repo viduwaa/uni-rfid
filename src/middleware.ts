@@ -50,6 +50,7 @@ export default withAuth(
             !pathname.startsWith("/library/self-service") &&
             !pathname.startsWith("/library/book-checkout") &&
             !pathname.startsWith("/library/book-returns") &&
+            !pathname.startsWith("/library/catalog-search") &&
             token?.role !== "librarian"
         ) {
             return NextResponse.redirect(new URL("/library", req.url));
@@ -102,6 +103,7 @@ export default withAuth(
                     pathname.startsWith("/library/self-service") ||
                     pathname.startsWith("/library/book-checkout") ||
                     pathname.startsWith("/library/book-returns") ||
+                    pathname.startsWith("/library/catalog-search") ||
                     pathname.startsWith("/api/auth") ||
                     pathname.startsWith("/public")
                 ) {

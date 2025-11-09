@@ -10,14 +10,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, UserCircle, Sparkles } from "lucide-react";
+import { BookOpen, UserCircle, Sparkles, FileSearch } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function LibraryLanding() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"login" | "self-service">(
-        "login"
-    );
+    const [activeTab, setActiveTab] = useState<
+        "login" | "self-service" | "catalog"
+    >("login");
 
     return (
         <div className="min-h-screen bg-background">
@@ -36,7 +36,7 @@ export default function LibraryLanding() {
                 </div>
 
                 {/* Tab Selection */}
-                <div className="flex justify-center gap-4 mb-8 max-w-md mx-auto">
+                <div className="flex justify-center gap-4 mb-8 max-w-3xl mx-auto">
                     <Button
                         variant={activeTab === "login" ? "default" : "outline"}
                         className="flex-1 h-12 text-base"
@@ -55,6 +55,16 @@ export default function LibraryLanding() {
                         <Sparkles className="h-4 w-4 mr-2" />
                         Self Service
                     </Button>
+                    <Button
+                        variant={
+                            activeTab === "catalog" ? "default" : "outline"
+                        }
+                        className="flex-1 h-12 text-base"
+                        onClick={() => setActiveTab("catalog")}
+                    >
+                        <FileSearch className="h-4 w-4 mr-2" />
+                        Catalog Search
+                    </Button>
                 </div>
 
                 {/* Content */}
@@ -62,6 +72,78 @@ export default function LibraryLanding() {
                     {activeTab === "login" ? (
                         <div className="animate-in fade-in duration-300">
                             <LoginForm role="library" />
+                        </div>
+                    ) : activeTab === "catalog" ? (
+                        <div className="animate-in fade-in duration-300">
+                            <Card>
+                                <CardHeader className="text-center space-y-4">
+                                    <div className="mx-auto p-4 bg-primary/10 rounded-full w-20 h-20 flex items-center justify-center">
+                                        <FileSearch className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <CardTitle className="text-2xl font-bold">
+                                        Library Catalog
+                                    </CardTitle>
+                                    <CardDescription className="text-base">
+                                        Search and browse our complete library
+                                        collection
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <div className="space-y-3 p-4 bg-muted rounded-lg border">
+                                        <h3 className="font-semibold text-base">
+                                            📚 Available Features
+                                        </h3>
+                                        <ul className="space-y-2 text-sm text-muted-foreground">
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-primary mt-1">
+                                                    ✓
+                                                </span>
+                                                <span>
+                                                    Search by title, author, or
+                                                    ISBN
+                                                </span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-primary mt-1">
+                                                    ✓
+                                                </span>
+                                                <span>
+                                                    Filter by category and
+                                                    availability
+                                                </span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-primary mt-1">
+                                                    ✓
+                                                </span>
+                                                <span>
+                                                    View book details and
+                                                    location
+                                                </span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-primary mt-1">
+                                                    ✓
+                                                </span>
+                                                <span>
+                                                    Check availability status
+                                                </span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <Button
+                                        className="w-full h-12"
+                                        onClick={() =>
+                                            router.push(
+                                                "/library/catalog-search"
+                                            )
+                                        }
+                                    >
+                                        <FileSearch className="h-4 w-4 mr-2" />
+                                        Browse Catalog
+                                    </Button>
+                                </CardContent>
+                            </Card>
                         </div>
                     ) : (
                         <div className="animate-in fade-in duration-300">

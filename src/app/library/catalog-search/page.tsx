@@ -205,12 +205,18 @@ export default function CatalogSearch() {
             <PageHeader
                 title="Catalog Search"
                 breadcrumbs={[
-                    { label: "Library", href: "/library/dashboard" },
+                    { label: "Library", href: "/library" },
                     { label: "Catalog Search" },
                 ]}
-                backHref="/library/dashboard"
-                centerIcon={<FileSearch className="h-8 w-8 text-primary mx-auto" />}
-                right={<div className="text-sm text-muted-foreground">{books.length} books found</div>}
+                backHref="/library"
+                centerIcon={
+                    <FileSearch className="h-8 w-8 text-primary mx-auto" />
+                }
+                right={
+                    <div className="text-sm text-muted-foreground">
+                        {books.length} books found
+                    </div>
+                }
             />
 
             {/* Search Section */}
