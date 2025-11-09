@@ -29,6 +29,8 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
+import formatCurrency from "@/lib/formatCurrency";
 
 interface Transaction {
   id: string;
@@ -126,43 +128,15 @@ export default function StudentTransactions() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Breadcrumb (highest) */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-250">
-          <Link
-            href="/student/dashboard"
-            className="flex items-center hover:text-gray-700"
-          >
-            <Home className="h-4 w-4 mr-1" />
-            Dashboard
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900 dark:text-gray-300 font-medium">
-            Transaction History
-          </span>
-        </nav>
-
-        {/* Back row with centered title (same horizontal line on md+) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-6">
-          <div className="flex items-center">
-            <Link href="/student/dashboard">
-              <Button variant="outline" size="sm" className="flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
-
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Transaction History
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              View your canteen and payment transactions
-            </p>
-          </div>
-
-          <div className="hidden md:block" />
-        </div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Dashboard", href: "/student/dashboard" },
+            { label: "Transaction History" },
+          ]}
+          title={"Transaction History"}
+          subtitle={"View your canteen and payment transactions"}
+          backHref="/student/dashboard"
+        />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -190,7 +164,7 @@ export default function StudentTransactions() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-700">
-                Rs. {totalSpent.toFixed(2)}
+                {formatCurrency(totalSpent)}
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-300">
                 Completed transactions
@@ -264,8 +238,9 @@ export default function StudentTransactions() {
                           })}
                         </TableCell>
                         <TableCell className="font-medium">
-                          Rs.{" "}
-                          {parseFloat(transaction.amount.toString()).toFixed(2)}
+                          {formatCurrency(
+                            parseFloat(transaction.amount.toString())
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(transaction.status)}>

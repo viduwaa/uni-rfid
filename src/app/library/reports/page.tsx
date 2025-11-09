@@ -20,7 +20,10 @@ import {
   Package,
   AlertTriangle,
   Loader2,
+  Home,
+  ChevronRight,
 } from "lucide-react";
+import formatCurrency from "@/lib/formatCurrency";
 import {
   Card,
   CardContent,
@@ -203,19 +206,49 @@ export default function LibraryReports() {
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/library/dashboard" className="mr-4">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-250">
+          <Link
+            href="/library/dashboard"
+            className="flex items-center hover:text-gray-700"
+          >
+            <Home className="h-4 w-4 mr-1" />
+            Dashboard
+          </Link>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-gray-900 dark:text-gray-300 font-medium">
+            Library
+          </span>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-gray-900 dark:text-gray-300 font-medium">
+            Reports
+          </span>
+        </nav>
+      </div>
+
+      {/* Header with centered title and back button */}
+      <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-6">
+        <div className="flex items-center">
+          <Link href="/library/dashboard">
+            <Button variant="outline" size="sm" className="flex items-center">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
             </Button>
           </Link>
-          <BarChart3 className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Library Reports</h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="text-center">
+          <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Library Reports
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            Generate reports for circulation, finance and inventory
+          </p>
+        </div>
+
+        <div className="hidden md:flex items-center justify-end gap-4">
           <Select value={reportPeriod} onValueChange={setReportPeriod}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Select period" />
@@ -312,25 +345,25 @@ export default function LibraryReports() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  ${financialData.total_fines}
+                  {formatCurrency(financialData.total_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Fines</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  ${financialData.paid_fines}
+                  {formatCurrency(financialData.paid_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Paid</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  ${financialData.pending_fines}
+                  {formatCurrency(financialData.pending_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Pending</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-600">
-                  ${financialData.waived_fines}
+                  {formatCurrency(financialData.waived_fines)}
                 </div>
                 <div className="text-sm text-muted-foreground">Waived</div>
               </div>
