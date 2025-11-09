@@ -25,6 +25,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import type { BookWithAvailability } from "@/types/library";
 
@@ -201,20 +202,16 @@ export default function CatalogSearch() {
     return (
         <div className="container mx-auto py-6 px-4">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <Link href="/library/dashboard">
-                        <Button variant="outline" size="icon">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
-                    <FileSearch className="h-8 w-8 text-primary" />
-                    <h1 className="text-3xl font-bold">Catalog Search</h1>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                    {books.length} books found
-                </div>
-            </div>
+            <PageHeader
+                title="Catalog Search"
+                breadcrumbs={[
+                    { label: "Library", href: "/library/dashboard" },
+                    { label: "Catalog Search" },
+                ]}
+                backHref="/library/dashboard"
+                centerIcon={<FileSearch className="h-8 w-8 text-primary mx-auto" />}
+                right={<div className="text-sm text-muted-foreground">{books.length} books found</div>}
+            />
 
             {/* Search Section */}
             <Card className="mb-6">

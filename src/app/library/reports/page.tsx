@@ -32,6 +32,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -206,67 +207,36 @@ export default function LibraryReports() {
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-250">
-          <Link
-            href="/library/dashboard"
-            className="flex items-center hover:text-gray-700"
-          >
-            <Home className="h-4 w-4 mr-1" />
-            Dashboard
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-900 dark:text-gray-300 font-medium">
-            Library
-          </span>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-900 dark:text-gray-300 font-medium">
-            Reports
-          </span>
-        </nav>
-      </div>
+      <PageHeader
+        title="Library Reports"
+        subtitle="Generate reports for circulation, finance and inventory"
+        breadcrumbs={[
+          { label: "Library", href: "/library/dashboard" },
+          { label: "Reports" },
+        ]}
+        backHref="/library/dashboard"
+        centerIcon={<BarChart3 className="h-8 w-8 text-primary mx-auto" />}
+        right={
+          <div className="hidden md:flex items-center justify-end gap-4">
+            <Select value={reportPeriod} onValueChange={setReportPeriod}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 Days</SelectItem>
+                <SelectItem value="30">Last 30 Days</SelectItem>
+                <SelectItem value="90">Last 3 Months</SelectItem>
+                <SelectItem value="365">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
 
-      {/* Header with centered title and back button */}
-      <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 mb-6">
-        <div className="flex items-center">
-          <Link href="/library/dashboard">
-            <Button variant="outline" size="sm" className="flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+            <Button onClick={() => fetchReports()} variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
+              Refresh
             </Button>
-          </Link>
-        </div>
-
-        <div className="text-center">
-          <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Library Reports
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Generate reports for circulation, finance and inventory
-          </p>
-        </div>
-
-        <div className="hidden md:flex items-center justify-end gap-4">
-          <Select value={reportPeriod} onValueChange={setReportPeriod}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 Days</SelectItem>
-              <SelectItem value="30">Last 30 Days</SelectItem>
-              <SelectItem value="90">Last 3 Months</SelectItem>
-              <SelectItem value="365">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button onClick={() => fetchReports()} variant="outline">
-            <FileText className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* Circulation Report */}
       {circulationData && (
