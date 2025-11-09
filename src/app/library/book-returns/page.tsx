@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +22,8 @@ import {
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import RFIDStudentReader from "@/components/RFIDStudentReader";
+import RFIDBookReader from "@/components/RFIDBookReader";
 import type { LoanWithDetails } from "@/types/library";
 import formatCurrency from "@/lib/formatCurrency";
 

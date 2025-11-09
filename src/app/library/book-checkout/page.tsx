@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import RFIDStudentReader from "@/components/RFIDStudentReader";
+import RFIDBookReader from "@/components/RFIDBookReader";
 import { getFacultyName } from "@/lib/utils";
 import formatCurrency from "@/lib/formatCurrency";
 import type { BookWithAvailability, MemberSummary } from "@/types/library";

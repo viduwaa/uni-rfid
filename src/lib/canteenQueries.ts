@@ -182,6 +182,30 @@ export const updateMenuItemAvailability = async (
     }
 };
 
+// Delete menu item (soft delete by setting is_active to false)
+export const deleteMenuItem = async (id: string): Promise<MenuItem> => {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(
+            `UPDATE menu_items 
+       SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND is_active = TRUE 
+       RETURNING *`,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            throw new Error("Menu item not found or already deleted");
+        }
+
+        return result.rows[0];
+    } catch (error) {
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 // Get student by card UID
 export const getStudentByCardUID = async (
     cardUID: string
