@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home from '../page';
@@ -26,13 +27,13 @@ describe('Home Page', () => {
 
   it('renders the main heading', () => {
     expect(
-      screen.getByText('University RFID Card System')
+      screen.getByRole('heading', { name: /university management system/i })
     ).toBeInTheDocument();
   });
 
   it('renders the subtitle description', () => {
     expect(
-      screen.getByText(/Manage attendance, canteen services, and student information/i)
+      screen.getByText(/integrated with rfid card system/i)
     ).toBeInTheDocument();
   });
 
