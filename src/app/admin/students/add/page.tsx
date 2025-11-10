@@ -2,7 +2,7 @@
 
 import type React from "react";
 import "./add.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     Card,
@@ -33,6 +33,42 @@ export default function AddStudent() {
     const [validationError, setValidationError] = useState<StudentForm>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // new state for auto-generated email
+    const [facultyValue, setFacultyValue] = useState<string | undefined>(
+        undefined
+    );
+    const [registerNumber, setRegisterNumber] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+
+    // prevent future DOB selection
+    const [maxDate, setMaxDate] = useState<string>("");
+    useEffect(() => {
+        setMaxDate(new Date().toISOString().split("T")[0]);
+    }, []);
+
+    // faculty -> domain mapping (uses select item values like "tec","agr",...)
+    const facultyDomains: Record<string, string> = {
+        tec: "tec.rjt.ac.lk",
+        agr: "agri.rjt.ac.lk",
+        app: "as.rjt.ac.lk",
+        mgt: "mgt.rjt.ac.lk",
+        med: "med.rjt.ac.lk",
+        ssh: "ssh.rjt.ac.lk",
+    };
+
+    // generate email when faculty or register number changes
+    useEffect(() => {
+        if (!facultyValue || !registerNumber) return;
+
+        // normalize registration: remove non-alphanumeric and lowercase
+        const cleaned = registerNumber.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+
+        const domain = facultyDomains[facultyValue];
+        if (domain) {
+            setEmail(`${cleaned}@${domain}`);
+        }
+    }, [facultyValue, registerNumber]);
+
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setIsUploading(true);
@@ -58,6 +94,17 @@ export default function AddStudent() {
         // get form data
         const form = event.currentTarget as HTMLFormElement;
         const formData = new FormData(form);
+
+        // client-side DOB check: prevent future dates
+        const dob = (formData.get("dob") as string) || "";
+        const today = new Date().toISOString().split("T")[0];
+        if (dob && dob > today) {
+            setValidationError((prev) => ({
+                ...(prev || {}),
+                dateOfBirth: "Date of birth cannot be in the future",
+            }));
+            return;
+        }
 
         //validate form data
         const validationErrors = validateForm(formData);
@@ -97,6 +144,11 @@ export default function AddStudent() {
 
             form.reset();
             setPhotoPreview(null);
+
+            // clear controlled state so inputs reflect reset
+            setFacultyValue(undefined);
+            setRegisterNumber("");
+            setEmail("");
         } catch (error) {
             console.error("Error submitting form", error);
             toast.error("Error submitting form", {
@@ -111,7 +163,7 @@ export default function AddStudent() {
         <div className="min-h-screen">
             <div className="container mx-auto p-6 space-y-6">
                 <div className="mb-6 flex items-center ">
-                    <Link href="/admin/dashboard" className="mr-4">
+                    <Link href="/admin/students" className="mr-4">
                         <Button variant="outline" size="icon">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
@@ -242,46 +294,16 @@ export default function AddStudent() {
                                     </div>
                                 </div>
 
-                                {/* Register Number & Email */}
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="registerNumber">
-                                            Register Number
-                                        </Label>
-                                        <Input
-                                            id="registerNumber"
-                                            placeholder="UNI2023001"
-                                            name="registerNumber"
-                                            required
-                                        />
-                                        {validationError?.registerNumber && (
-                                            <span className="text-red-500 text-sm">
-                                                {validationError.registerNumber}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="john.doe@university.edu"
-                                            name="email"
-                                            required
-                                        />
-                                        {validationError?.email && (
-                                            <span className="text-red-500 text-sm">
-                                                {validationError.email}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
                                 {/* Faculty */}
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label htmlFor="faculty">Faculty</Label>
-                                        <Select name="faculty">
+                                        <Select
+                                            name="faculty"
+                                            onValueChange={(val) =>
+                                                setFacultyValue(val)
+                                            }
+                                        >
                                             <SelectTrigger id="faculty">
                                                 <SelectValue placeholder="Select Faculty" />
                                             </SelectTrigger>
@@ -345,6 +367,49 @@ export default function AddStudent() {
                                     </div>
                                 </div>
 
+                                {/* Register Number & Email */}
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="registerNumber">
+                                            Register Number
+                                        </Label>
+                                        <Input
+                                            id="registerNumber"
+                                            placeholder="UNI/2023/001"
+                                            name="registerNumber"
+                                            required
+                                            value={registerNumber}
+                                            onChange={(e) =>
+                                                setRegisterNumber(e.target.value)
+                                            }
+                                        />
+                                        {validationError?.registerNumber && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.registerNumber}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="john.doe@university.edu"
+                                            name="email"
+                                            required
+                                            value={email}
+                                            onChange={(e) =>
+                                                setEmail(e.target.value)
+                                            }
+                                        />
+                                        {validationError?.email && (
+                                            <span className="text-red-500 text-sm">
+                                                {validationError.email}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {/* Address */}
                                 <div className="space-y-2">
                                     <Label htmlFor="address">Address</Label>
@@ -385,6 +450,7 @@ export default function AddStudent() {
                                             id="dob"
                                             type="date"
                                             name="dob"
+                                            max={maxDate}
                                         />
                                         {validationError?.dateOfBirth && (
                                             <span className="text-red-500 text-sm">
