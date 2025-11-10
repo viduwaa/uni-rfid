@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     Card,
@@ -33,6 +33,46 @@ export default function AddLecturer() {
     const [validationError, setValidationError] = useState<LecturerForm>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // faculty code (tec/app/ssh/...) and email state to auto-update domain
+    const [facultyValue, setFacultyValue] = useState<string | undefined>(
+        undefined
+    );
+    const [email, setEmail] = useState<string>("");
+    const [regNo, setRegNo] = useState<string>("");
+    const [maxDate, setMaxDate] = useState<string>("");
+
+    const facultyDomains: Record<string, string> = {
+        tec: "tec.rjt.ac.lk",
+        agr: "agri.rjt.ac.lk",
+        app: "as.rjt.ac.lk",
+        mgt: "mgt.rjt.ac.lk",
+        med: "med.rjt.ac.lk",
+        ssh: "ssh.rjt.ac.lk",
+    };
+
+    // when faculty changes, update the domain part of the email
+    useEffect(() => {
+        // set today's date for DOB max on mount
+        setMaxDate(new Date().toISOString().split("T")[0]);
+    }, []);
+
+    useEffect(() => {
+        if (!facultyValue) return;
+        const domain = facultyDomains[facultyValue];
+        if (!domain) return;
+
+        // If the user entered a full/personal email (contains "@"), don't overwrite it.
+        if (email.includes("@")) return;
+
+        // Use current email (as local part) or fallback to regNo
+        const local = email || regNo;
+        if (!local) return;
+
+        const cleaned = local.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        const newEmail = `${cleaned}@${domain}`;
+        if (email !== newEmail) setEmail(newEmail);
+    }, [facultyValue, regNo, email]);
+
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setIsUploading(true);
@@ -53,50 +93,60 @@ export default function AddLecturer() {
     };
 
     const handleSubmit = async (event: React.FormEvent) => {
-            event.preventDefault();
-    
-            // get form data
-            const form = event.currentTarget as HTMLFormElement;
-            const formData = new FormData(form);
-    
-            //validate form data
-            const validationErrors = validateForm(formData);
-            if (Object.keys(validationErrors).length > 0) {
-                setValidationError(validationErrors);
-                return;
+        event.preventDefault();
+
+        // get form data
+        const form = event.currentTarget as HTMLFormElement;
+        const formData = new FormData(form);
+        // client-side DOB check: prevent future dates
+        const dob = (formData.get("dob") as string) || "";
+        const today = new Date().toISOString().split("T")[0];
+        if (dob && dob > today) {
+            setValidationError((prev) => ({
+                ...(prev || {}),
+                dateOfBirth: "Date of birth cannot be in the future",
+            }));
+            return;
+        }
+
+        //validate form data
+        const validationErrors = validateForm(formData);
+        if (Object.keys(validationErrors).length > 0) {
+            setValidationError(validationErrors);
+            return;
+        }
+
+        //clear valdation errors
+        setValidationError({});
+
+        //start submitting
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch("/api/lecturers/", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Submission failed");
             }
-    
-            //clear valdation errors
-            setValidationError({});
-    
-            //start submitting
-            setIsSubmitting(true);
-    
-            try {
-                const response = await fetch("/api/lecturers/", {
-                    method: "POST",
-                    body: formData,
-                });
-    
-                const data = await response.json();
-    
-                if (!response.ok) {
-                    throw new Error(data.message || "Submission failed");
-                }
-    
-                toast.success("Lecturer Registration success");
-    
-                form.reset();
-                setPhotoPreview(null);
-            } catch (error) {
-                console.error("Error submitting form", error);
-                toast.error("Error submitting form", {
-                    description: (error as Error).message + "\nPlease try again",
-                });
-            } finally {
-                setIsSubmitting(false);
-            }
-        };
+
+            toast.success("Lecturer Registration success");
+
+            form.reset();
+            setPhotoPreview(null);
+        } catch (error) {
+            console.error("Error submitting form", error);
+            toast.error("Error submitting form", {
+                description: (error as Error).message + "\nPlease try again",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen">
@@ -200,7 +250,7 @@ export default function AddLecturer() {
                                         <Input
                                             id="initName"
                                             name="initName"
-                                            placeholder="STAFF2023001"
+                                            placeholder="K.G.Fernando"
                                             required
                                         />
                                     </div>
@@ -222,6 +272,8 @@ export default function AddLecturer() {
                                             name="regNo"
                                             placeholder="STAFF2023001"
                                             required
+                                            value={regNo}
+                                            onChange={(e) => setRegNo(e.target.value)}
                                         />
                                         {validationError?.registerNumber && (
                                             <span className="text-red-500 text-sm">
@@ -250,11 +302,16 @@ export default function AddLecturer() {
                                     <div className="grid grid-cols-2">
                                         <div className="space-y-2">
                                             <Label htmlFor="faculty">Faculty</Label>
-                                            <Select name="faculty">
+                                            <Select
+                                                name="faculty"
+                                                onValueChange={(val) =>
+                                                    setFacultyValue(val)
+                                                }
+                                            >
                                                 <SelectTrigger className="w-[160px]" id="faculty">
                                                     <SelectValue  placeholder="Select Faculty" />
                                                 </SelectTrigger>
-                                                <SelectContent> 
+                                                <SelectContent>
                                                     <SelectItem value="tec">
                                                         Technology
                                                     </SelectItem>
@@ -311,6 +368,7 @@ export default function AddLecturer() {
                                         )}
                                         </div>
                                     </div>
+                                    {/* Date Of Birth */}
                                     <div className="space-y-2">
                                         <Label htmlFor="dob">
                                             Date of Birth
@@ -319,6 +377,7 @@ export default function AddLecturer() {
                                             id="dob"
                                             type="date"
                                             name="dob"
+                                            max={maxDate}
                                         />
                                         {validationError?.dateOfBirth && (
                                             <span className="text-red-500 text-sm">
@@ -336,6 +395,11 @@ export default function AddLecturer() {
                                             id="email"
                                             placeholder="STAFF2023001@rjt.ac.lk"
                                             name="email"
+                                            value={email}
+                                            onChange={(e) => {
+                                                // allow user to type full email; faculty selection will overwrite domain
+                                                setEmail(e.target.value);
+                                            }}
                                         />
                                         {validationError?.email && (
                                             <span className="text-red-500 text-sm">
