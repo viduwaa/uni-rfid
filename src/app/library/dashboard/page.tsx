@@ -60,11 +60,11 @@ export default function LibraryDashboard() {
 
                     {/* Issue RFID Tags */}
                     <Link href="./issue-tags/" className="block">
-                        <Card className="h-full transition-all hover:shadow-md border-2 border-purple-200 dark:border-purple-800">
+                        <Card className="h-full transition-all hover:shadow-md border-2">
                             <CardHeader>
                                 <div className="flex items-center gap-2">
-                                    <Tag className="h-8 w-8 text-purple-600" />
-                                    <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded">
+                                    <Tag className="h-8 w-8" />
+                                    <span className=" px-2 py-1 rounded">
                                         RFID
                                     </span>
                                 </div>
