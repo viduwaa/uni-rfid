@@ -108,7 +108,8 @@ export const insertMenuItems = async (item: CanteenItem): Promise<MenuItem> => {
         // Now try the actual insert
         const result = await client.query(
             `INSERT INTO menu_items (name, category, price, description, is_active, is_available) 
-       VALUES ($1, $2::food_category, $3, $4, TRUE, FALSE) RETURNING *`,
+       VALUES ($1, $2::food_category, $3, $4, TRUE, FALSE) 
+       RETURNING id as menu_item_id, name as item_name, category, price, description, is_available, is_active, created_at, updated_at`,
             [item.name, item.category, item.price, item.description || null]
         );
 

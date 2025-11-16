@@ -21,7 +21,7 @@ export default function SelfServicePortal() {
                         <Button variant="outline" size="icon">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
-                    </Link>
+                    </Link> 
                 </div>
 
                 {/* Hero Section */}
